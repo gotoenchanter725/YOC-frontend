@@ -1,0 +1,57 @@
+.heander-container {
+    .navbar-list {
+        .item {
+            @apply relative text-primary px-2 py-1.5 mx-0 xl:mx-1 2xl:mx-3 font-medium border-t-[2px] border-transparent transition-colors;
+            &.active {
+                @apply text-secondary border-t-[2px] border-secondary;
+            }
+            &:hover {
+                @apply text-secondary;
+            }
+            &.children {
+                @apply pr-10;
+                .child-list {
+                    @apply opacity-0 invisible transition-all text-primary;
+                    @apply w-[120px] rounded bg-[#0f120de8] px-1.5 py-1 absolute left-0 top-10 z-50 flex flex-col;
+
+                    & li {
+                        @apply hover:bg-[#1e1e1e] rounded cursor-pointer px-1.5 py-1 my-1 flex justify-between items-center;
+                        &:hover {
+                            @apply text-secondary
+                        }
+                    }
+                }
+                &:hover .child-list {
+                    @apply opacity-100 visible;
+                }
+                &::before {
+                    @apply absolute top-1.5 right-1.5 w-[24px] h-[24px] content-['_'] bg-[length:100%_100%];
+                    background-image: url(../../../public/images/arrow-down.png);
+                }
+            }
+        }
+    }
+
+    .right_menu {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+
+        .token-price {
+            display: flex;
+            gap: 10px;
+        }
+
+        .connect-wallet .app-button {
+            // position: absolute;
+            // right: 20px;
+            // top: 15px;
+            width: fit-content;
+            height: 35px;
+            color: #800080;
+            border-radius: 15px;
+            padding: 10px 15px;
+            font-size: 1.125rem;
+        }
+    }
+}

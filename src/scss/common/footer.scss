@@ -1,0 +1,37 @@
+.footer {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    color: white;
+    .footer-logo {
+        width: 65%;
+    }
+    .social-links {
+        display: flex;
+        gap: 25px;
+        .item {
+            cursor: pointer;
+            transition: all 0.3s;
+            &:hover {
+                transform: scale(1.2);
+            }
+        }
+        .gradient {
+            background-image: linear-gradient(to bottom left, red, yellow); 
+        }
+    }
+    .contact-mail {
+        margin: 20px 0;
+        a {
+            color: white;
+            font-size: 0.78125rem;
+            text-decoration: underline;
+        }
+    }
+    .token-price {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        font-size: 0.8rem;
+    }
+}

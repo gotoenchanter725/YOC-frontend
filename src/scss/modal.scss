@@ -1,0 +1,33 @@
+.close_icon {
+    color: black;
+    cursor: pointer;
+}
+.modal_content.buy_token_modal {
+    .input_field {
+        font-size: 0.78125rem;
+        .input_control {
+            width: 250px;
+            height: 40px;
+            padding: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid black;
+            border-radius: 5px;
+            margin-bottom: 5px;
+            margin-top: 10px;
+            input {
+                border: none;
+                &:focus-visible {
+                    outline: none;
+                }
+            }
+            span {
+                color: rgb(148, 111, 111);
+            }
+        }
+    }
+    .app-button {
+        float: right;
+    }
+}

@@ -1,0 +1,25 @@
+.language-selector {
+    position: relative;
+    .selected-lang {
+        cursor: pointer;
+        padding: 3px 10px;
+        border-radius: 8px;
+        background-color: #17365b;
+        color: yellow;
+        text-transform: uppercase;
+    }
+    .lang-list {
+        position: absolute;
+        top: 40px;
+        li {
+            margin-top: 5px;
+            padding: 3px 10px;
+            text-align: center;
+            border-radius: 8px;
+            background-color: #4f7099;
+            color: yellow;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+    }
+}

@@ -1,0 +1,58 @@
+.app-card {
+    max-width: 400px;
+    min-width: 350px;
+    margin-bottom: 10px;
+    padding: 15px;
+    background-color: #122640;
+    color: #a3b9d3;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    box-shadow: 0 0 3px 1px rgba($color: #000000, $alpha: 0.5);
+
+    .project-name {
+        font-size: 1.125rem;
+    }
+
+    .explanation {
+        height: 50px;
+        margin: 15px 0;
+        font-size: 0.9rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+    }
+
+    .extra-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        font-size: 0.8125rem;
+        text-align: left;
+
+        a {
+            display: block;
+            color: white;
+        }
+
+        .open_vote_btn {
+            cursor: pointer;
+        }
+
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 5px;
+        }
+
+    }
+
+    .max-btn {
+        width: 40px;
+        height: 20px;
+        border-radius: 5px;
+        background-color: rgb(12 84 173);
+    }
+}

@@ -1,0 +1,47 @@
+@import url("https://fonts.googleapis.com/css?family=Kanit");
+
+* {
+    box-sizing: border-box;
+    font-family: Kanit, Arial, Helvetica, sans-serif;
+}
+
+html {
+    font-size: 16px;
+    overflow: hidden;
+}
+
+body {
+    overflow: auto;
+    height: 100vh;
+}
+
+html,
+body,
+p,
+div,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+ul,
+li {
+    margin: 0;
+    padding: 0;
+}
+
+a {
+    text-decoration: none;
+}
+
+ul,
+ol {
+    list-style: none;
+}
+
+input,
+button,
+select {
+    outline: none;
+}

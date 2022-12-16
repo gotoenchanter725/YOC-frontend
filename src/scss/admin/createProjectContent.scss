@@ -1,0 +1,93 @@
+.create_loading-spin {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba($color: #000000, $alpha: 0.9);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius:  8px;
+    .loading-icon {
+        border-radius: 5px;
+    }
+}
+.new_project_container {
+    display: flex;
+    align-items: flex-end;
+    max-width: 700px;
+    margin: auto;
+    font-size: 0.78125rem;
+    color: black;
+    label {
+        display: block;
+        margin: 15px 0 5px;
+    }
+    .input_field {
+        input, textarea {
+            font-size: 1.8rem;
+            width: 100%;
+            border: 1px solid black !important;
+        }
+        .supply_sold, .amount_price {
+            justify-content: space-between;
+            .input_control {
+                &:nth-child(2) {
+                    text-align: right;
+                }
+                input {
+                    width: 150px;
+                }
+            }
+        }
+    }
+    .left_input_field{
+        width: 40%;
+        margin-right: 20px;
+    }
+    .right_input_field {
+        width: 60%;
+        .add_icon, .add_symbol {
+            input {
+                display: none;
+            }
+            .icon_image, .symbol_image {
+                width: 150px;
+                height: 100px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                margin-bottom: 2px;
+                background-color: gray;
+                color: black;
+                background-size: 100% 100%;
+                cursor: pointer;
+            }
+        }
+    }
+}
+.btn_group {
+    max-width: 700px;
+    margin: auto;
+    margin-top: 50px;
+    gap: 30px;
+    justify-content: flex-end;
+    .app-button {
+        font-size: 0.9rem;
+    }
+}
+
+
+@media (max-width: 650px) {
+    .new_project_container {
+        display: block;
+        .left_input_field{
+            width: 100%;
+            margin-right: 0px;
+        }
+        .right_input_field{
+            width: 100%;
+        }
+    }
+}
