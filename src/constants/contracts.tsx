@@ -19,7 +19,7 @@ const Project = {
 
 const ProjectDetail = {
     ...ProjectDetailABI, 
-    address: "0x6e21D5b02708F9566E81EB87fb047D5A1bEE02A5"
+    address: "0x0FFe39517daE32b5e77444E50F7AB5038F4d54eD"
 }
 
 const TokenTemplate = TokenTemplateABI;
