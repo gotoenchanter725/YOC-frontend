@@ -118,7 +118,7 @@ const Fund: FC = () => {
 
     useEffect(() => {
         if (account && rpc_provider) {
-            dispatch(projectInfos(account, rpc_provider) as any)
+            dispatch(projectInfos(account) as any)
         }
     }, [account, dispatch, rpc_provider])
 

@@ -1,5 +1,4 @@
 import type { AppProps } from 'next/app'
-import { ThirdwebWeb3Provider } from "@3rdweb/hooks";
 import { Provider } from "react-redux";
 import "regenerator-runtime/runtime";
 
@@ -10,22 +9,11 @@ import LoadingComponent from '../src/components/widgets/LoadingComponent';
 import AlertModal from '../src/components/widgets/AlertModal';
 
 function MyApp({ Component, pageProps }: AppProps) {
-  const supportedChainIds = [5, 5];
-  
-  const connectors = {
-    injected: {},
-  };
-
   return (
     <Provider store={store}>
-      <ThirdwebWeb3Provider
-        supportedChainIds={supportedChainIds}
-        connectors={connectors}
-      >
         <Component {...pageProps} />
         <AlertModal />
         <LoadingComponent />
-      </ThirdwebWeb3Provider>
     </Provider>
   )
 }
