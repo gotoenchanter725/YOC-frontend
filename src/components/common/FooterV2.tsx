@@ -7,8 +7,6 @@ import FooterIon2 from "../../../public/images/footer2.png";
 import FooterIon3 from "../../../public/images/footer3.png";
 import FooterIon4 from "../../../public/images/footer4.png";
 import FooterIon5 from "../../../public/images/footer5.png";
-import logoIcon from "../../../public/images/footer-logo.png";
-
 interface propsType {
     emptyLogo?: boolean;
 }
@@ -21,7 +19,7 @@ const FooterV2: FC<propsType> = (props) => {
                     props?.emptyLogo ? (
                         ""
                     ) : (
-                        <Image src={logoIcon} width={400} height={180} />
+                        <img src='./images/footer-logo.png' className='w-[400px] h-[180px]' />
                     )
                 }
             </div>
