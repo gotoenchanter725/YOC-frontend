@@ -8,7 +8,7 @@ const initialState = {
   projects: [],
 };
 
-const getInfo = (state = initialState, action) => {
+const getInfo = (state = initialState, action: any) => {
   switch (action.type) {
     case GET_PROJECT_INFO:
     case WALLET_CONNECT:

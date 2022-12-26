@@ -8,15 +8,15 @@ import {
   ProjectDetail,
 } from "../../src/constants/contracts";
 
-let web3Modal = null;
+let web3Modal: any;
 
-const projectDetailInfo = async (address, connectedAddress = "0x0000000000000000000000000000000000000000", rpc_provider) => {
+const projectDetailInfo = async (address: any, connectedAddress = "0x0000000000000000000000000000000000000000") => {
   try {
     let detailAddress = ProjectDetail.address;
-    const detailContract = new Contract(detailAddress, ProjectDetail.abi, rpc_provider);
+    const detailContract = new Contract(detailAddress, ProjectDetail.abi, rpc_provider_basic);
     let detailProject = await detailContract.getProjectDetails(address, connectedAddress);
 
-    const projectDetailObj = {};
+    const projectDetailObj: any = {};
     const shareTokenAddress = detailProject.shareToken;
     const investTokenAddress = detailProject.investToken;
     const shareDecimal_temp = Number(ethers.utils.formatUnits(detailProject.shareTokenDecimals, 0));
@@ -72,18 +72,18 @@ const projectDetailInfo = async (address, connectedAddress = "0x0000000000000000
   }
 }
 
-export const projectInfos = (account, rpc_provider) => async (dispatch) => {
+export const projectInfos = (account: any) => async (dispatch: any) => {
   try {
-    const ProjectManagerInstance = new Contract(ProjectManager.address, ProjectManager.abi, rpc_provider);
+    const ProjectManagerInstance = new Contract(ProjectManager.address, ProjectManager.abi);
     const projects = await ProjectManagerInstance.getProjectAllContract();
-    const projectsDetail = [];
+    const projectsDetail: any[] = [];
 
     Promise.all(
-      projects.map(item => {
+      projects.map((item: any) => {
         return new Promise(async (resolve) => {
-          const projectInfoObj = await projectDetailInfo(item, account, rpc_provider);
+          const projectInfoObj = await projectDetailInfo(item, account);
           projectsDetail.push(projectInfoObj);
-          resolve();
+          resolve("");
         });
       })
     ).then(() => {
@@ -100,12 +100,12 @@ export const projectInfos = (account, rpc_provider) => async (dispatch) => {
   }
 };
 
-export const addNewProject = (projectsList, newAddress, account) => async (dispatch) => {
+export const addNewProject = (projectsList: any, newAddress: any, account: any) => async (dispatch: any) => {
   try {
     new Promise(async (resolve) => {
-      const projectInfoObj = await projectDetailInfo(newAddress, account);
+      const projectInfoObj = await projectDetailInfo(newAddress as any, account as any);
       projectsList.push(projectInfoObj);
-      resolve();
+      resolve('');
     }).then(() => {
       dispatch({
         type: GET_PROJECT_INFO,
@@ -120,17 +120,17 @@ export const addNewProject = (projectsList, newAddress, account) => async (dispa
   }
 };
 
-export const updateProjectInfo = (projectList, projectAddress, account) => async (dispatch) => {
+export const updateProjectInfo = (projectList: any, projectAddress: any, account: any) => async (dispatch: any) => {
   try {
     new Promise(async (resolve) => {
       const projectInfoObj = await projectDetailInfo(projectAddress, account);
-      projectList.map((item, index) => {
+      projectList.map((item: any, index: any) => {
         if (item.poolAddress == projectAddress) {
           projectList[index] = projectInfoObj;
           return;
         }
       })
-      resolve();
+      resolve('');
     }).then(() => {
       dispatch({
         type: GET_PROJECT_INFO,
@@ -144,14 +144,15 @@ export const updateProjectInfo = (projectList, projectAddress, account) => async
   }
 };
 
-export const walletConnect = () => async (dispatch) => {
+export const walletConnect = () => async (dispatch: any) => {
   const rpc_provider = rpc_provider_basic;
   try {
     const providerOptions = {
       injected: {
         display: {
           name: "Metamask",
-        }
+        }, 
+        package: WalletConnectProvider,
       },
       walletconnect: {
         display: {
@@ -164,7 +165,29 @@ export const walletConnect = () => async (dispatch) => {
             5: process.env.TEST_NETWORK_URL
           }
         }
-      }
+      },
+      // 'custom-walletlink': {
+      //   display: {
+      //     logo: 'https://play-lh.googleusercontent.com/PjoJoG27miSglVBXoXrxBSLveV6e3EeBPpNY55aiUUBM9Q1RCETKCOqdOkX2ZydqVf0',
+      //     name: 'Coinbase',
+      //     description: 'Connect to Coinbase Wallet (not Coinbase App)',
+      //   },
+      //   options: {
+      //     appName: 'Coinbase', // Your app name
+      //     networkUrl: `https://mainnet.infura.io/v3/${INFURA_ID}`,
+      //     chainId: 1,
+      //   },
+      //   package: WalletLink,
+      //   connector: async (_, options) => {
+      //     const { appName, networkUrl, chainId } = options
+      //     const walletLink = new WalletLink({
+      //       appName,
+      //     })
+      //     const provider = walletLink.makeWeb3Provider(networkUrl, chainId)
+      //     await provider.enable()
+      //     return provider
+      //   },
+      // },
     };
 
     web3Modal = new Web3Modal({
@@ -172,11 +195,11 @@ export const walletConnect = () => async (dispatch) => {
       providerOptions,
       disableInjectedProvider: false,
       theme: {
-        background: "rgb(39, 49, 56)",
+        background: "#081e1a",
         main: "rgb(199, 199, 199)",
         secondary: "rgb(136, 136, 136)",
         border: "rgba(195, 195, 195, 0.14)",
-        hover: "rgb(16, 26, 32)",
+        hover: "#0b4e42b3",
       },
     });
 
@@ -184,11 +207,11 @@ export const walletConnect = () => async (dispatch) => {
 
     if (Number(instance.chainId) !== Number(process.env.CHAIN_ID)) {
       try {
-        await web3.currentProvider.request({
+        await window.web3.currentProvider.request({
           method: "wallet_switchEthereumChain",
           params: [{ chainId: `0x${Number(process.env.CHAIN_ID).toString(16)}` }]
         });
-      } catch (error) {
+      } catch (error: any) {
         alert(error.message);
       }
       return;
@@ -221,29 +244,29 @@ export const walletConnect = () => async (dispatch) => {
         account: account,
         provider: provider,
         chainId: instance.chainId,
-        signer: signer, 
+        signer: signer,
         rpc_provider: rpc_provider
       }
     })
 
-    dispatch(projectInfos(account, rpc_provider));
+    dispatch(projectInfos(account));
 
   } catch (error) {
     console.log("Wallet Connect error: ", error)
   }
 }
 
-export const walletDisconnect = () => async (dispatch) => {
+export const walletDisconnect = () => async (dispatch: any) => {
   try {
     await web3Modal.clearCachedProvider();
-    localStorage.setItem('account', undefined);
+    localStorage.setItem('account', '');
     dispatch({
-      type: WALLET_DISCONNECT, 
+      type: WALLET_DISCONNECT,
       payload: {
         account: undefined,
         provider: undefined,
         chainId: undefined,
-        signer: undefined, 
+        signer: undefined,
         rpc_provider: undefined
       }
     })
@@ -253,18 +276,18 @@ export const walletDisconnect = () => async (dispatch) => {
   }
 }
 
-export const getShareTokenBalance = (address, accounts) => async (dispatch) => {
+export const getShareTokenBalance = (address: any, account: any) => async (dispatch: any) => {
   try {
-    const ProjectManagerInstance = new Contract(ProjectManager.address, ProjectManager.abi, rpc_provider);
+    const ProjectManagerInstance = new Contract(ProjectManager.address, ProjectManager.abi);
     const projects = await ProjectManagerInstance.getProjectAllContract();
-    const projectsDetail = [];
+    const projectsDetail: any[] = [];
 
     Promise.all(
-      projects.map(item => {
+      projects.map((item: any) => {
         return new Promise(async (resolve) => {
           const projectInfoObj = await projectDetailInfo(item, account);
           projectsDetail.push(projectInfoObj);
-          resolve();
+          resolve('');
         });
       })
     ).then(() => {
