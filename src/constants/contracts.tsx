@@ -10,7 +10,7 @@ const AdminWalletAddress = "0x5141383723037FBd3818dAEcb7d4C5DF1Dc8c6B1"
 
 const ProjectManager = {
     ...ProjectManageABI, 
-    address: "0x100abd96d948CcEbe13f7ca1c9D35811fa3b73D8"
+    address: "0x5Fb5766f39ABFaECE532d8c90C71a9B31F070A28"
 };
 
 const Project = {
@@ -19,24 +19,24 @@ const Project = {
 
 const ProjectDetail = {
     ...ProjectDetailABI, 
-    address: "0x86D7F06af5E0D517835361c962234A96074431EF"
+    address: "0x679CB8a6671E490b7874DF90F6F82753c7163E56"
 }
 
 const TokenTemplate = TokenTemplateABI;
 
 const USDCToken = {
     ...USDCTokenABI, 
-    address: "0xbb9b0c89C100610E238e7e9dd9DDB954Df2BE199"
+    address: "0x4f88ccc080246172D680041FAAc681ae48F6Ea4c"
 }
 
 const YOCSwapRouter = {
     ...YOCSwapRouterAPI, 
-    address: "0x40266001ef3db4D33Bba29F105dfc61cc33eE5B6"
+    address: "0x5044F1986EA335765E39bD191376eB6830DFF58b"
 }
 
 const YOCSwapFactory = {
     ...YOCSwapFactoryAPI, 
-    address: "0xaAEc40a06542F89Cf171defc07400219A6347082"
+    address: "0x122f4421A7f52A45e9e65ceBcb712C2961c32835"
 }
 
 export {
