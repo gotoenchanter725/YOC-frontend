@@ -26,7 +26,7 @@
     }
     .input_field {
         input, textarea {
-            font-size: 1.8rem;
+            font-size: 1.125rem;
             width: 100%;
             border: 1px solid black !important;
         }
@@ -43,11 +43,11 @@
         }
     }
     .left_input_field{
-        width: 40%;
+        width: 42%;
         margin-right: 20px;
     }
     .right_input_field {
-        width: 60%;
+        width: 58%;
         .add_icon, .add_symbol {
             input {
                 display: none;

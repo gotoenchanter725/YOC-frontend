@@ -3,14 +3,14 @@ import ProjectABI from "../../contracts/Project.sol/Project.json";
 import ProjectDetailABI from "../../contracts/ProjectDetail.sol/ProjectDetail.json";
 import TokenTemplateABI from "../../contracts/TokenTemplate.sol/TokenTemplate.json";
 import USDCTokenABI from "../../contracts/USDC.sol/USDC.json";
-import YOCSwapABI from "../../contracts/YOCSwap.sol/YOCSwap.json";
-import BASICABI from "../../contracts/USDC.sol/USDC.json";
+import YOCSwapRouterAPI from "../../contracts/YocswapRouter.sol/YocswapRouter.json";
+import YOCSwapFactoryAPI from "../../contracts/YocswapFactory.sol/YocswapFactory.json";
 
-const AdminWalletAddress = "0xcAe5d23D4ce4Ea764E219807B2FD8394dc06B6e2"
+const AdminWalletAddress = "0x5141383723037FBd3818dAEcb7d4C5DF1Dc8c6B1"
 
 const ProjectManager = {
     ...ProjectManageABI, 
-    address: "0xa73FCe62d419a4933146A8687Ee63d8C6805E14D"
+    address: "0x5Fb5766f39ABFaECE532d8c90C71a9B31F070A28"
 };
 
 const Project = {
@@ -19,19 +19,24 @@ const Project = {
 
 const ProjectDetail = {
     ...ProjectDetailABI, 
-    address: "0x0FFe39517daE32b5e77444E50F7AB5038F4d54eD"
+    address: "0x679CB8a6671E490b7874DF90F6F82753c7163E56"
 }
 
 const TokenTemplate = TokenTemplateABI;
 
 const USDCToken = {
     ...USDCTokenABI, 
-    address: "0x2C628401a5a2d79f3920C7e2eE38577eBCACec8d"
+    address: "0x4f88ccc080246172D680041FAAc681ae48F6Ea4c"
 }
 
-const YOCSwap = {
-    ...YOCSwapABI, 
-    address: "0xD04559Fbf8A906Beb6cEE2b493Ef1B6b5004EeDB"
+const YOCSwapRouter = {
+    ...YOCSwapRouterAPI, 
+    address: "0x5044F1986EA335765E39bD191376eB6830DFF58b"
+}
+
+const YOCSwapFactory = {
+    ...YOCSwapFactoryAPI, 
+    address: "0x122f4421A7f52A45e9e65ceBcb712C2961c32835"
 }
 
 export {
@@ -41,5 +46,6 @@ export {
     ProjectDetail, 
     TokenTemplate, 
     USDCToken, 
-    YOCSwap
+    YOCSwapRouter, 
+    YOCSwapFactory
 }

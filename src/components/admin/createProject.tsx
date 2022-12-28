@@ -80,11 +80,12 @@ const CreateProjectContent: FC<Props> = ({ handleClose }) => {
                 return;
             }
 
-            setCreatingProject(true);
             if (!title || !desc || !category || !decimal || !roi || !apr || !startDate || !endDate || !tokenIconImage || !tokenSymbolImage || !total || !sellPercent || !tokenWallet || +price < 0) {
                 alert("Please input correct data");
                 return;
             }
+
+            setCreatingProject(true);
             client = create({
                 url: "https://ipfs.infura.io:5001/api/v0",
                 headers: {
@@ -163,39 +164,39 @@ const CreateProjectContent: FC<Props> = ({ handleClose }) => {
                 </div>
             ) : ''
         }
-        <div className="new_project_container">
+        <div className="new_project_container px-2">
             <div className='input_field left_input_field'>
                 <div className="input_control title">
                     <label htmlFor="">Title</label>
-                    <input className="" type="text" onChange={(e) => setTitle(e.target.value)} required />
+                    <input className="px-2 py-1.5 rounded outline-none" type="text" onChange={(e) => setTitle(e.target.value)} required />
                 </div>
                 <div className="input_control description">
                     <label htmlFor="">Description</label>
-                    <textarea className="" rows={5} onChange={(e) => setDesc(e.target.value)} />
+                    <textarea className="px-2 py-1.5 rounded" rows={5} onChange={(e) => setDesc(e.target.value)} />
                 </div>
                 <div className="input_control category">
                     <label htmlFor="">Category</label>
-                    <input className="" type="text" onChange={(e) => setCategory(e.target.value)} />
+                    <input className="px-2 py-1.5 rounded" type="text" onChange={(e) => setCategory(e.target.value)} />
                 </div>
                 <div className="input_control decimal">
                     <label htmlFor="">Decimals</label>
-                    <input className="" type="number" onChange={(e) => setDecimal(e.target.value)} />
+                    <input className="px-2 py-1.5 rounded" type="number" onChange={(e) => setDecimal(e.target.value)} />
                 </div>
                 <div className="input_control ROI">
                     <label htmlFor="">ROI</label>
-                    <input className="" type="number" onChange={(e) => setRoi(e.target.value)} />
+                    <input className="px-2 py-1.5 rounded" type="number" onChange={(e) => setRoi(e.target.value)} />
                 </div>
                 <div className="input_control APR">
                     <label htmlFor="">APR</label>
-                    <input className="" type="number" onChange={(e) => setApr(e.target.value)} />
+                    <input className="px-2 py-1.5 rounded" type="number" onChange={(e) => setApr(e.target.value)} />
                 </div>
                 <div className="input_control start_date">
                     <label htmlFor="">Start Date</label>
-                    <input className="" type="date" onChange={(e) => setStartDate(new Date(e.target.value).getTime().toString())} />
+                    <input className="px-2 py-1.5 rounded" type="date" onChange={(e) => setStartDate(new Date(e.target.value).getTime().toString())} />
                 </div>
                 <div className="input_control end_date">
                     <label htmlFor="">End Date</label>
-                    <input className="" type="date" onChange={(e) => setEndDate(new Date(e.target.value).getTime().toString())} />
+                    <input className="px-2 py-1.5 rounded" type="date" onChange={(e) => setEndDate(new Date(e.target.value).getTime().toString())} />
                 </div>
             </div>
             <div className='input_field right_input_field'>
@@ -221,42 +222,42 @@ const CreateProjectContent: FC<Props> = ({ handleClose }) => {
                 <div className='d-flex supply_sold'>
                     <div className="input_control total_supply">
                         <label htmlFor="">Total Supply of Tokens</label>
-                        <input className="" type="number" onChange={(e) => setTotal(e.target.value)} />
+                        <input className="px-2 py-1.5 rounded" type="number" onChange={(e) => setTotal(e.target.value)} />
                     </div>
                     <div className="input_control percent_sold">
                         <label htmlFor="">Percentage of Tokens to be sold</label>
-                        <input className="" type="number" min={0} max={100} onChange={(e) => setSellPercent(e.target.value)} />
-                        <span>%</span>
+                        <input className="!w-[130px] px-2 py-1.5" type="number" min={0} max={100} onChange={(e) => setSellPercent(e.target.value)} />
+                        <span className="text-2xl">%</span>
                     </div>
                 </div>
                 <div className='d-flex amount_price'>
                     <div className="input_control price sold_amount">
                         <label htmlFor="">Amount of tokens to be sold</label>
-                        <input className="" type="text" defaultValue={sellAmount} />
+                        <input className="px-2 py-1.5 rounded" type="text" defaultValue={sellAmount} />
                     </div>
                     <div className="input_control price">
                         <label htmlFor="">Price (Tokens for 1 USDC)</label>
-                        <input className="" type="number" onChange={(e) => setPrice(e.target.value)} />
+                        <input className="px-2 py-1.5 rounded" type="number" onChange={(e) => setPrice(e.target.value)} />
                     </div>
 
                 </div>
                 <div className="input_control address">
                     <label htmlFor="">Token Address</label>
-                    <input className="" type="text" defaultValue={tokenAddr} />
+                    <input className="px-2 py-1.5 rounded" type="text" defaultValue={tokenAddr} />
                 </div>
                 <div className="input_control wallet">
                     <label htmlFor="">Invest Token Address</label>
-                    <input className="" type="text" onChange={(e) => setTokenWallet(e.target.value)} />
+                    <input className="px-2 py-1.5 rounded" type="text" onChange={(e) => setTokenWallet(e.target.value)} />
                 </div>
                 <div className="input_control website">
                     <label htmlFor="">Project website</label>
-                    <input className="" type="text" onChange={(e) => setProjectWebsite(e.target.value)} />
+                    <input className="px-2 py-1.5 rounded" type="text" onChange={(e) => setProjectWebsite(e.target.value)} />
                 </div>
             </div>
         </div>
-        <div className='btn_group d-flex'>
-            <Button text='Create' bgColor='#00e500' onClick={createProject} />
-            <Button text='Cancel' bgColor='#d3cbcb' onClick={cancelProject} />
+        <div className='flex justify-end px-2 !my-4'>
+            <Button className="!bg-[#176cb9] !rounded mr-2" text='Create' bgColor='#00e500' onClick={createProject} />
+            <Button className="!bg-[#2d332ece] !rounded" text='Cancel' bgColor='#d3cbcb' onClick={cancelProject} />
         </div>
     </div>
 }

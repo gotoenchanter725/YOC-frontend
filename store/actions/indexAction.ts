@@ -74,8 +74,10 @@ const projectDetailInfo = async (address: any, connectedAddress = "0x00000000000
 
 export const projectInfos = (account: any) => async (dispatch: any) => {
   try {
-    const ProjectManagerInstance = new Contract(ProjectManager.address, ProjectManager.abi);
+    const ProjectManagerInstance = new Contract(ProjectManager.address, ProjectManager.abi, rpc_provider_basic);
+    console.log(ProjectManagerInstance);
     const projects = await ProjectManagerInstance.getProjectAllContract();
+    console.dir(projects);
     const projectsDetail: any[] = [];
 
     Promise.all(
@@ -278,7 +280,7 @@ export const walletDisconnect = () => async (dispatch: any) => {
 
 export const getShareTokenBalance = (address: any, account: any) => async (dispatch: any) => {
   try {
-    const ProjectManagerInstance = new Contract(ProjectManager.address, ProjectManager.abi);
+    const ProjectManagerInstance = new Contract(ProjectManager.address, ProjectManager.abi, rpc_provider_basic);
     const projects = await ProjectManagerInstance.getProjectAllContract();
     const projectsDetail: any[] = [];
 
