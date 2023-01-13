@@ -153,7 +153,7 @@ export const walletConnect = () => async (dispatch: any) => {
       injected: {
         display: {
           name: "Metamask",
-        }, 
+        },
         package: WalletConnectProvider,
       },
       walletconnect: {

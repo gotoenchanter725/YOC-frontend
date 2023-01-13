@@ -2,6 +2,7 @@ import { GET_PROJECT_INFO, WALLET_CONNECT, WALLET_DISCONNECT } from "../types";
 
 const initialState = {
   account: undefined,
+  balance: undefined, 
   provider: undefined,
   signer: undefined,
   chainId: undefined,

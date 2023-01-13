@@ -1,17 +1,420 @@
-import React, { FC } from "react"
-import Footer from "../src/components/common/Footer";
-import Navbar from "../src/components/common/Navbar";
+import React, { FC, useState, useEffect } from 'react';
+import { useDispatch, useSelector } from "react-redux";
+import { mathExact } from 'math-exact';
+import { Contract, BigNumber, constants, utils } from 'ethers';
+const { MaxUint256, AddressZero, Zero } = constants;
+
+import Navbar from '../src/components/common/Navbar';
+import FooterV2 from '../src/components/common/FooterV2';
+import SideMenuBar from '../src/components/widgets/SideMenuBar';
+import TokenComponent from '../src/components/widgets/TokenComponent';
+import SimpleLoading from "../src/components/widgets/SimpleLoading";
+import Modal from '../src/components/widgets/Modalv2';
+
+import { TOKENS, tokenInterface } from '../src/constants/tokens';
+import { TokenTemplate, YOCSwapRouter, YOCSwapFactory } from "../src/constants/contracts";
+import { alert_show, loading_end, loading_start, walletConnect } from "../store/actions";
+import { rpc_provider_basic } from '../utils/rpc_provider';
+import { convertEthToWei, convertRate, convertWeiToEth } from "../utils/unit";
+
+const tempMaxValue = 99999999999;
+const ethAddress = "0xb4fbf271143f4fbf7b91a5ded31805e42b2208d6";
+const txRunLimitTime = 1000 * 60 * 5; // 5 min
 
 const Liquidity: FC = () => {
-    return <div>
-        <Navbar />
-        <div className="container">
-            <p className="title">
-                Welcome to Liquidity Page
-            </p>
+    const dispatch = useDispatch();
+    const { provider, signer, account, rpc_provider } = useSelector((state: any) => state.data);
+    const [typeIn, setTypeIn] = useState<tokenInterface>(TOKENS[0] as tokenInterface);
+    const [typeOut, setTypeOut] = useState<tokenInterface>();
+    const [amountIn, setAmountIn] = useState(0);
+    const [amountOut, setAmountOut] = useState(0);
+    const [myBalanceIn, setMyBalanceIn] = useState(0);
+    const [myBalanceOut, setMyBalanceOut] = useState(0);
+    const [allowanceIn, setAllowanceIn] = useState(0);
+    const [allowanceOut, setAllowanceOut] = useState(0);
+    const [pendingLiquidity, setPendingLiquidity] = useState(false);
+    const [pendingApproveIn, setPendingApproveIn] = useState(false);
+    const [pendingApproveOut, setPendingApproveOut] = useState(false);
+    const [confirmDeposit, setConfirmDeposit] = useState(false);
+    const [rate, setRate] = useState(0);
+    const [swapContract] = useState(new Contract(
+        YOCSwapRouter.address,
+        YOCSwapRouter.abi,
+        rpc_provider_basic
+    ));
+
+    useEffect(() => {
+        if (provider && account) {
+            setTypeInHandle(TOKENS[0])
+        }
+    }, [provider, account])
+
+    const getINIT_CODE_PAIR_HASH = async () => {
+        let factoryContract = new Contract(
+            YOCSwapFactory.address,
+            YOCSwapFactory.abi,
+            rpc_provider_basic
+        )
+        console.log(factoryContract);
+        console.log(await factoryContract.INIT_CODE_PAIR_HASH());
+    }
+
+    const calculateRate = async (in_: tokenInterface, out_: tokenInterface) => {
+        if (!(in_ && out_)) return 0;
+        try {
+            let res = await swapContract.getExpectLiquidityAmount((in_.address == "ETH" ? ethAddress : in_.address), (out_.address == "ETH" ? ethAddress : out_.address), convertEthToWei('1', in_.decimals));
+            let rate = convertWeiToEth(res, out_.decimals);
+            setRate(+rate);
+            return +rate;
+        } catch (error) {
+            console.dir(error);
+            return 0;
+        }
+    }
+
+    const checkAllowance = async (token: tokenInterface) => {
+        if (!token) return false;
+        let tokenContract = new Contract(
+            token.address,
+            TokenTemplate.abi,
+            rpc_provider_basic
+        );
+        let approveAmount = convertWeiToEth((await tokenContract.allowance(account, YOCSwapRouter.address)), token.decimals);
+        // let approveAmount = await tokenContract.allowance(account, YOCSwapRouter.address);
+        console.log(approveAmount);
+        return approveAmount;
+    }
+
+    const setAmountInHandle = (v: number) => {
+        setAmountIn(v);
+        if (+rate) setAmountOut(mathExact('Multiply', +v, +rate));
+    }
+
+    const setAmountOutHandle = (v: number) => {
+        setAmountOut(v)
+        if (+rate) setAmountIn(mathExact('Divide', +v, +rate));
+    }
+
+    const setTypeInHandle = async (v: tokenInterface) => {
+        dispatch(loading_start() as any);
+        try {
+            setAllowanceIn(tempMaxValue);
+            setTypeIn(v);
+            let r = await calculateRate(v, typeOut as tokenInterface);
+            if (r) setAmountIn(mathExact('Divide', +amountOut, +r));
+            if (v.address == "ETH") {
+                let balance = await provider.getBalance(account);
+                setMyBalanceIn(+convertWeiToEth(balance, v.decimals));
+            } else {
+                const contract = new Contract(
+                    v.address,
+                    TokenTemplate.abi,
+                    rpc_provider
+                );
+
+                let balance = await contract.balanceOf(account);
+                setMyBalanceIn(+convertWeiToEth(balance, v.decimals));
+
+                let allowAmount = await checkAllowance(v);
+                setAllowanceIn(Number(allowAmount));
+            }
+            dispatch(loading_end() as any);
+        } catch (error) {
+            console.dir(error);
+            dispatch(loading_end() as any);
+        }
+    }
+
+    const setTypeOutHandle = async (v: tokenInterface) => {
+        dispatch(loading_start() as any);
+        try {
+            setAllowanceOut(tempMaxValue);
+            setTypeOut(v);
+            let r = await calculateRate(typeIn, v);
+            if (r) setAmountOut(mathExact('Multiply', +amountIn, +r));
+            if (v.address == "ETH") {
+                let balance = await provider.getBalance(account);
+                setMyBalanceOut(+convertWeiToEth(balance, v.decimals));
+            } else {
+                const contract = new Contract(
+                    v.address,
+                    TokenTemplate.abi,
+                    rpc_provider
+                );
+                let balance = await contract.balanceOf(account);
+                setMyBalanceOut(+convertWeiToEth(balance, v.decimals));
+
+                let allowAmount = await checkAllowance(v);
+                setAllowanceOut(Number(allowAmount));
+            }
+            dispatch(loading_end() as any);
+        } catch (error) {
+            console.dir(error);
+            dispatch(loading_end() as any);
+        }
+    }
+
+    const approveHandle = async (token: tokenInterface, type: string) => {
+        let tokenContract = new Contract(
+            token.address,
+            TokenTemplate.abi,
+            signer
+        );
+
+        try {
+            let amount = 0;
+            if (type == "in") {
+                setPendingApproveIn(true);
+                amount = amountIn;
+            } else {
+                setPendingApproveOut(true);
+                amount = amountOut;
+            }
+            let tx = await tokenContract.approve(YOCSwapRouter.address, convertEthToWei(String(Number(+amount).toFixed(token.decimals)), token.decimals));
+            const receipt = await tx.wait();
+            console.log(receipt.events)
+            if (type == "in") {
+                setPendingApproveIn(false);
+                setAllowanceIn(amount);
+            } else {
+                setPendingApproveOut(false);
+                setAllowanceOut(amount);
+            }
+        } catch (err) {
+            if (type == "in") {
+                setPendingApproveIn(false);
+            } else {
+                setPendingApproveOut(false);
+            }
+        }
+    }
+
+    const addLiquidity = async () => {
+        try {
+            if (typeIn && typeOut) {
+                setPendingLiquidity(true);
+                let tokenContract = new Contract(
+                    YOCSwapRouter.address,
+                    YOCSwapRouter.abi,
+                    signer
+                );
+                let tx;
+                if (typeIn.address == "ETH") {
+                    console.log(typeOut.address);
+                    console.log(convertEthToWei(String('1'), 18));
+                    console.log(convertEthToWei(String(Number(+amountIn).toFixed(typeIn.decimals)), typeIn.decimals));
+                    console.log(convertEthToWei(String(Number(+amountOut).toFixed(typeOut.decimals)), typeOut.decimals));
+                    tx = await tokenContract.addLiquidityETH(
+                        typeOut.address,
+                        convertEthToWei(String(Number(+amountOut).toFixed(typeOut.decimals)), typeOut.decimals),
+                        convertEthToWei(String(Number(+amountOut).toFixed(typeOut.decimals)), typeOut.decimals), // 0
+                        convertEthToWei(String(Number(+amountIn).toFixed(typeIn.decimals)), typeIn.decimals), // 0
+                        account,
+                        Date.now() + txRunLimitTime + '',
+                        // MaxUint256, 
+                        { value: convertEthToWei(String(Number(+amountIn).toFixed(typeIn.decimals)), typeIn.decimals) }
+                    );
+                } else if (typeOut.address == "ETH") {
+                    tx = await tokenContract.addLiquidityETH(
+                        typeIn.address,
+                        convertEthToWei(String(Number(+amountIn).toFixed(typeIn.decimals)), typeIn.decimals),
+                        convertEthToWei(String(Number(+amountIn).toFixed(typeIn.decimals)), typeIn.decimals), // 0
+                        convertEthToWei(String(Number(+amountOut).toFixed(typeOut.decimals)), typeOut.decimals), // 0
+                        account,
+                        Date.now() + txRunLimitTime + '',
+                        // MaxUint256, 
+                        { value: convertEthToWei(String(Number(+amountOut).toFixed(typeOut.decimals)), typeOut.decimals) }
+                    );
+                } else {
+                    tx = await tokenContract.addLiquidity(
+                        typeIn.address,
+                        typeOut.address,
+                        convertEthToWei(String(Number(+amountIn).toFixed(typeIn.decimals)), typeIn.decimals),
+                        convertEthToWei(String(Number(+amountOut).toFixed(typeOut.decimals)), typeOut.decimals),
+                        '0', // convertEthToWei(String(Number(+amountIn).toFixed(typeIn.decimals)), typeIn.decimals), 
+                        '0', // convertEthToWei(String(Number(+amountOut).toFixed(typeOut.decimals)), typeOut.decimals),
+                        account,
+                        Date.now() + txRunLimitTime + '',
+                        // MaxUint256, 
+                        {
+                            gasLimit: 3000000
+                        }
+                    );
+                }
+                const receipt = await tx.wait();
+                setMyBalanceIn(+mathExact('Subtract', +myBalanceIn, +amountIn));
+                setMyBalanceOut(+mathExact('Subtract', +myBalanceOut, +amountOut));
+                setPendingLiquidity(false);
+                setConfirmDeposit(false)
+                setRate(amountIn / amountOut);
+                dispatch(alert_show({ content: 'Refund Initiated Successfully!', status: 'success' }) as any);
+            }
+        } catch (error: any) {
+            console.dir(error)
+            if (error.code == "UNPREDICTABLE_GAS_LIMIT") dispatch(alert_show({ content: 'Insufficient B amount', status: 'error' }) as any);
+            setPendingLiquidity(false);
+            setConfirmDeposit(false)
+        }
+    }
+
+    const changeTokenEach = () => {
+        const tempType = typeIn;
+        setTypeIn(typeOut as tokenInterface);
+        setTypeOut(tempType as tokenInterface);
+
+        const tempBalance = myBalanceIn;
+        setMyBalanceIn(myBalanceOut);
+        setMyBalanceOut(tempBalance);
+
+        const tempAmount = amountIn;
+        setAmountIn(amountOut);
+        setAmountOut(tempAmount);
+
+        if (rate) setRate(1 / rate);
+
+        const tempAllowance = allowanceIn;
+        setAllowanceIn(allowanceOut);
+        setAllowanceOut(tempAllowance);
+
+        const tempPendingApprove = pendingApproveIn;
+        setPendingApproveIn(pendingApproveOut);
+        setPendingApproveOut(tempPendingApprove);
+    }
+
+    return (
+        <div className='relative'>
+            <Navbar />
+            <img className='absolute left-0 top-[10vh] h-[85vh]' src='./images/bg-effect-image.png' alt='effect' />
+            <div className='container !py-0 mx-auto min-h-[450px]'>
+                <div className='swap-container relative min-w-full min-h-full'>
+                    <div className='absolute left-0 top-0 w-full h-full -z-[10]'>
+                        <div className='absolute right-0 -top-[250px] w-[350px] h-[650px] opacity-25 bg-tr-gradient bg-blend-color-dodge'></div>
+                    </div>
+                    <div className='w-full h-full flex justify-end items-start z-[20]'>
+                        <div className='flex flex-col  bg-bg-pattern rounded shadow-big w-[400px] mt-[100px] mr-[5vw]'>
+                            <div className='px-3 py-6'>
+                                <h3 className='relative text-2xl font-semibold text-primary text-center' onClick={() => getINIT_CODE_PAIR_HASH()}>
+                                    Liquidity
+                                    <div className='absolute right-0 top-0'>
+                                        <img className='h-[35px]' src='/images/swap-header.png' alt='swap' />
+                                    </div>
+                                </h3>
+                                <p className='text-dark-secondary mt-4 text-center'>Lorum Ipsum deposit stir</p>
+                            </div>
+                            <div className='relative px-3 py-6 bg-primary-pattern border border-[#ffffff28] rounded -mx-[1px]'>
+                                <div className='flex flex-col justify-between'>
+                                    <label className='mb-2' htmlFor='first'>Input</label>
+                                    <TokenComponent type={typeIn} setType={(v) => setTypeInHandle(v)} amount={amountIn} setAmount={(v) => setAmountInHandle(v)} ignoreValue={typeOut} disabled={!Boolean(account)} />
+                                </div>
+                                <div className='flex items-center justify-between'>
+                                    <div className='flex items-center py-3'>
+                                        <label className='text-sm mr-2'>Balance:</label>
+                                        <span className='text-sm text-[#8B8B8B]'>{myBalanceIn}</span>
+                                    </div>
+                                    <div className='flex items-center'>
+                                        {
+                                            pendingApproveIn ?
+                                                <SimpleLoading className="w-[20px]" />
+                                                : (
+                                                    ((!allowanceIn && (typeIn && typeIn.address != "ETH")) || allowanceIn < amountIn) ?
+                                                        <button className='bg-btn-primary px- w-full px-2 text-sm rounded shadow-btn-primary' onClick={() => approveHandle(typeIn, 'in')}>approve</button>
+                                                        : ""
+                                                )
+                                        }
+                                    </div>
+                                </div>
+                                <div className='absolute z-[1] left-1/2 aspect-[1/1] -bottom-[calc(20px_+_0.5rem)] -translate-x-1/2 cursor-pointer'><img src='/images/swap.png' alt="swap" width={40} height={40} onClick={() => changeTokenEach()} /></div>
+                            </div>
+                            <div className='relative -z-0 px-3 pt-6 pb-4 mt-1 bg-secondary-pattern border border-[#ffffff28] rounded -mx-[1px]'>
+                                <div className='flex flex-col justify-between'>
+                                    <label className='mb-2' htmlFor='second'>Input</label>
+                                    <TokenComponent type={typeOut} setType={(v) => setTypeOutHandle(v)} amount={amountOut} setAmount={(v) => setAmountOutHandle(v)} ignoreValue={typeIn} disabled={!Boolean(account)} />
+                                </div>
+                                <div className='flex items-center justify-between'>
+                                    <div className='flex items-center py-3'>
+                                        <label className='text-sm mr-2'>Balance:</label>
+                                        <span className='text-sm text-[#8B8B8B]'>{myBalanceOut}</span>
+                                    </div>
+                                    <div className='flex items-center'>
+                                        {
+                                            pendingApproveOut ?
+                                                <SimpleLoading className="w-[20px]" />
+                                                : (
+                                                    ((!allowanceOut && (typeOut && typeOut.address != "ETH")) || allowanceOut < amountOut) ?
+                                                        <button className='bg-btn-primary px- w-full px-2 text-sm rounded shadow-btn-primary' onClick={() => approveHandle(typeOut as tokenInterface, 'out')}>approve</button>
+                                                        : ""
+                                                )
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                            <div className='px-3 py-4'>
+                                {/* <div className='flex justify-between items-center'>
+                                    <p className='text-primary text-lg font-semibold'>LP Tokens</p>
+                                    <span className='text-secondary text-md'>{Number(rate).toFixed(2)}</span>
+                                </div> */}
+                                {
+                                    pendingLiquidity ?
+                                        <button className='bg-btn-primary w-full flex justify-around items-center py-5 my-10 text-3xl rounded-lg shadow-btn-primary z-[100]' ><SimpleLoading className='w-[36px] h-[36px]' /></button>
+                                        : (account ?
+                                            <button className='bg-btn-primary w-full py-5 my-10 text-3xl rounded-lg shadow-btn-primary z-[100] disabled:bg-btn-disable' disabled={(allowanceIn < amountIn || allowanceOut < amountOut || !+amountIn || amountIn > myBalanceIn || !+amountOut || amountOut > myBalanceOut) as boolean} onClick={() => setConfirmDeposit(true)}>Add liquidity</button>
+                                            :
+                                            <button className='bg-btn-primary w-full py-5 my-10 text-3xl rounded-lg shadow-btn-primary' onClick={() => dispatch(walletConnect() as any)}>Connect Wallet</button>
+                                        )
+                                }
+                            </div>
+                        </div>
+                        <SideMenuBar />
+                    </div>
+                </div>
+            </div>
+            <FooterV2 />
+
+            <Modal size='small' show={confirmDeposit} onClose={() => { setConfirmDeposit(false) }}>
+                <div className='w-full flex flex-col justify-around items-center py-8 px-12 text-white'>
+                    <p className='text-base font-semibold w-full mb-2'>{typeIn?.symbol}/{typeOut?.symbol} Tokens</p>
+                    <h2 className='text-3xl font-semibold w-full py-3 mb-6 leading-8 border-b-2 border-solid border-white'>
+                        {/* {"232.09"} */}
+                    </h2>
+                    <div className='mb-8 w-full'>
+                        <div className='w-full flex justify-between items-center mb-2'>
+                            <p className='text-lg font-semibold '>{typeIn?.symbol} Deposited</p>
+                            <p className='text-lg font-semibold'>{amountIn}</p>
+                        </div>
+                        <div className='w-full flex justify-between items-center'>
+                            <p className='text-lg font-semibold '>{typeOut?.symbol} Deposited</p>
+                            <p className='text-lg font-semibold'>{amountOut}</p>
+                        </div>
+                    </div>
+                    <div className='flex w-full justify-between'>
+                        <span className='text-lg'>Rates</span>
+                        <div className='flex flex-col w-[60%] min-w-[200px]'>
+                            <div className='flex justify-between'>
+                                <div className='w-[70px] flex justify-between'>
+                                    <span>{"1"} {typeIn?.symbol}</span>
+                                    <span>=</span>
+                                </div>
+                                <span>{Number(+(rate ? rate : convertRate(amountOut, amountIn))).toFixed(typeOut ? typeOut.decimals : 16)} {typeOut?.symbol}</span>
+                            </div>
+                            <div className='flex justify-between'>
+                                <div className='w-[70px] flex justify-between'>
+                                    <span>{"1"} {typeOut?.symbol}</span>
+                                    <span>=</span>
+                                </div>
+                                <span>{Number(+rate ? mathExact('Divide', 1, +rate) : convertRate(amountIn, amountOut)).toFixed(typeIn ? typeIn.decimals : 16)} {typeIn?.symbol}</span>
+                            </div>
+                        </div>
+                    </div>
+                    {
+                        pendingLiquidity ?
+                            <button className='bg-btn-primary max-w-[350px] w-full flex items-center justify-around py-4 mt-6 text-3xl rounded-lg shadow-btn-primary z-[100]' ><SimpleLoading className='w-[36px] h-[36px]' /></button>
+                            :
+                            <button className='bg-btn-primary max-w-[350px] w-full py-4 mt-6 text-3xl rounded-lg shadow-btn-primary' onClick={() => addLiquidity()}>Confirm Deposit</button>
+                    }
+                </div>
+            </Modal>
         </div>
-        <Footer />
-    </div>
+    )
 }
 
 export default Liquidity;

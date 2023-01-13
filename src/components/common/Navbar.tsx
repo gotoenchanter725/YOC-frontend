@@ -3,20 +3,24 @@ import { useDispatch, useSelector } from "react-redux"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/router"
+import { Contract } from "ethers"
+
 import Button from "../widgets/Button"
 import TokenSelecotor from "./TokenSelector"
-import { walletConnect, walletDisconnect } from "../../../store/actions";
+
 import logoImage from "../../../public/images/logo-menu.png";
 import arrowRightImage from "../../../public/images/arrow-right.png";
 import walletIcon from "../../../public/images/wallet.png";
 import appIcon from "../../../public/images/app-icon.png";
 import coinIcon from "../../../public/images/coin.png";
 
+import { walletConnect, walletDisconnect } from "../../../store/actions";
+
 const Navbar = () => {
     const router = useRouter();
     const dispatch = useDispatch();
     const [navbarBgActive, setNavbarBgActive] = useState(false);
-    const { account } = useSelector((state: any) => state.data);
+    const { account, balance } = useSelector((state: any) => state.data);
     const currentPath = router.pathname;
 
     useEffect(() => {
@@ -32,7 +36,7 @@ const Navbar = () => {
             else setNavbarBgActive(false)
         })
     }, [])
-
+    
     return (
         <div className="sticky top-0 w-full z-[200] h-[95px]">
             <div className={`w-full header-wrap transition-all ${navbarBgActive ? "bg-[#00160c]" : "bg-transparent"}`}>
@@ -108,7 +112,7 @@ const Navbar = () => {
                     </div>
                     <div className="flex items-center">
                         <div className="flex cursor-pointer border-[1px] border-border-primary items-center ml-1">
-                            <div className="px-4"> YOC {'5.17'}</div>
+                            <div className="px-4"> YOC {balance}</div>
                             <div className="px-2 pt-2 border-l-[1px] border-border-primary">
                                 <div className="min-w-[20px]">
                                     <Image src={coinIcon} alt='wallet' width={20} height={20} />

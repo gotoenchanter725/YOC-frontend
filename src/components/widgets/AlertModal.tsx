@@ -3,6 +3,7 @@ import Image from 'next/image';
 
 import Modal from "./Modalv2";
 import alertSuccessImage from "../../../public/images/success.png";
+import alertErrorImage from "../../../public/images/error.png";
 
 import { alert_hidden } from "../../../store/actions";
 
@@ -21,7 +22,7 @@ const AlertModal = () => {
                     alertType == "success" ?
                         <Image width={50} height={52} src={alertSuccessImage} alt='image' />
                         :
-                        <Image width={50} height={52} src={alertSuccessImage} alt='image' />
+                        <Image width={50} height={52} src={alertErrorImage} alt='image' />
                 }
                 <p className='text-center text-lg w-full text-white pt-4 font-semibold'>{alertContent}</p>
             </div>
