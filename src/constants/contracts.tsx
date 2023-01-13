@@ -4,7 +4,10 @@ import ProjectDetailABI from "../../contracts/ProjectDetail.sol/ProjectDetail.js
 import TokenTemplateABI from "../../contracts/TokenTemplate.sol/TokenTemplate.json";
 import USDCTokenABI from "../../contracts/USDC.sol/USDC.json";
 import YOCSwapRouterAPI from "../../contracts/YocswapRouter.sol/YocswapRouter.json";
-import YOCSwapFactoryAPI from "../../contracts/YocswapFactory.sol/YocswapFactory.json";
+import YOCSwapFactoryABI from "../../contracts/YocswapFactory.sol/YocswapFactory.json";
+import YOCPairABI from "../../contracts/YocswapFactory.sol/YocswapPair.json";
+import YOCFarmABI from "../../contracts/YocFarming.sol/YOCMasterChef.json";
+import YOCPoolABI from "../../contracts/YocPool.sol/YocPool.json";
 
 const AdminWalletAddress = "0x5141383723037FBd3818dAEcb7d4C5DF1Dc8c6B1"
 
@@ -35,8 +38,32 @@ const YOCSwapRouter = {
 }
 
 const YOCSwapFactory = {
-    ...YOCSwapFactoryAPI, 
+    ...YOCSwapFactoryABI, 
     address: "0x122f4421A7f52A45e9e65ceBcb712C2961c32835"
+}
+
+const YOCFarm = {
+    ...YOCFarmABI, 
+    address: "0xaAEc40a06542F89Cf171defc07400219A6347082"
+}
+
+const YOCPool = {
+    ...YOCPoolABI, 
+    address: [
+        // '0x3464f0F6AAa56C78fF3060d62d9C1be90bef61bc', 
+        // '0xF58913AB1c6Fed1B40D293A2266053a5DAf9AB48'
+        // '0x8d22219Dbc8B096632B352A0bD7815801e59173D'
+        '0xD70097ECC3AdC255259a34Ffd568EfAD4ab34e0a'
+    ]
+}
+
+const YOCPair = {
+    ...YOCPairABI, 
+}
+
+const YOC = {
+    address: "0x3EFb72DA89a6d1060A1D6c28a2564a235F5Bf38d", 
+    ...TokenTemplateABI
 }
 
 export {
@@ -46,6 +73,10 @@ export {
     ProjectDetail, 
     TokenTemplate, 
     USDCToken, 
+    YOC, 
     YOCSwapRouter, 
-    YOCSwapFactory
+    YOCSwapFactory, 
+    YOCFarm, 
+    YOCPool,
+    YOCPair
 }
