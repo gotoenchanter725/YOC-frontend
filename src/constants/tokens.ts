@@ -43,35 +43,35 @@ export const ETH_TEST_TOKENS: Array<tokenInterface> = [
         "logoURI": "./images/coins/YOC.png"
     }, {
         "chainId": 5,
-        "address": "0x5fb8fBeeFcEd7DFE2C6bA21754EA764aFdE8fe9f",
+        "address": "0xd6e7650D75a73C1d41d3F02289825872419D760B",
         "name": "YOC1",
         "symbol": "YOC1",
         "decimals": 8,
         "logoURI": "./images/coins/YOC.png"
     }, {
         "chainId": 5,
-        "address": "0x6572a96eE12eCf3fDbE92eB2a05f768e40d74080",
+        "address": "0x573d5466F80CceDd11a3c1416343f5f1bD3EdB81",
         "name": "YOC2",
         "symbol": "YOC2",
         "decimals": 8,
         "logoURI": "./images/coins/YOC.png"
     }, {
         "chainId": 5,
-        "address": "0x19ff1dA431B6D723561D8E45002234573E64c655",
+        "address": "0x503ef8A56AF4e8cdB0Deb6591700AD831b8E5B8c",
         "name": "YOC3",
         "symbol": "YOC3",
         "decimals": 8,
         "logoURI": "./images/coins/YOC.png"
     }, {
         "chainId": 5,
-        "address": "0x6Fb3eAD94e597B75b0Cf2D9d11275Bcb499c9FBC",
+        "address": "0x0371ffF077Ebe945e66161a3A764BCa633f6F024",
         "name": "YOC4",
         "symbol": "YOC4",
         "decimals": 8,
         "logoURI": "./images/coins/YOC.png"
     }, {
         "chainId": 5,
-        "address": "0x6c9DE6074fc06d8924789d242A7037e48c682C10",
+        "address": "0xB008e62d77f42643AC3f0fc9Ee7c00bC94D29EcE",
         "name": "YOC5",
         "symbol": "YOC5",
         "decimals": 8,
