@@ -12,14 +12,14 @@ import SimpleLoading from '../src/components/widgets/SimpleLoading';
 import TokenComponent from '../src/components/widgets/TokenComponent';
 
 import { TOKENS, tokenInterface } from '../src/constants/tokens';
-import { TokenTemplate, YOCSwapRouter } from "../src/constants/contracts";
+import { TokenTemplate, YOCSwapRouter, WETH } from "../src/constants/contracts";
 import { alert_show, loading_end, loading_start, walletConnect } from "../store/actions";
 import { rpc_provider_basic } from '../utils/rpc_provider';
 import { convertEthToWei, convertWeiToEth } from "../utils/unit";
 import { debounceHook } from '../utils/hook';
 
 const tempMaxValue = 99999999999;
-const ethAddress = "0xb4fbf271143f4fbf7b91a5ded31805e42b2208d6";
+const ethAddress = WETH;
 const txRunLimitTime = 1000 * 60 * 5; // 5 min
 
 const Swap: FC = () => {

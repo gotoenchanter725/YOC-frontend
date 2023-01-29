@@ -12,13 +12,13 @@ import SimpleLoading from "../src/components/widgets/SimpleLoading";
 import Modal from '../src/components/widgets/Modalv2';
 
 import { TOKENS, tokenInterface } from '../src/constants/tokens';
-import { TokenTemplate, YOCSwapRouter, YOCSwapFactory } from "../src/constants/contracts";
+import { TokenTemplate, YOCSwapRouter, YOCSwapFactory, WETH } from "../src/constants/contracts";
 import { alert_show, loading_end, loading_start, walletConnect } from "../store/actions";
 import { rpc_provider_basic } from '../utils/rpc_provider';
 import { convertEthToWei, convertRate, convertWeiToEth } from "../utils/unit";
 
 const tempMaxValue = 99999999999;
-const ethAddress = "0xb4fbf271143f4fbf7b91a5ded31805e42b2208d6";
+const ethAddress = WETH;
 const txRunLimitTime = 1000 * 60 * 5; // 5 min
 
 const Liquidity: FC = () => {
@@ -170,7 +170,7 @@ const Liquidity: FC = () => {
                 setPendingApproveOut(true);
                 amount = amountOut;
             }
-            let tx = await tokenContract.approve(YOCSwapRouter.address, convertEthToWei(String(Number(+amount).toFixed(token.decimals)), token.decimals));
+            let tx = await tokenContract.approve(YOCSwapRouter.address, MaxUint256);
             const receipt = await tx.wait();
             console.log(receipt.events)
             if (type == "in") {
@@ -212,7 +212,10 @@ const Liquidity: FC = () => {
                         account,
                         Date.now() + txRunLimitTime + '',
                         // MaxUint256, 
-                        { value: convertEthToWei(String(Number(+amountIn).toFixed(typeIn.decimals)), typeIn.decimals) }
+                        { 
+                            value: convertEthToWei(String(Number(+amountIn).toFixed(typeIn.decimals)), typeIn.decimals), 
+                            gasLimit: 3000000
+                        }
                     );
                 } else if (typeOut.address == "ETH") {
                     tx = await tokenContract.addLiquidityETH(
@@ -223,7 +226,10 @@ const Liquidity: FC = () => {
                         account,
                         Date.now() + txRunLimitTime + '',
                         // MaxUint256, 
-                        { value: convertEthToWei(String(Number(+amountOut).toFixed(typeOut.decimals)), typeOut.decimals) }
+                        {
+                            value: convertEthToWei(String(Number(+amountOut).toFixed(typeOut.decimals)), typeOut.decimals), 
+                            gasLimit: 3000000
+                        }
                     );
                 } else {
                     tx = await tokenContract.addLiquidity(
@@ -386,22 +392,22 @@ const Liquidity: FC = () => {
                             <p className='text-lg font-semibold'>{amountOut}</p>
                         </div>
                     </div>
-                    <div className='flex w-full justify-between'>
-                        <span className='text-lg'>Rates</span>
-                        <div className='flex flex-col w-[60%] min-w-[200px]'>
+                    <div className='flex flex-col w-full justify-between'>
+                        <span className='text-lg mb-2'>Rates</span>
+                        <div className='flex flex-col w-full min-w-[200px]'>
                             <div className='flex justify-between'>
                                 <div className='w-[70px] flex justify-between'>
                                     <span>{"1"} {typeIn?.symbol}</span>
                                     <span>=</span>
                                 </div>
-                                <span>{Number(+(rate ? rate : convertRate(amountOut, amountIn))).toFixed(typeOut ? typeOut.decimals : 16)} {typeOut?.symbol}</span>
+                                <span className='text-ellipsis'>{Number(+(rate ? rate : convertRate(amountOut, amountIn))).toFixed(typeOut ? typeOut.decimals : 16)} {typeOut?.symbol}</span>
                             </div>
                             <div className='flex justify-between'>
                                 <div className='w-[70px] flex justify-between'>
                                     <span>{"1"} {typeOut?.symbol}</span>
                                     <span>=</span>
                                 </div>
-                                <span>{Number(+rate ? mathExact('Divide', 1, +rate) : convertRate(amountIn, amountOut)).toFixed(typeIn ? typeIn.decimals : 16)} {typeIn?.symbol}</span>
+                                <span className='text-ellipsis'>{Number(+rate ? mathExact('Divide', 1, +rate) : convertRate(amountIn, amountOut)).toFixed(typeIn ? typeIn.decimals : 16)} {typeIn?.symbol}</span>
                             </div>
                         </div>
                     </div>
