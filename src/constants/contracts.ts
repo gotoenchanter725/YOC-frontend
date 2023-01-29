@@ -29,10 +29,10 @@ const ProjectDetail = {
 
 const TokenTemplate = TokenTemplateABI;
 
-const WETH = "0xb4fbf271143f4fbf7b91a5ded31805e42b2208d6";
+const WETH = "0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c";
 
 const YOC = {
-    address: "0x5A3B9f4a4aD616f67D3406967516eEB50B6cc379", 
+    address: "0x228D1Ed5F520438ef35f87253fcB1C6Df8267283", 
     decimals: 18, 
     ...YOCABI
 }
@@ -40,17 +40,17 @@ const YOC = {
 const USDCToken = {
     ...USDCTokenABI, 
     decimals: 6, 
-    address: "0x587FE7dE6Cfaa1C2961747efB05eb5E399C661f5"
+    address: "0xcfe3E78a7Ad6e4bb58FFb52DE7dc2d4E3C2872B1"
 }
 
 const YOCSwapFactory = {
     ...YOCSwapFactoryABI, 
-    address: "0xb5adA6454C59ef7E340004Bf81B1e75087eb68f8"
+    address: "0x94625dC914C88C435b6bD31e0D6f278C3f504bB8"
 }
 
 const YOCSwapRouter = {
     ...YOCSwapRouterAPI, 
-    address: "0x369ccED38f349A61bfea7CC2489999AA065c5667"
+    address: "0x7311976B4c2B62CBA2CFe54ae65DD0dB26703E51"
 }
 
 const YOCPair = {
@@ -59,7 +59,7 @@ const YOCPair = {
 
 const YOCFarm = {
     ...YOCFarmABI, 
-    address: "0x4Af2aCdB241937d32Ec1A15F2b3E48768161DE10", 
+    address: "0xd92222686f677889e4A720E89478C944f7906F8b", 
     pools: [3, 4, 5]
 }
 
@@ -68,15 +68,15 @@ const YOCPool = {
     TokenABI: TokenStakingABI.abi, 
     pools: [
         {
-            address: '0x3e36F110fC355E2C819a84aa4a3697f7E74cF64c', 
+            address: '0xb7De31Bd3193e1206377a0F7D1B417c13C03260d', 
             yoc: true
         }, 
         {
-            address: '0xe4A4a973412eC04FD3325b564e5F7172286c577b', 
+            address: '0x922B81951cc957932DfEBdf736a24af4a6B4d4BA', 
             yoc: false
         }, 
         {
-            address: '0x18F7fb60b29a6aE6d63822fa25aa457a90bBB8F3', 
+            address: '0xC882255736ea35701CB1D8c633398A15E5302b66', 
             yoc: false
         }, 
     ]

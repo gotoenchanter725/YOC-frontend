@@ -1,3 +1,5 @@
+import { USDCToken, YOC } from "./contracts";
+
 export interface tokenInterface {
     logoURI: string,
     name: string,
@@ -27,17 +29,17 @@ export const ETH_TEST_TOKENS: Array<tokenInterface> = [
         "logoURI": "https://ethereum-optimism.github.io/data/ETH/logo.svg"
     }, {
         "chainId": 5,
-        "address": "0x587FE7dE6Cfaa1C2961747efB05eb5E399C661f5",
+        "address": USDCToken.address,
         "name": "USDC",
         "symbol": "USDC",
-        "decimals": 6,
+        "decimals": USDCToken.decimals,
         "logoURI": "./images/coins/USDC.png"
     }, {
         "chainId": 5,
-        "address": "0x5A3B9f4a4aD616f67D3406967516eEB50B6cc379",
+        "address": YOC.address,
         "name": "YOC",
         "symbol": "YOC",
-        "decimals": 18,
+        "decimals": YOC.decimals,
         "logoURI": "./images/coins/YOC.png"
     }, {
         "chainId": 5,
