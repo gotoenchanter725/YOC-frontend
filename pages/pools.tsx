@@ -1,6 +1,6 @@
 import React, { FC, useEffect, useState } from "react"
 import { useDispatch, useSelector } from "react-redux";
-import Image from "next/image";
+import axios from "axios";
 import { Contract, constants } from 'ethers';
 const { MaxUint256, AddressZero, Zero } = constants;
 
@@ -16,6 +16,7 @@ import { alert_show, loading_end, loading_start, walletConnect } from "../store/
 import { convertEthToWei, convertRate, convertWeiToEth } from "../utils/unit";
 
 const Pools: FC = () => {
+    const [after1second, setAfter1second] = useState(false);  // flag that checks if the 1 second is passed from when the page is loaded.
     const dispatch = useDispatch();
     const { provider, signer, account, rpc_provider } = useSelector((state: any) => state.data);
     const [sortBy, setSortBy] = useState('');
@@ -30,6 +31,11 @@ const Pools: FC = () => {
     const [stakeMax, setStakeMax] = useState(false);
     const [unstakeMax, setUnstakeMax] = useState(false);
     const [enableModalShow, setEnableModalShow] = useState(false);
+    const [farmContract] = useState(new Contract(
+        YOCFarm.address,
+        YOCFarm.abi,
+        rpc_provider_basic
+    ));
     const [swapContract] = useState(new Contract(
         YOCSwapRouter.address,
         YOCSwapRouter.abi,
@@ -37,95 +43,133 @@ const Pools: FC = () => {
     ));
 
     useEffect(() => {
-        // dispatch(loading_start() as any);
         (async () => {
-            let pools: StakeInterface[] = [];
-            for (let i = 0; i < YOCPool.pools.length; i++) {
+            if (after1second) {
+                dispatch(loading_start() as any);
+                if (account) {
+                    console.log("Account!");
+
+                    const res: any = await getPools();
+                    if (res.data.pools.length == pairs.length) {
+                        await updatePools()
+                    } else {
+                        await checkPools();
+                    }
+                } else {
+                    console.log("No Account!");
+
+                    const res: any = await getPools();
+                    if (res.data.pools.length == pairs.length) {
+                        setPairs([...pairs.map((item: any) => {
+                            return {
+                                ...item,
+
+                                balance: 0,
+                                approve: 0,
+                                earned: 0,
+                                amount: 0,
+                                usdcAmount: 0,
+                            }
+                        })])
+                    } else {
+                        await checkPools();
+                    }
+                }
+                dispatch(loading_end() as any);
+            }
+        })()
+    }, [account, after1second])
+
+    const getPools = async () => {
+        try {
+            const res: any = await axios.get(process.env.API_ADDRESS + `/staking/pools`)
+            return res;
+        } catch (err) {
+            return "Error";
+        }
+    }
+
+    const checkPools = async () => {
+        console.log("Check Pools");
+
+        try {
+            let pools: StakeInterface[] = [], poolsData: any = [];
+            const res: any = await getPools();
+            poolsData = res.data.pools;
+            for (let i = 0; i < poolsData.length; i++) {
                 pools.push({
                     loading: true
                 })
             }
+
             setPairs(pools);
+            const totalAlloc = await farmContract.totalAllocPoint();
 
-            const FarmContract = new Contract(
-                YOCFarm.address,
-                YOCFarm.abi,
-                rpc_provider_basic
-            );
-            const totalAlloc = await FarmContract.totalAllocPoint();
-
-            for (let index = 0; index < YOCPool.pools.length; index++) {
-                // dispatch(loading_start() as any);
+            for (let index = 0; index < poolsData.length; index++) {
                 const item: any = pools[index];
                 const stakingContract = new Contract(
-                    YOCPool.pools[index].address,
-                    (YOCPool.pools[index].yoc ? YOCPool.abi : YOCPool.TokenABI),
+                    poolsData[index].address,
+                    (poolsData[index].isYoc ? YOCPool.abi : YOCPool.TokenABI),
                     rpc_provider_basic
                 )
 
-                const tokenAddress = await stakingContract.token();
+                const tokenAddress = poolsData[index].tokenAddress;
                 const tokenContact = new Contract(
                     tokenAddress,
                     TokenTemplate.abi,
                     rpc_provider_basic
                 );
-                const symbol = await tokenContact.symbol();
-                const name = await tokenContact.name();
-                const stakeDecimal = await tokenContact.decimals();
-                const totalLiquidity = convertWeiToEth(await tokenContact.balanceOf(YOCPool.pools[index].address), stakeDecimal);
-                // console.log("totalLiquidity:", totalLiquidity);
+                const symbol = poolsData[index].tokenSymbol;
+                const stakeDecimal = poolsData[index].tokenDecimals;
+                const poolID = poolsData[index].poolId;
+                const alloc = poolsData[index].allocPoint;
 
-                // APR
-                const poolID = await stakingContract.yocPoolPID();
-                const alloc = (await FarmContract.poolInfo(Number(poolID))).allocPoint;
-                // console.log(symbol, name, poolID, alloc, totalAlloc);
-                // console.log(Number(poolID), alloc, Number(alloc) / Number(totalAlloc) * 20 * 60 * 60 * 24 * 365);
-                let yearYocUSDRes = Number(convertWeiToEth((await swapContract.getAmountsOut(
-                    convertEthToWei(String(Number(Number(alloc) / Number(totalAlloc) * 20 * 60 * 60 * 24 * 365).toFixed(16)), YOC.decimals),
-                    [
-                        YOC.address,
-                        USDCToken.address
-                    ]
-                ))[1], USDCToken.decimals));
-                // console.log('YOC: ', yearYocUSDRes);
-                let stakedTotalUSDRes = 0;
-                if (tokenAddress != USDCToken.address && Number(totalLiquidity)) {
-                    stakedTotalUSDRes = Number(convertWeiToEth((await swapContract.getAmountsOut(
-                        convertEthToWei(totalLiquidity, stakeDecimal),
+                let totalLiquidity, APR;
+                {
+                    totalLiquidity = convertWeiToEth(await tokenContact.balanceOf(poolsData[index].address), stakeDecimal);
+                    let yearYocUSDRes = Number(convertWeiToEth((await swapContract.getAmountsOut(
+                        convertEthToWei(String(Number(Number(alloc) / Number(totalAlloc) * 20 * 60 * 60 * 24 * 365).toFixed(16)), YOC.decimals),
                         [
-                            tokenAddress,
+                            YOC.address,
                             USDCToken.address
                         ]
                     ))[1], USDCToken.decimals));
-                } else {
-                    stakedTotalUSDRes = Number(totalLiquidity)
+                    let stakedTotalUSDRes = 0;
+                    if (tokenAddress != USDCToken.address && Number(totalLiquidity)) {
+                        stakedTotalUSDRes = Number(convertWeiToEth((await swapContract.getAmountsOut(
+                            convertEthToWei(totalLiquidity, stakeDecimal),
+                            [
+                                tokenAddress,
+                                USDCToken.address
+                            ]
+                        ))[1], USDCToken.decimals));
+                    } else {
+                        stakedTotalUSDRes = Number(totalLiquidity)
+                    }
+                    console.log('YOC: ', yearYocUSDRes);
+                    console.log('TOKEN: ', stakedTotalUSDRes);
+                    APR = stakedTotalUSDRes ? Number(yearYocUSDRes / stakedTotalUSDRes * 100) : 0;
                 }
-                // console.log('TOKEN: ', stakedTotalUSDRes);
-                const APR = stakedTotalUSDRes ? Number(yearYocUSDRes / stakedTotalUSDRes * 100) : 0;
 
                 let balance, userInfo: any, approve = '', amount, earned = 0, usdcAmount = 0;
                 if (account) {
                     balance = convertWeiToEth(await tokenContact.balanceOf(account), Number(stakeDecimal));
-                    approve = convertWeiToEth(await tokenContact.allowance(account, YOCPool.pools[index].address), Number(stakeDecimal));
+                    approve = convertWeiToEth(await tokenContact.allowance(account, poolsData[index].address), Number(stakeDecimal));
                     userInfo = await stakingContract.userInfo(account);
-                    if (YOCPool.pools[index].yoc) {
+                    if (poolsData[index].isYoc) {
                         const totalReward = convertWeiToEth(await stakingContract.calculateTotalPendingYOCRewards(), YOC.decimals);
                         const totalShare = await stakingContract.totalShares();
                         amount = convertWeiToEth(String(userInfo.shares), Number(stakeDecimal));
 
                         if (Number(totalShare)) earned = Number(userInfo.shares) / Number(totalShare) * Number(totalReward);
-                        // console.log("EEEE:", Number(userInfo.shares), Number(totalShare), Number(totalReward))
                     } else {
                         amount = convertWeiToEth(String(userInfo.amount), Number(stakeDecimal));
-                        console.log("Userinfo:", userInfo);
                         if (userInfo) {
                             const pending = await stakingContract.pendingReward(account);
-                            console.log("pending:", pending);
                             if (pending) earned = Number(convertWeiToEth(pending, YOC.decimals));
-                            console.log("tokenEarned:", earned);
                         }
                     }
-                    console.log("earned:", earned);
+
                     if (earned) {
                         let res = await swapContract.getAmountsOut(
                             convertEthToWei(String(earned), YOC.decimals),
@@ -140,33 +184,120 @@ const Pools: FC = () => {
 
                 pools[index] = {
                     ...item,
-                    address: YOCPool.pools[index].address,
+                    pId: poolID,
+                    address: poolsData[index].address,
                     tokenAddress: tokenAddress,
                     stakingContract: stakingContract,
                     tokenContact: tokenContact,
                     symbol: symbol,
-                    name: name,
-                    balance: balance ? Number(balance) : 0,
                     stakeDecimal: stakeDecimal,
                     totalLiquidity: totalLiquidity,
+                    loading: false,
+                    isYoc: poolsData[index].isYoc,
+                    APR: APR,
+
+                    balance: balance ? Number(balance) : 0,
                     userInfo: userInfo,
                     approve: approve,
-                    amount: amount ? Number(amount) : 0,
-                    loading: false,
-                    yoc: YOCPool.pools[index].yoc,
                     earned: earned,
+                    amount: amount ? Number(amount) : 0,
                     usdcAmount: usdcAmount,
-                    APR: APR
                 }
-                setPairs(pools);
-                if (index == YOCPool.pools.length - 1) dispatch(loading_end() as any);
+                setPairs([...pools]);
             }
-        })();
-    }, [account])
+        } catch (err) {
+            console.log(err);
+        }
+    }
+
+    const updatePools = async () => {
+        console.log("Update Pools");
+
+        try {
+            let pools: StakeInterface[] = [...pairs.map((item) => {
+                return {
+                    ...item,
+                    loading: true,
+                }
+            })];
+
+            setPairs([...pools]);
+
+            for (let index = 0; index < pairs.length; index++) {
+                const item: any = pools[index];
+                const stakingContract = new Contract(
+                    item.address + '',
+                    (item.isYoc ? YOCPool.abi : YOCPool.TokenABI),
+                    rpc_provider_basic
+                )
+
+                const tokenAddress = item.tokenAddress;
+                const tokenContact = new Contract(
+                    tokenAddress + '',
+                    TokenTemplate.abi,
+                    rpc_provider_basic
+                );
+                const stakeDecimal = item.stakeDecimal;
+
+                let balance, userInfo: any, approve = '', amount, earned = 0, usdcAmount = 0;
+                if (account) {
+                    balance = convertWeiToEth(await tokenContact.balanceOf(account), Number(stakeDecimal));
+                    approve = convertWeiToEth(await tokenContact.allowance(account, item.address), Number(stakeDecimal));
+                    userInfo = await stakingContract.userInfo(account);
+                    if (item.isYoc) {
+                        const totalReward = convertWeiToEth(await stakingContract.calculateTotalPendingYOCRewards(), YOC.decimals);
+                        const totalShare = await stakingContract.totalShares();
+                        amount = convertWeiToEth(String(userInfo.shares), Number(stakeDecimal));
+
+                        if (Number(totalShare)) earned = Number(userInfo.shares) / Number(totalShare) * Number(totalReward);
+                    } else {
+                        amount = convertWeiToEth(String(userInfo.amount), Number(stakeDecimal));
+                        if (userInfo) {
+                            const pending = await stakingContract.pendingReward(account);
+                            if (pending) earned = Number(convertWeiToEth(pending, YOC.decimals));
+                        }
+                    }
+
+                    if (earned) {
+                        let res = await swapContract.getAmountsOut(
+                            convertEthToWei(String(earned), YOC.decimals),
+                            [
+                                YOC.address,
+                                USDCToken.address
+                            ]
+                        );
+                        usdcAmount = Number(convertWeiToEth(res[1], USDCToken.decimals));
+                    }
+                }
+
+                pools[index] = {
+                    ...item,
+                    loading: false,
+
+                    balance: balance ? Number(balance) : 0,
+                    userInfo: userInfo,
+                    approve: approve,
+                    earned: earned,
+                    amount: amount ? Number(amount) : 0,
+                    usdcAmount: usdcAmount,
+                }
+                setPairs([...pools]);
+            }
+        } catch (err) {
+            console.log(err);
+        }
+    }
 
     useEffect(() => {
         console.log(pairs);
     }, [pairs])
+
+    useEffect(() => {
+        setTimeout(() => {
+            setAfter1second(true);
+            console.log("After 1 second")
+        }, 3000)
+    }, [])
 
     const togglePairOpenHandle = (pairInfo: any) => {
         if (pairInfo.loading) return;
@@ -359,7 +490,6 @@ const Pools: FC = () => {
                             }
                         }).filter(item => {
                             if (item.address?.indexOf(searchText) != -1
-                                || item.name?.indexOf(searchText) != -1
                                 || item.symbol?.indexOf(searchText) != -1
                                 || String(item.totalLiquidity)?.indexOf(searchText) != -1
                                 || String(item.APR)?.indexOf(searchText) != -1) return true;
@@ -424,7 +554,7 @@ const Pools: FC = () => {
                                                     item.loading ? <div role="status" className="max-w-sm animate-pulse h-[24px] flex items-center">
                                                         <p className="h-3 bg-gray-200 rounded-full w-12"></p>
                                                     </div> :
-                                                        <p className="text-[#C7C7C7]">{item.totalLiquidity ? Number(item.totalLiquidity) : 0} {item.yoc ? "YOC" : item.symbol}</p>
+                                                        <p className="text-[#C7C7C7]">{item.totalLiquidity ? Number(item.totalLiquidity) : 0} {item.isYoc ? "YOC" : item.symbol}</p>
                                                 }
                                             </div>
                                             <div className="w-[25%] mr-4">
@@ -449,7 +579,7 @@ const Pools: FC = () => {
                                             <a className="mb-2" href={`https://goerli.etherscan.io/address/${item.address}`} >Contract Details</a>
                                         </div>
                                         {
-                                            !item.yoc ? (
+                                            !item.isYoc ? (
                                                 <div className="h-[110px] px-4 py-4 ml-2 bg-normal-pattern w-[calc(50%_-_60px)] flex flex-col justify-between">
                                                     <div>
                                                         <h3 className="text-lg font-semibold mb-2">YOC Earned</h3>
@@ -542,7 +672,6 @@ const Pools: FC = () => {
                             }
                         }).filter(item => {
                             if (item.address?.indexOf(searchText) != -1
-                                || item.name?.indexOf(searchText) != -1
                                 || item.symbol?.indexOf(searchText) != -1
                                 || String(item.totalLiquidity)?.indexOf(searchText) != -1
                                 || String(item.APR)?.indexOf(searchText) != -1) return true;

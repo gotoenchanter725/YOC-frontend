@@ -1,6 +1,6 @@
 import React, { FC, useEffect, useState } from "react"
 import { useDispatch, useSelector } from "react-redux";
-import Image from "next/image";
+import axios from "axios";
 import { Contract, constants } from 'ethers';
 const { MaxUint256, AddressZero, Zero } = constants;
 
@@ -16,6 +16,7 @@ import { convertEthToWei, convertRate, convertWeiToEth } from "../utils/unit";
 import { WALLET_CONNECT } from "../store/types";
 
 const Farm: FC = () => {
+    const [after1second, setAfter1second] = useState(false);  // flag that checks if the 1 second is passed from when the page is loaded.
     const dispatch = useDispatch();
     const { provider, signer, account, rpc_provider } = useSelector((state: any) => state.data);
     const [sortBy, setSortBy] = useState('');
@@ -42,120 +43,227 @@ const Farm: FC = () => {
     ));
 
     useEffect(() => {
-        dispatch(loading_start() as any);
         (async () => {
-            let pools: PoolInterface[] = [];
-            for (let i = 0; i < YOCFarm.pools.length; i++) {
+            if (after1second) {
+                dispatch(loading_start() as any);
+                if (account) {
+                    console.log("Account!");
+
+                    const res: any = await getPools();
+                    if (res.data.pools.length == pairs.length) {
+                        await updatePools()
+                    } else {
+                        await checkPools();
+                    }
+                } else {
+                    console.log("No Account!");
+
+                    const res: any = await getPools();
+                    if (res.data.pools.length == pairs.length) {
+                        setPairs([...pairs.map((item: any) => {
+                            return {
+                                ...item,
+
+                                balance: 0,
+                                lpAmount: 0,
+                                earned: 0,
+                                approve: false,
+                            }
+                        })])
+                    } else {
+                        await checkPools();
+                    }
+                }
+                dispatch(loading_end() as any);
+            }
+        })()
+    }, [account, after1second])
+
+    const getPools = async () => {
+        try {
+            const res: any = await axios.get(process.env.API_ADDRESS + `/farm/pools`)
+            return res;
+        } catch (err) {
+            return "Error";
+        }
+    }
+
+    const checkPools = async () => {
+        console.log("Check Pools");
+
+        try {
+            let pools: PoolInterface[] = [], poolsData: any = [];
+            const res: any = await getPools();
+            poolsData = res.data.pools;
+            for (let i = 0; i < poolsData.length; i++) {
                 pools.push({
                     loading: true
                 })
             }
-            setPairs(pools);
 
-            for (let index = 0; index < YOCFarm.pools.length; index++) {
+            setPairs(pools);
+            const totalAlloc = await farmContract.totalAllocPoint();
+
+            for (let index = 0; index < poolsData.length; index++) {
                 const item = pools[index];
-                const pId = YOCFarm.pools[index];
-                const lpTokenAddress = await farmContract.lpToken(pId);
-                const poolInfo = await farmContract.poolInfo(pId);
-                let PairContract = new Contract(
-                    lpTokenAddress,
-                    YOCPair.abi,
-                    rpc_provider_basic
-                )
-                const decimal = await PairContract.decimals();
-                const symbol = await PairContract.symbol();
-                const liquidity = convertWeiToEth(await PairContract.totalSupply(), decimal);
-                // console.log(decimal, symbol, liquidity)
-                let balance, allowance, earned, lpAmount;
-                if (account) {
-                    earned = convertWeiToEth(String(await farmContract.pendingYOC(pId, account)), Number(YOC.decimals));
-                    balance = convertWeiToEth(String(await PairContract.balanceOf(account)), Number(decimal));
-                    // console.log(PairContract, balance);
-                    allowance = await PairContract.allowance(account, YOCFarm.address);
-                    let userInfo = await farmContract.userInfo(pId, account);
-                    lpAmount = userInfo ? convertWeiToEth(String(userInfo[0]), Number(decimal)) : 0;
-                };
-                let token0Address = await PairContract.token0();
-                let token1Address = await PairContract.token1();
-                let token0 = new Contract(
+                const pId = poolsData[index].poolId;
+                const lpTokenAddress = poolsData[index].pairAddress;
+                const decimal = poolsData[index].pairDecimals;
+                const symbol = poolsData[index].pairSymbol;
+
+                let token0Address = poolsData[index].token0Address;
+                let token1Address = poolsData[index].token1Address;
+                let token0Decimal = poolsData[index].token0Decimals;
+                let token1Decimal = poolsData[index].token1Decimals;
+                let token0Symbol = poolsData[index].token0Symbol;
+                let token1Symbol = poolsData[index].token1Symbol;
+                let token0Contract = new Contract(
                     token0Address,
                     TokenTemplate.abi,
                     rpc_provider_basic
                 );
-                let token0Symbol = await token0.symbol();
-                let token0Decimal = await token0.decimals();
-                let token1 = new Contract(
+                let token1Contract = new Contract(
                     token1Address,
                     TokenTemplate.abi,
                     rpc_provider_basic
                 );
-                let token1Symbol = await token1.symbol();
-                let token1Decimal = await token1.decimals();
-
 
                 // APR
-                const totalAlloc = await farmContract.totalAllocPoint();
-                const alloc = poolInfo.allocPoint;
-                // console.log(alloc, Number(alloc) / Number(totalAlloc) * 20 * 60 * 60 * 24 * 365);
-                let yearYocUSDRes = Number(convertWeiToEth((await swapContract.getAmountsOut(
-                    convertEthToWei(String(Number(Number(alloc) / Number(totalAlloc) * 20 * 60 * 60 * 24 * 365).toFixed(YOC.decimals)), YOC.decimals),
-                    [
-                        YOC.address,
-                        USDCToken.address
-                    ]
-                ))[1], USDCToken.decimals));
-                console.log(liquidity, token0Decimal, token1Decimal);
-                console.log('YOC: ', yearYocUSDRes);
-                let LPTotalUSDRes = 0;
-                if (token0Address != USDCToken.address) {
-                    LPTotalUSDRes = Number(convertWeiToEth((await swapContract.getAmountsOut(
-                        convertEthToWei(liquidity, token0Decimal),
+                let APR, liquidity, alloc = poolsData[index].allocPoint;
+                {
+                    let yearYocUSDRes = Number(convertWeiToEth((await swapContract.getAmountsOut(
+                        convertEthToWei(String(Number(Number(alloc) / Number(totalAlloc) * 20 * 60 * 60 * 24 * 365).toFixed(YOC.decimals)), YOC.decimals),
                         [
-                            token0Address,
+                            YOC.address,
                             USDCToken.address
                         ]
                     ))[1], USDCToken.decimals));
-                } else {
-                    LPTotalUSDRes = Number(liquidity)
+                    console.log(`${index}YOC: `, yearYocUSDRes);
+                    let LPTotalUSDRes = 0;
+                    let amount0 = convertWeiToEth(await token0Contract.balanceOf(lpTokenAddress), token0Decimal);
+                    if (token0Address != USDCToken.address) {
+                        LPTotalUSDRes = Number(convertWeiToEth((await swapContract.getAmountsOut(
+                            convertEthToWei(amount0, token0Decimal),
+                            [
+                                token0Address,
+                                USDCToken.address
+                            ]
+                        ))[1], USDCToken.decimals));
+                    } else {
+                        LPTotalUSDRes = Number(amount0)
+                    }
+                    console.log(`${index}TOKEN0_USD: `, LPTotalUSDRes);
+                    let amount1 = convertWeiToEth(await token1Contract.balanceOf(lpTokenAddress), token1Decimal);
+                    if (token1Address != USDCToken.address) {
+                        LPTotalUSDRes += Number(convertWeiToEth((await swapContract.getAmountsOut(
+                            convertEthToWei(amount1, token1Decimal),
+                            [
+                                token1Address,
+                                USDCToken.address
+                            ]
+                        ))[1], USDCToken.decimals));
+                    } else {
+                        LPTotalUSDRes += Number(amount1)
+                    }
+                    console.log(`${index}TOKEN1_USD: `, LPTotalUSDRes);
+                    APR = Number(yearYocUSDRes / LPTotalUSDRes * 100);
+                    liquidity = LPTotalUSDRes
                 }
-                console.log('TOKEN: ', LPTotalUSDRes);
-                if (token1Address != USDCToken.address) {
-                    LPTotalUSDRes += Number(convertWeiToEth((await swapContract.getAmountsOut(
-                        convertEthToWei(liquidity, token1Decimal),
-                        [
-                            token1Address,
-                            USDCToken.address
-                        ]
-                    ))[1], USDCToken.decimals));
-                } else {
-                    LPTotalUSDRes += Number(liquidity)
-                }
-                console.log('TOKEN: ', LPTotalUSDRes);
-                const APR = Number(yearYocUSDRes / LPTotalUSDRes * 100);
 
+                let balance, allowance, earned, lpAmount;
+                if (account) {
+                    let PairContract = new Contract(
+                        lpTokenAddress,
+                        YOCPair.abi,
+                        rpc_provider_basic
+                    )
+                    earned = convertWeiToEth(String(await farmContract.pendingYOC(pId, account)), Number(YOC.decimals));
+                    balance = convertWeiToEth(String(await PairContract.balanceOf(account)), Number(decimal));
+                    allowance = await PairContract.allowance(account, YOCFarm.address);
+                    let userInfo = await farmContract.userInfo(pId, account);
+                    lpAmount = userInfo ? convertWeiToEth(String(userInfo[0]), Number(decimal)) : 0;
+                };
 
                 pools[index] = {
                     ...item,
                     address: lpTokenAddress,
                     decimal: decimal,
                     symbol: symbol,
-                    balance: balance ? Number(balance) : 0,
-                    lpAmount: lpAmount ? Number(lpAmount) : 0,
                     token0: token0Symbol,
                     token1: token1Symbol,
                     liquidity: Number(liquidity),
-                    allocPoint: Number(poolInfo.allocPoint),
-                    earned: earned ? Number(earned) : 0,
+                    allocPoint: alloc,
                     APR: APR,
-                    approve: Number(allowance) ? true : false,
                     loading: false,
                     pairId: pId,
+
+                    balance: balance ? Number(balance) : 0,
+                    lpAmount: lpAmount ? Number(lpAmount) : 0,
+                    earned: earned ? Number(earned) : 0,
+                    approve: Number(allowance) ? true : false,
                 };
-                setPairs(pools);
+                setPairs([...pools]);
             }
-        })();
-        dispatch(loading_end() as any);
-    }, [account])
+        } catch (err) {
+            console.log(err);
+        }
+    }
+
+    const updatePools = async () => {
+        console.log("Update Pools");
+
+        try {
+            let pools: PoolInterface[] = [...pairs.map((item) => {
+                return {
+                    ...item,
+                    loading: true,
+                }
+            })];
+
+            setPairs([...pools]);
+
+            for (let index = 0; index < pairs.length; index++) {
+                const item = pairs[index];
+                let balance, allowance, earned, lpAmount;
+                if (account) {
+                    let PairContract = new Contract(
+                        item.address + '',
+                        YOCPair.abi,
+                        rpc_provider_basic
+                    )
+                    earned = convertWeiToEth(String(await farmContract.pendingYOC(item.pairId, account)), Number(YOC.decimals));
+                    balance = convertWeiToEth(String(await PairContract.balanceOf(account)), Number(item.decimal));
+                    allowance = await PairContract.allowance(account, YOCFarm.address);
+                    let userInfo = await farmContract.userInfo(item.pairId, account);
+                    lpAmount = userInfo ? convertWeiToEth(String(userInfo[0]), Number(item.decimal)) : 0;
+                };
+
+                pools[index] = {
+                    ...item,
+                    loading: false,
+
+                    balance: balance ? Number(balance) : 0,
+                    lpAmount: lpAmount ? Number(lpAmount) : 0,
+                    earned: earned ? Number(earned) : 0,
+                    approve: Number(allowance) ? true : false,
+                };
+                setPairs([...pools]);
+            }
+        } catch (err) {
+            console.log(err);
+        }
+    }
+
+    useEffect(() => {
+        setTimeout(() => {
+            setAfter1second(true);
+            console.log("After 1 second")
+        }, 3000)
+    }, [])
+
+    useEffect(() => {
+        console.log(pairs);
+    }, [JSON.stringify(pairs)])
 
     const togglePairOpenHandle = (pairInfo: any) => {
         if (pairInfo.loading) return;
@@ -421,7 +529,7 @@ const Farm: FC = () => {
                                                     item.loading ? <div role="status" className="max-w-sm animate-pulse h-[24px] flex items-center">
                                                         <p className="h-3 bg-gray-200 rounded-full w-12"></p>
                                                     </div> :
-                                                        <p className="text-[#C7C7C7]">{item.liquidity ? item.liquidity.toFixed(3) : 0}</p>
+                                                        <p className="text-[#C7C7C7]">{item.liquidity ? item.liquidity.toFixed(3) : 0} USD</p>
                                                 }
                                             </div>
                                             <div className="min-w-[120px] w-[16%] mr-4">
