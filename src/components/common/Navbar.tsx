@@ -38,7 +38,7 @@ const Navbar = () => {
     }, [])
     
     return (
-        <div className="sticky top-0 w-full z-[200] h-[95px]">
+        <div className="sticky top-0 w-full z-[2] h-[95px]">
             <div className={`w-full header-wrap transition-all ${navbarBgActive ? "bg-[#00160c]" : "bg-transparent"}`}>
                 <nav className="container heander-container !py-4 mx-auto flex justify-between items-center">
                     <div className="flex justify-between items-center">

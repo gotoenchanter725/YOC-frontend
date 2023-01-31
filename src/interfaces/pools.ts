@@ -27,6 +27,7 @@ export interface PairOpenInterface {
 }
 
 export interface StakeInterface {
+    pId?: number, 
     address?: string;
     stakingContract?: Contract, 
     decimal?: number;
@@ -45,4 +46,6 @@ export interface StakeInterface {
     tokenAddress?: string;
     tokenContact?: Contract, 
     balance?: number;
+    isYoc?: boolean;
+    usdcAmount?: number;
 };

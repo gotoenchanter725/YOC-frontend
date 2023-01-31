@@ -6,7 +6,10 @@ import { rpc_provider_basic } from "../../utils/rpc_provider";
 import {
   ProjectManager,
   ProjectDetail,
+  YOC,
+  TokenTemplate,
 } from "../../src/constants/contracts";
+import { convertWeiToEth } from "../../utils/unit";
 
 let web3Modal: any;
 
@@ -75,9 +78,7 @@ const projectDetailInfo = async (address: any, connectedAddress = "0x00000000000
 export const projectInfos = (account: any) => async (dispatch: any) => {
   try {
     const ProjectManagerInstance = new Contract(ProjectManager.address, ProjectManager.abi, rpc_provider_basic);
-    console.log(ProjectManagerInstance);
     const projects = await ProjectManagerInstance.getProjectAllContract();
-    console.dir(projects);
     const projectsDetail: any[] = [];
 
     Promise.all(
@@ -223,6 +224,13 @@ export const walletConnect = () => async (dispatch: any) => {
     const signer = provider.getSigner();
     const account = await signer.getAddress();
 
+    let YOCContract = new Contract(
+      YOC.address,
+      TokenTemplate.abi,
+      rpc_provider_basic
+    )
+    let balance = Number(convertWeiToEth(await YOCContract.balanceOf(account), YOC.decimals));
+
     provider.on("disconnect", () => {
       dispatch(walletDisconnect())
     });
@@ -244,6 +252,7 @@ export const walletConnect = () => async (dispatch: any) => {
       type: WALLET_CONNECT,
       payload: {
         account: account,
+        balance: balance, 
         provider: provider,
         chainId: instance.chainId,
         signer: signer,

@@ -1,7 +1,7 @@
 {
   "_format": "hh-sol-artifact-1",
   "contractName": "IYOCMasterChef",
-  "sourceName": "contracts/YocPool.sol",
+  "sourceName": "contracts/TokenStaking.sol",
   "abi": [
     {
       "inputs": [

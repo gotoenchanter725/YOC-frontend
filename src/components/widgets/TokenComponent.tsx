@@ -54,8 +54,8 @@ const TokenComponent = (props: propsInterface) => {
                                         <div key={index} className={`flex items-center w-full cursor-pointer ${props.type && item.address == props.type.address && "bg-[#00000055]"} hover:bg-[#00000055] px-3 py-1.5`} onClick={() => selectToken(item.address)}>
                                             <img className="rounded-full w-[36x] h-[36px] mr-3" src={item.logoURI} alt={item.symbol} />
                                             <div className="flex flex-col">
-                                                <h4 className="text-xl font-bold">{item.name}</h4>
-                                                <span className="text-sm font-medium text-[#FFFFFF55]">{item.symbol}</span>
+                                                <h4 className="text-xl font-bold">{item.symbol}</h4>
+                                                <span className="text-sm font-medium text-[#FFFFFF55]">{item.name}</span>
                                             </div>
                                         </div>
                                     )

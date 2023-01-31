@@ -1,123 +1,86 @@
+import { USDCToken, YOC } from "./contracts";
+
 export interface tokenInterface {
     logoURI: string,
     name: string,
     symbol: string,
-    address: string, 
+    address: string,
     decimals: number,
-    chainId?: number, 
+    chainId?: number,
 }
 export const ETH_TOKENS: Array<tokenInterface> = [
     {
         "chainId": 5,
-        "address": "ETH",
-        "name": "Ether",
-        "symbol": "ETH",
+        "address": "BNB",
+        "name": "Binance Coin",
+        "symbol": "BNB",
         "decimals": 18,
-        "logoURI": "https://ethereum-optimism.github.io/data/ETH/logo.svg"
+        "logoURI": "/images/coins/BNB.png"
     }
 ]
 
 export const ETH_TEST_TOKENS: Array<tokenInterface> = [
     {
         "chainId": 5,
-        "address": "ETH",
-        "name": "Ether",
-        "symbol": "ETH",
+        "address": "BNB",
+        "name": "Binance Coin",
+        "symbol": "BNB",
         "decimals": 18,
-        "logoURI": "https://ethereum-optimism.github.io/data/ETH/logo.svg"
-    }
-    , {
+        "logoURI": "/images/coins/BNB.png"
+    }, {
         "chainId": 5,
-        "address": "0xBeb52076066726A3E357aa014b69648721909B9D",
-        "name": "YOC1 FoundersCoin",
+        "address": USDCToken.address,
+        "name": USDCToken.name,
+        "symbol": USDCToken.symbol,
+        "decimals": USDCToken.decimals,
+        "logoURI": "./images/coins/USDC.png"
+    }, {
+        "chainId": 5,
+        "address": YOC.address,
+        "name": YOC.name,
+        "symbol": YOC.symbol,
+        "decimals": YOC.decimals,
+        "logoURI": "./images/coins/YOC.png"
+    }, {
+        "chainId": 5,
+        "address": "0xd6e7650D75a73C1d41d3F02289825872419D760B",
+        "name": "YOC1",
         "symbol": "YOC1",
-        "decimals": 18,
-        "logoURI": "./images/coin.png"
+        "decimals": 8,
+        "logoURI": "./images/coins/YOC.png"
     }, {
         "chainId": 5,
-        "address": "0xC882255736ea35701CB1D8c633398A15E5302b66",
-        "name": "YOC2 FoundersCoin",
+        "address": "0x573d5466F80CceDd11a3c1416343f5f1bD3EdB81",
+        "name": "YOC2",
         "symbol": "YOC2",
-        "decimals": 18,
-        "logoURI": "./images/coin.png"
+        "decimals": 8,
+        "logoURI": "./images/coins/YOC.png"
     }, {
         "chainId": 5,
-        "address": "0x02Cf6E3cB97987d7577ffa41FaEE0733fEA49940",
-        "name": "YOC3 FoundersCoin",
+        "address": "0x503ef8A56AF4e8cdB0Deb6591700AD831b8E5B8c",
+        "name": "YOC3",
         "symbol": "YOC3",
-        "decimals": 18,
-        "logoURI": "./images/coin.png"
+        "decimals": 8,
+        "logoURI": "./images/coins/YOC.png"
     }, {
         "chainId": 5,
-        "address": "0xF6aB3f0A07F77Dc2bf93EaA85d9F9a85D7eA2BCA",
-        "name": "YOC4 FoundersCoin",
+        "address": "0x0371ffF077Ebe945e66161a3A764BCa633f6F024",
+        "name": "YOC4",
         "symbol": "YOC4",
-        "decimals": 16,
-        "logoURI": "./images/coin.png"
+        "decimals": 8,
+        "logoURI": "./images/coins/YOC.png"
     }, {
         "chainId": 5,
-        "address": "0xb078feD64184515Cea3b2ab6935E85dC2e559C56",
-        "name": "YOC5 FoundersCoin",
+        "address": "0xB008e62d77f42643AC3f0fc9Ee7c00bC94D29EcE",
+        "name": "YOC5",
         "symbol": "YOC5",
-        "decimals": 16,
-        "logoURI": "./images/coin.png"
+        "decimals": 8,
+        "logoURI": "./images/coins/YOC.png"
     }
 ];
 
 export const TOKENS: tokenInterface[] = (() => {
     return process.env.env == 'development' ? ETH_TEST_TOKENS : ETH_TOKENS;
 })();
- 
-export const ALL_TOKENS: Array<tokenInterface> = [
-    {
-        "chainId": 5,
-        "address": "ETH",
-        "name": "Ether",
-        "symbol": "ETH",
-        "decimals": 18,
-        "logoURI": "https://ethereum-optimism.github.io/data/ETH/logo.svg"
-    }
-    , {
-        "chainId": 5,
-        "address": "0xBeb52076066726A3E357aa014b69648721909B9D",
-        "name": "YOC1 FoundersCoin",
-        "symbol": "YOC1",
-        "decimals": 18,
-        "logoURI": "./images/coin.png"
-    }, {
-        "chainId": 5,
-        "address": "0xC882255736ea35701CB1D8c633398A15E5302b66",
-        "name": "YOC2 FoundersCoin",
-        "symbol": "YOC2",
-        "decimals": 18,
-        "logoURI": "./images/coin.png"
-    }, {
-        "chainId": 5,
-        "address": "0x02Cf6E3cB97987d7577ffa41FaEE0733fEA49940",
-        "name": "YOC3 FoundersCoin",
-        "symbol": "YOC3",
-        "decimals": 18,
-        "logoURI": "./images/coin.png"
-    }, {
-        "chainId": 5,
-        "address": "0xF6aB3f0A07F77Dc2bf93EaA85d9F9a85D7eA2BCA",
-        "name": "YOC4 FoundersCoin",
-        "symbol": "YOC4",
-        "decimals": 16,
-        "logoURI": "./images/coin.png"
-    }, {
-        "chainId": 5,
-        "address": "0xb078feD64184515Cea3b2ab6935E85dC2e559C56",
-        "name": "YOC5 FoundersCoin",
-        "symbol": "YOC5",
-        "decimals": 16,
-        "logoURI": "./images/coin.png"
-    }, {
-        "chainId": 5,
-        "address": "0xbb9b0c89C100610E238e7e9dd9DDB954Df2BE199",
-        "name": "MUMMY TOKEN",
-        "symbol": "USDC",
-        "decimals": 16,
-        "logoURI": "./images/coins/USDC.png"
-    }
-];
+
+export const ALL_TOKENS: Array<tokenInterface> = [];
