@@ -11,34 +11,34 @@ export interface tokenInterface {
 export const ETH_TOKENS: Array<tokenInterface> = [
     {
         "chainId": 5,
-        "address": "ETH",
-        "name": "Ether",
-        "symbol": "ETH",
+        "address": "BNB",
+        "name": "Binance Coin",
+        "symbol": "BNB",
         "decimals": 18,
-        "logoURI": "https://ethereum-optimism.github.io/data/ETH/logo.svg"
+        "logoURI": "/images/coins/BNB.png"
     }
 ]
 
 export const ETH_TEST_TOKENS: Array<tokenInterface> = [
     {
         "chainId": 5,
-        "address": "ETH",
-        "name": "Ether",
-        "symbol": "ETH",
+        "address": "BNB",
+        "name": "Binance Coin",
+        "symbol": "BNB",
         "decimals": 18,
-        "logoURI": "https://ethereum-optimism.github.io/data/ETH/logo.svg"
+        "logoURI": "/images/coins/BNB.png"
     }, {
         "chainId": 5,
         "address": USDCToken.address,
-        "name": "USDC",
-        "symbol": "USDC",
+        "name": USDCToken.name,
+        "symbol": USDCToken.symbol,
         "decimals": USDCToken.decimals,
         "logoURI": "./images/coins/USDC.png"
     }, {
         "chainId": 5,
         "address": YOC.address,
-        "name": "YOC",
-        "symbol": "YOC",
+        "name": YOC.name,
+        "symbol": YOC.symbol,
         "decimals": YOC.decimals,
         "logoURI": "./images/coins/YOC.png"
     }, {

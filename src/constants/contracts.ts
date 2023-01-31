@@ -34,12 +34,16 @@ const WETH = "0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c";
 const YOC = {
     address: "0x228D1Ed5F520438ef35f87253fcB1C6Df8267283", 
     decimals: 18, 
+    symbol: "YOC", 
+    name: "YOC-FoundersCoin", 
     ...YOCABI
 }
 
 const USDCToken = {
     ...USDCTokenABI, 
     decimals: 6, 
+    symbol: "USDC", 
+    name: "USDC-FoundersCoin", 
     address: "0xcfe3E78a7Ad6e4bb58FFb52DE7dc2d4E3C2872B1"
 }
 
