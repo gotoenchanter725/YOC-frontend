@@ -68,7 +68,7 @@ const Swap: FC = () => {
         try {
             if (direct) {
                 let res = await swapContract.getAmountsOut(
-                    convertEthToWei(Number(amount,).toFixed(in_.decimals), in_.decimals),
+                    convertEthToWei(Number(amount).toFixed(in_.decimals), in_.decimals),
                     [
                         (in_.address == "ETH" ? ethAddress : in_.address),
                         (out_.address == "ETH" ? ethAddress : out_.address)
@@ -80,7 +80,7 @@ const Swap: FC = () => {
                 setAmountOut(+res1);
             } else {
                 let res = await swapContract.getAmountsIn(
-                    convertEthToWei(Number(amount,).toFixed(out_.decimals), out_.decimals),
+                    convertEthToWei(Number(amount).toFixed(out_.decimals), out_.decimals),
                     [
                         (in_.address == "ETH" ? ethAddress : in_.address),
                         (out_.address == "ETH" ? ethAddress : out_.address)
@@ -200,7 +200,7 @@ const Swap: FC = () => {
             }
             let tx = await tokenContract.approve(
                 YOCSwapRouter.address,
-                convertEthToWei(String(Number(+amount).toFixed(-token.decimals)), token.decimals)
+                convertEthToWei(String(Number(+amount).toFixed(+token.decimals)), token.decimals)
             );
             const receipt = await tx.wait();
             console.log(receipt.events)
@@ -239,13 +239,13 @@ const Swap: FC = () => {
                             account,
                             Date.now() + txRunLimitTime + '',
                             {
-                                value: convertEthToWei(String(Number(+amountIn).toFixed(-typeIn.decimals)), typeIn.decimals),
+                                value: convertEthToWei(String(Number(+amountIn).toFixed(+typeIn.decimals)), typeIn.decimals),
                                 gasLimit: 3000000
                             }
                         );
                     } else {
                         tx = await tokenContract.swapETHForExactTokens(
-                            convertEthToWei(String(Number(+amountOut).toFixed(-typeOut.decimals)), typeOut.decimals),
+                            convertEthToWei(String(Number(+amountOut).toFixed(+typeOut.decimals)), typeOut.decimals),
                             [ethAddress, typeOut.address],
                             account,
                             Date.now() + txRunLimitTime + '',
@@ -258,7 +258,7 @@ const Swap: FC = () => {
                 } else if (typeOut.address == "ETH") {
                     if (lastTarget == 'in') {
                         tx = await tokenContract.swapExactTokensForETH(
-                            convertEthToWei(String(Number(+amountIn).toFixed(-typeIn.decimals)), typeIn.decimals),
+                            convertEthToWei(String(Number(+amountIn).toFixed(+typeIn.decimals)), typeIn.decimals),
                             '0', //convertEthToWei(String(Number(+amountOut).toFixed(typeOut.decimals)), typeOut.decimals), // 0
                             [typeIn.address, ethAddress],
                             account,
@@ -269,7 +269,7 @@ const Swap: FC = () => {
                         );
                     } else {
                         tx = await tokenContract.swapTokensForExactETH(
-                            convertEthToWei(String(Number(+amountOut).toFixed(-typeOut.decimals)), typeOut.decimals),
+                            convertEthToWei(String(Number(+amountOut).toFixed(+typeOut.decimals)), typeOut.decimals),
                             '0', // convertEthToWei(String(Number(+amountIn).toFixed(typeIn.decimals)), typeIn.decimals),
                             [typeIn.address, ethAddress],
                             account,
@@ -282,7 +282,7 @@ const Swap: FC = () => {
                 } else {
                     if (lastTarget == 'in') {
                         tx = await tokenContract.swapExactTokensForTokens(
-                            convertEthToWei(String(Number(+amountIn).toFixed(-typeIn.decimals)), typeIn.decimals),
+                            convertEthToWei(String(Number(+amountIn).toFixed(+typeIn.decimals)), typeIn.decimals),
                             '0', // convertEthToWei(String(Number(+amountOut).toFixed(typeOut.decimals)), typeOut.decimals), // 0
                             [typeIn.address, typeOut.address],
                             account,
@@ -293,7 +293,7 @@ const Swap: FC = () => {
                         );
                     } else {
                         tx = await tokenContract.swapTokensForExactTokens(
-                            convertEthToWei(String(Number(+amountOut).toFixed(-typeOut.decimals)), typeOut.decimals),
+                            convertEthToWei(String(Number(+amountOut).toFixed(+typeOut.decimals)), typeOut.decimals),
                             '0', // convertEthToWei(String(Number(+amountIn).toFixed(typeIn.decimals)), typeIn.decimals), // 0
                             [typeIn.address, typeOut.address],
                             account,
