@@ -11,7 +11,7 @@ export interface tokenInterface {
 export const ETH_TOKENS: Array<tokenInterface> = [
     {
         "chainId": 5,
-        "address": "BNB",
+        "address": "ETH",
         "name": "Binance Coin",
         "symbol": "BNB",
         "decimals": 18,
@@ -22,7 +22,7 @@ export const ETH_TOKENS: Array<tokenInterface> = [
 export const ETH_TEST_TOKENS: Array<tokenInterface> = [
     {
         "chainId": 5,
-        "address": "BNB",
+        "address": "ETH",
         "name": "Binance Coin",
         "symbol": "BNB",
         "decimals": 18,
