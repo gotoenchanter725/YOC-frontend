@@ -29,7 +29,7 @@ const ProjectDetail = {
 
 const TokenTemplate = TokenTemplateABI;
 
-const WETH = "0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c";
+const WETH = "0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd";
 
 const YOC = {
     address: "0x228D1Ed5F520438ef35f87253fcB1C6Df8267283", 
@@ -54,7 +54,7 @@ const YOCSwapFactory = {
 
 const YOCSwapRouter = {
     ...YOCSwapRouterAPI, 
-    address: "0x7311976B4c2B62CBA2CFe54ae65DD0dB26703E51"
+    address: "0x0FC9eCbe955Bc0421525b8BeE01f3A413a74A20e"
 }
 
 const YOCPair = {
