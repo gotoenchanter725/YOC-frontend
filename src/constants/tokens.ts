@@ -15,7 +15,7 @@ export const ETH_TOKENS: Array<tokenInterface> = [
         "name": process.env.NET_WORK == "ETH" ? "Ether" : "Binance Coin",
         "symbol": process.env.NET_WORK == "ETH" ? "ETH" : "BNB",
         "decimals": 18,
-        "logoURI": `/images/coins/${process.env.NET_WORK ? "ETH" : "BNB"}.png`
+        "logoURI": `/images/coins/${process.env.NET_WORK == "ETH" ? "ETH" : "BNB"}.png`
     }
 ]
 
@@ -26,7 +26,7 @@ export const ETH_TEST_TOKENS: Array<tokenInterface> = [
         "name": process.env.NET_WORK == "ETH" ? "Ether" : "Binance Coin",
         "symbol": process.env.NET_WORK == "ETH" ? "ETH" : "BNB",
         "decimals": 18,
-        "logoURI": `/images/coins/${process.env.NET_WORK ? "ETH" : "BNB"}.png`
+        "logoURI": `/images/coins/${process.env.NET_WORK == "ETH" ? "ETH" : "BNB"}.png`
     }, {
         "chainId": 5,
         "address": USDCToken.address,
