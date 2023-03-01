@@ -32,7 +32,7 @@ const TokenTemplate = TokenTemplateABI;
 const WETH = process.env.WETH + "";
 
 const YOC = {
-    address: process.env.YOC + "", 
+    address: process.env.YOCAddress + "", 
     decimals: 18, 
     symbol: "YOC", 
     name: "YOC-FoundersCoin", 
