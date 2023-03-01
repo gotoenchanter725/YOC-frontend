@@ -13,18 +13,23 @@
 .hidden {
     display: none;
 }
+
 .d-flex {
     display: flex;
 }
+
 .justify-center {
     justify-content: center;
 }
+
 .justify-between {
     justify-content: space-between;
 }
+
 .justify-around {
     justify-content: space-around;
 }
+
 .align-center {
     align-items: center;
 }
@@ -38,27 +43,50 @@
 .mt-5 {
     margin-top: 5px;
 }
+
 .mt-10 {
     margin-top: 10px;
 }
+
 .ml-5 {
     margin-left: 5px;
 }
+
 .ml-10 {
     margin-left: 10px;
 }
+
 .mr-5 {
     margin-right: 5px;
 }
+
 .mr-10 {
     margin-right: 10px;
 }
+
 .mb-5 {
     margin-bottom: 5px;
 }
+
 .mb-10 {
     margin-bottom: 10px;
 }
+
 .mb-1 {
     margin-bottom: 1px;
+}
+
+.apexcharts-candlestick-area {
+    // fill: crimson !important;
+    // stroke: yellow;
+}
+
+.apexcharts-tooltip {
+    background: #013c5e!important;
+    .apexcharts-tooltip-title {
+        background-color: #1E1E1E!important;
+    }
+    .apexcharts-tooltip-box {
+        background: #013c5e!important;
+    }
 }

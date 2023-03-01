@@ -56,6 +56,11 @@ module.exports = {
         'tr-gradient': 'radial-gradient(50.03% 50.02% at 49.8% 50.03%, rgba(66, 232, 224, 0.85) 0%, #36A6A1 43.75%, #00000000 100%)', 
         'normal-pattern': 'linear-gradient(90.46deg, rgba(118, 118, 118, 0.12) -18.76%, rgba(173, 173, 173, 0.12) 72.39%)', 
         'row-pattern': 'linear-gradient(90.46deg, rgba(0, 220, 159, 0.12) -18.76%, rgba(173, 173, 173, 0.12) 72.39%)', 
+        'home-box1': "url('/images/box1.png')", 
+        'home-box2': "url('/images/box2.png')", 
+        'home-box3': "url('/images/box3.png')", 
+        'home-box4': "url('/images/box4.png')", 
+        'box-pattern': "linear-gradient(90.46deg, rgba(30, 30, 30, 0.06) -18.76%, rgba(252, 252, 252, 0.083) 72.39%);"
       },
       boxShadow: {
         'big': '0px 4px 35px #2af6ff5c',
