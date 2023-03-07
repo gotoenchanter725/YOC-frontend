@@ -82,11 +82,20 @@
 }
 
 .apexcharts-tooltip {
-    background: #013c5e!important;
+    background: #013c5e !important;
+
     .apexcharts-tooltip-title {
-        background-color: #1E1E1E!important;
+        background-color: #1E1E1E !important;
     }
+
     .apexcharts-tooltip-box {
-        background: #013c5e!important;
+        background: #013c5e !important;
+    }
+}
+
+.apexcharts-menu {
+    background: #013c5e !important;
+    .apexcharts-menu-item:hover {
+        background: #012e47 !important;
     }
 }
