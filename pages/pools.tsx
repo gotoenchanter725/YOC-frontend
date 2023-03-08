@@ -164,7 +164,7 @@ const Pools: FC = () => {
                         if (Number(totalShare)) earned = Number(userInfo.shares) / Number(totalShare) * Number(totalReward);
                     } else {
                         amount = convertWeiToEth(String(userInfo.amount), Number(stakeDecimal));
-                        if (userInfo) {
+                        if (userInfo && +userInfo.amount) {
                             const pending = await stakingContract.pendingReward(account);
                             if (pending) earned = Number(convertWeiToEth(pending, YOC.decimals));
                         }
@@ -252,7 +252,7 @@ const Pools: FC = () => {
                         if (Number(totalShare)) earned = Number(userInfo.shares) / Number(totalShare) * Number(totalReward);
                     } else {
                         amount = convertWeiToEth(String(userInfo.amount), Number(stakeDecimal));
-                        if (userInfo) {
+                        if (userInfo && +userInfo.amount) {
                             const pending = await stakingContract.pendingReward(account);
                             if (pending) earned = Number(convertWeiToEth(pending, YOC.decimals));
                         }
