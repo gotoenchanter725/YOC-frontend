@@ -77,7 +77,7 @@ const TotalLockedBubbleChart = () => {
                     options={options}
                     series={series}
                     type={"scatter"}
-                    height={350}
+                    height={window.innerWidth / 4}
                 />
             }
         </div>

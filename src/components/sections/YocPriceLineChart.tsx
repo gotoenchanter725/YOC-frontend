@@ -9,7 +9,7 @@ const LineChart = () => {
     const [options, setOption] = useState<ApexCharts.ApexOptions>({
         chart: {
             type: 'candlestick',
-            height: 350,
+            height: 250,
             foreColor: 'white',
             dropShadow: {
                 enabled: true,
@@ -98,7 +98,7 @@ const LineChart = () => {
                     options={options}
                     series={series}
                     type={"line"}
-                // width="900"
+                    height={window.innerWidth / 4}
                 />
             }
         </div>
