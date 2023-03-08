@@ -87,6 +87,7 @@ const TradingChart: FC<Props> = ({ period }) => {
                     options={options}
                     series={series}
                     type={"candlestick"}
+                    height={window.innerWidth / 4}
                 />
             }
         </div>
