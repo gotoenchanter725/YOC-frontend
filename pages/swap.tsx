@@ -1,15 +1,14 @@
 import React, { FC, useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { mathExact } from 'math-exact';
-import { Contract } from 'ethers';
+import { Contract, constants } from 'ethers';
+const { MaxUint256 } = constants;
 import _ from "lodash";
 
-import Navbar from '../src/components/common/Navbar';
-import FooterV2 from '../src/components/common/FooterV2';
-import Modal from '../src/components/widgets/Modalv2';
-import SideMenuBar from '../src/components/widgets/SideMenuBar';
-import SimpleLoading from '../src/components/widgets/SimpleLoading';
-import TokenComponent from '../src/components/widgets/TokenComponent';
+import Modal from '@components/widgets/Modalv2';
+import SideMenuBar from '@components/widgets/SideMenuBar';
+import SimpleLoading from '@components/widgets/SimpleLoading';
+import TokenComponent from '@components/widgets/TokenComponent';
 
 import { TOKENS, tokenInterface } from '../src/constants/tokens';
 import { TokenTemplate, YOCSwapRouter, WETH } from "../src/constants/contracts";
@@ -70,8 +69,8 @@ const Swap: FC = () => {
                 let res = await swapContract.getAmountsOut(
                     convertEthToWei(Number(amount).toFixed(in_.decimals), in_.decimals),
                     [
-                        (in_.address == "ETH" ? ethAddress : in_.address),
-                        (out_.address == "ETH" ? ethAddress : out_.address)
+                        in_.address,
+                        out_.address
                     ]
                 );
                 const res0 = convertWeiToEth(res[0], in_.decimals);
@@ -82,8 +81,8 @@ const Swap: FC = () => {
                 let res = await swapContract.getAmountsIn(
                     convertEthToWei(Number(amount).toFixed(out_.decimals), out_.decimals),
                     [
-                        (in_.address == "ETH" ? ethAddress : in_.address),
-                        (out_.address == "ETH" ? ethAddress : out_.address)
+                        in_.address,
+                        out_.address
                     ]
                 );
                 const res0 = convertWeiToEth(res[0], in_.decimals);
@@ -135,7 +134,7 @@ const Swap: FC = () => {
             setLastTarget('in');
             setTypeIn(v);
             await calculateRate(v, typeOut as tokenInterface, amountIn, true);
-            if (v.address == "ETH") {
+            if (v.address == WETH) {
                 let balance = await provider.getBalance(account);
                 setMyBalanceIn(+convertWeiToEth(balance, v.decimals));
             } else {
@@ -162,7 +161,7 @@ const Swap: FC = () => {
             setAllowanceOut(tempMaxValue);
             setTypeOut(v);
             await calculateRate(typeIn, v, amountOut, false);
-            if (v.address == "ETH") {
+            if (v.address == WETH) {
                 let balance = await provider.getBalance(account);
                 setMyBalanceOut(+convertWeiToEth(balance, v.decimals));
             } else {
@@ -198,10 +197,7 @@ const Swap: FC = () => {
                 setPendingApproveOut(true);
                 amount = amountOut;
             }
-            let tx = await tokenContract.approve(
-                YOCSwapRouter.address,
-                convertEthToWei(String(Number(+amount).toFixed(+token.decimals)), token.decimals)
-            );
+            let tx = await tokenContract.approve(YOCSwapRouter.address, MaxUint256);
             const receipt = await tx.wait();
             console.log(receipt.events)
             if (type == "in") {
@@ -231,7 +227,7 @@ const Swap: FC = () => {
                     signer
                 );
                 let tx;
-                if (typeIn.address == "ETH") {
+                if (typeIn.address == WETH) {
                     if (lastTarget == 'in') {
                         tx = await tokenContract.swapExactETHForTokens(
                             '0', // convertEthToWei(String(Number(+amountOut).toFixed(typeOut.decimals)), typeOut.decimals),
@@ -240,7 +236,7 @@ const Swap: FC = () => {
                             Date.now() + txRunLimitTime + '',
                             {
                                 value: convertEthToWei(String(Number(+amountIn).toFixed(+typeIn.decimals)), typeIn.decimals),
-                                gasLimit: 3000000
+                                gasLimit: 300000
                             }
                         );
                     } else {
@@ -251,11 +247,11 @@ const Swap: FC = () => {
                             Date.now() + txRunLimitTime + '',
                             {
                                 value: convertEthToWei(String(Number(+amountIn).toFixed(typeIn.decimals)), typeIn.decimals),
-                                gasLimit: 3000000
+                                gasLimit: 300000
                             }
                         );
                     }
-                } else if (typeOut.address == "ETH") {
+                } else if (typeOut.address == WETH) {
                     if (lastTarget == 'in') {
                         tx = await tokenContract.swapExactTokensForETH(
                             convertEthToWei(String(Number(+amountIn).toFixed(+typeIn.decimals)), typeIn.decimals),
@@ -264,7 +260,7 @@ const Swap: FC = () => {
                             account,
                             Date.now() + txRunLimitTime + '',
                             {
-                                gasLimit: 3000000
+                                gasLimit: 300000
                             }
                         );
                     } else {
@@ -275,7 +271,7 @@ const Swap: FC = () => {
                             account,
                             Date.now() + txRunLimitTime + '',
                             {
-                                gasLimit: 3000000
+                                gasLimit: 300000
                             }
                         );
                     }
@@ -288,7 +284,7 @@ const Swap: FC = () => {
                             account,
                             Date.now() + txRunLimitTime + '',
                             {
-                                gasLimit: 3000000
+                                gasLimit: 300000
                             }
                         );
                     } else {
@@ -299,7 +295,7 @@ const Swap: FC = () => {
                             account,
                             Date.now() + txRunLimitTime + '',
                             {
-                                gasLimit: 3000000
+                                gasLimit: 300000
                             }
                         );
                     }
@@ -310,7 +306,7 @@ const Swap: FC = () => {
                 setPendingSwap(false);
                 setShowWaitingModal(false);
                 setSwapStep('swap');
-                dispatch(alert_show({ content: 'Refund Initiated Successfully!', status: 'success' }) as any);
+                dispatch(alert_show({ content: 'Swaped Successfully!', status: 'success' }) as any);
             }
         } catch (error: any) {
             console.dir(error);
@@ -370,7 +366,6 @@ const Swap: FC = () => {
 
     return (
         <div className='relative w-full'>
-            <Navbar />
             <img className='absolute left-0 top-[10vh] h-[85vh]' src='./images/bg-effect-image.png' alt='effect' />
             <div className='container !py-0 mx-auto min-h-[450px]'>
                 <div className='swap-container relative min-w-full min-h-full'>
@@ -411,7 +406,7 @@ const Swap: FC = () => {
                                                         pendingApproveIn ?
                                                             <SimpleLoading className="w-[20px]" />
                                                             : (
-                                                                ((!allowanceIn && (typeIn && typeIn.address != "ETH")) || allowanceIn < amountIn) ?
+                                                                ((!allowanceIn && (typeIn && typeIn.address != WETH)) || allowanceIn < amountIn) ?
                                                                     <button className='bg-btn-primary px- w-full px-2 text-sm rounded shadow-btn-primary' onClick={() => approveHandle(typeIn, 'in')}>approve</button>
                                                                     : ""
                                                             )
@@ -521,7 +516,6 @@ const Swap: FC = () => {
                     </div>
                 </div>
             </div>
-            <FooterV2 />
 
             <Modal size='small' show={showWaitingModal} onClose={() => setShowWaitingModal(false)}>
                 <div className='w-full flex flex-col justify-around items-center pt-8 px-6'>

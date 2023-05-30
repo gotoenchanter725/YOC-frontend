@@ -1,5 +1,5 @@
 import axios from "axios";
-import React, { FC, useRef, useState, useEffect } from "react";
+import React, { FC, useRef, useState, useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import Button from "../widgets/Button";
@@ -14,10 +14,23 @@ type Props = {
 
 const UserVotingContent: FC<Props> = ({ handleClose, votingQueryDetail, userVotingDetail, currentUserBalance }) => {
     const { projects, account, signer } = useSelector((state: any) => state.data);
-    const [queryId, setQueryId] = useState<number>(votingQueryDetail.id);
-    const [queryContent, setQueryContent] = useState<string>(votingQueryDetail.queryContent);
-    const [amountAnswer, setAmountAnswer] = useState<number>(votingQueryDetail.amountAnswer || 2);
-    const [answerArr, setAnswerArr] = useState<string[]>(votingQueryDetail.answerStr.split(','));
+    const queryId = useMemo(() => {
+        if (votingQueryDetail && votingQueryDetail.id) return votingQueryDetail.id;
+        else return 0;
+    }, [votingQueryDetail]);
+
+    const queryContent = useMemo(() => {
+        if (votingQueryDetail && votingQueryDetail.queryContent) return votingQueryDetail.queryContent;
+        else return [];
+    }, [votingQueryDetail]);
+    const amountAnswer = useMemo(() => {
+        if (votingQueryDetail && votingQueryDetail.amountAnswer) return votingQueryDetail.amountAnswer;
+        else return 2;
+    }, [votingQueryDetail]);
+    const answerArr = useMemo(() => {
+        if (votingQueryDetail && votingQueryDetail.answerStr) return votingQueryDetail.answerStr.split(',');
+        else return [];
+    }, [votingQueryDetail]);
 
     // const [startDate, setStartDate] = useState<string>("");
     // const [endDate, setEndDate] = useState<string>("");
@@ -36,19 +49,20 @@ const UserVotingContent: FC<Props> = ({ handleClose, votingQueryDetail, userVoti
     }
     let answerList = [];
     for (let i = 0; i < amountAnswer; i++) {
-        answerList.push(<div className="answer_item" key={i}>
-            <div className="answer">
+        answerList.push(<div className="answer_item flex justify-between" key={i}>
+            <div className="answer flex items-center">
                 <p>{i + 1}:</p>
                 <p>{answerArr[i]}</p>
+                {i == userVotingDetail.votingState ? (<div className="ml-3 rounded-full w-[8px] h-[8px] bg-secondary"></div>) : ""}
             </div>
-            <Button className={userVotingDetail.votingState != undefined ? "vote_btn disabled" : "vote_btn"} onClick={() => saveUserVotingStatus(account, i, queryId)} text="Vote" />
+            <Button className={userVotingDetail.votingState != undefined ? "vote_btn disabled" : "vote_btn"} disabled={userVotingDetail.votingState != undefined} onClick={() => saveUserVotingStatus(account, i, queryId)} text="Vote" />
         </div>)
     }
     let endDate = new Date(votingQueryDetail.endDate);
     let timeDiff = Math.ceil(Math.abs(endDate.getTime() - new Date().getTime()) / 1000 / 3600 / 24)
     let remainDays = timeDiff > 1 ? `${timeDiff} days` : timeDiff == 1 ? `1 day` : 'today';
-    return <div className="user_voting_content">
-        <div className="query_content">
+    return <div className="user_voting_content text-white">
+        <div className="query_content text-white rounded border border-[#FFFFFF22] !bg-transparent !bg-primary-pattern px-4 py-2 outline-none">
             <p>{queryContent}</p>
         </div>
         <div className="answer_content">
@@ -66,7 +80,6 @@ const UserVotingContent: FC<Props> = ({ handleClose, votingQueryDetail, userVoti
         <div>
             <p>Obs: You cannot change your vote once you have voted</p>
         </div>
-
     </div>
 }
 

@@ -16,11 +16,11 @@
 .new_project_container {
     display: flex;
     align-items: flex-end;
-    max-width: 700px;
     margin: auto;
     font-size: 0.78125rem;
     color: black;
     label {
+        color: white;
         display: block;
         margin: 15px 0 5px;
     }
@@ -28,7 +28,6 @@
         input, textarea {
             font-size: 1.125rem;
             width: 100%;
-            border: 1px solid black !important;
         }
         .supply_sold, .amount_price {
             justify-content: space-between;
@@ -36,18 +35,18 @@
                 &:nth-child(2) {
                     text-align: right;
                 }
-                input {
-                    width: 150px;
-                }
+            }
+            .input_control {
+                width: 100%;
             }
         }
     }
     .left_input_field{
-        width: 42%;
+        width: 50%;
         margin-right: 20px;
     }
     .right_input_field {
-        width: 58%;
+        width: 50%;
         .add_icon, .add_symbol {
             input {
                 display: none;

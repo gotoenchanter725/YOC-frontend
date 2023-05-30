@@ -1,743 +1,605 @@
-import React, { FC, useEffect, useState } from "react"
-import { useDispatch, useSelector } from "react-redux";
+import React, { FC, useCallback, useEffect, useMemo, useState } from "react"
 import axios from "axios";
 import { Contract, constants } from 'ethers';
 const { MaxUint256, AddressZero, Zero } = constants;
 
-import Footer from "../src/components/common/FooterV2";
-import Navbar from "../src/components/common/Navbar";
-import Modal from "../src/components/widgets/Modalv2";
+import Modal from "@components/widgets/Modalv2";
+
+const yocAmountYear = 4.5 * 60 * 24 * 365 * 20;
 
 import { YOCFarm, YOCSwapRouter, YOCPair, TokenTemplate, YOC, USDCToken } from "../src/constants/contracts";
-import { rpc_provider_basic } from '../utils/rpc_provider';
 import { PoolInterface, PairOpenInterface } from "../src/interfaces/pools";
-import { alert_show, loading_end, loading_start, walletConnect } from "../store/actions";
 import { convertEthToWei, convertRate, convertWeiToEth } from "../utils/unit";
-import { WALLET_CONNECT } from "../store/types";
+import useAccount from "@hooks/useAccount";
+import useLoading from "@hooks/useLoading";
+import useAlert from "@hooks/useAlert";
+import useWallet from "@hooks/useWallet";
+import { CurrencyDataInterface } from "src/interfaces/currency";
+import useNetwork from "@hooks/useNetwork";
 
 const Farm: FC = () => {
-    const [after1second, setAfter1second] = useState(false);  // flag that checks if the 1 second is passed from when the page is loaded.
-    const dispatch = useDispatch();
-    const { provider, signer, account, rpc_provider } = useSelector((state: any) => state.data);
-    const [sortBy, setSortBy] = useState('');
-    const [searchText, setSearchText] = useState('');
-    const [pairsOpen, setPairsOpen] = useState<PairOpenInterface[]>([]);
-    const [pairs, setPairs] = useState<PoolInterface[]>([]);
-    const [selectPair, setSelectPair] = useState<PoolInterface>();
-    const [stakeLpModalShow, setStakeLpModalShow] = useState(false);
-    const [unstakeLpModalShow, setUnstakeLpModalShow] = useState(false);
-    const [stakeLpAmount, setStakeLpAmount] = useState(0);
-    const [unstakeLpAmount, setUnstakeLpAmount] = useState(0);
-    const [stakeLpMax, setStakeLpMax] = useState(false);
-    const [unstakeLpMax, setUnstakeLpMax] = useState(false);
-    const [enableModalShow, setEnableModalShow] = useState(false);
-    const [farmContract] = useState(new Contract(
-        YOCFarm.address,
-        YOCFarm.abi,
-        rpc_provider_basic
-    ));
-    const [swapContract] = useState(new Contract(
-        YOCSwapRouter.address,
-        YOCSwapRouter.abi,
-        rpc_provider_basic
-    ));
+	const { account, provider, signer, rpc_provider } = useAccount();
+	const { loadingStart, loadingEnd } = useLoading();
+	const { explorer } = useNetwork();
+	const { alertShow } = useAlert();
+	const { connectWallet, updateWalletBalance } = useWallet();
+	const [farmPools, setFarmPools] = useState<any[]>([]);
+	const [currencies, setCurrencies] = useState<CurrencyDataInterface[]>([]);
+	const [farmUIToggle, setFarmUIToggle] = useState<Number[]>([]); // default:0, open: 1, loading: 2 
+	const [after1second, setAfter1second] = useState(false);  // flag that checks if the 1 second is passed from when the page is loaded.
+	const [sortBy, setSortBy] = useState('');
+	const [searchText, setSearchText] = useState('');
+	const [selectFarmPool, setSelectFarmPool] = useState<any>();
+	const [stakeLpModalShow, setStakeLpModalShow] = useState(false);
+	const [unstakeLpModalShow, setUnstakeLpModalShow] = useState(false);
+	const [stakeLpAmount, setStakeLpAmount] = useState(0);
+	const [unstakeLpAmount, setUnstakeLpAmount] = useState(0);
+	const [stakeLpMax, setStakeLpMax] = useState(false);
+	const [unstakeLpMax, setUnstakeLpMax] = useState(false);
+	const [enableModalShow, setEnableModalShow] = useState(false);
+	const farmContract = useMemo(() => new Contract(
+		YOCFarm.address,
+		YOCFarm.abi,
+		rpc_provider
+	), [YOCFarm, rpc_provider]);
 
-    useEffect(() => {
-        (async () => {
-            if (after1second) {
-                dispatch(loading_start() as any);
-                if (account) {
-                    console.log("Account!");
+	const checkPools = useCallback(async () => {
+		try {
+			if (currencies && currencies.length && yocAmountYear && farmContract) {
+				console.log("Check Pools", farmContract);
+				const totalAlloc = await farmContract.totalAllocPoint();
+				let farmResponse = await axios.get(process.env.API_ADDRESS + `/farm/all`);
+				if (farmResponse && farmResponse.data && farmResponse.data.pools) {
+					let data = [...new Array(farmResponse.data.pools.length).map(item => 0)].map(item => { return { loading: true } });
+					for (let i = 0; i < farmResponse.data.pools.length; i++) {
+						const item = farmResponse.data.pools[i];
+						if (currencies.length) {
+							let yocAmountForCurrentPool = yocAmountYear * item.allocPoint / totalAlloc;
+							let yocDetail = currencies.find((currency: any) => currency.address === YOC.address);
 
-                    const res: any = await getPools();
-                    if (res.data.pools.length == pairs.length) {
-                        await updatePools()
-                    } else {
-                        await checkPools();
-                    }
-                } else {
-                    console.log("No Account!");
+							if (!yocDetail) return item;
+							data[i] = {
+								...item,
+								loading: true,
+							};
+							setFarmPools([...data]);
+							let yocUSDAmountForCurrentPool = yocAmountForCurrentPool * yocDetail.price;
 
-                    const res: any = await getPools();
-                    if (res.data.pools.length == pairs.length) {
-                        setPairs([...pairs.map((item: any) => {
-                            return {
-                                ...item,
+							let totalLPAmount = item.liquidity.amount;
+							let totalToken0Amount = item.liquidity.amount0;
+							let totalToken1Amount = item.liquidity.amount1;
+							let LPamountCurrentPool = item.totalLPAmount;
+							let currency0Detail = getCurrencyDetail(item.liquidity.currency0.address);
+							let currency1Detail = getCurrencyDetail(item.liquidity.currency1.address);
 
-                                balance: 0,
-                                lpAmount: 0,
-                                earned: 0,
-                                approve: false,
-                            }
-                        })])
-                    } else {
-                        await checkPools();
-                    }
-                }
-                dispatch(loading_end() as any);
-            }
-        })()
-    }, [account, after1second])
+							if (!currency0Detail || !currency1Detail) return item;
+							let usdToken0Amount = LPamountCurrentPool / totalLPAmount * totalToken0Amount * currency0Detail.price;
+							let usdToken1Amount = LPamountCurrentPool / totalLPAmount * totalToken1Amount * currency1Detail.price;
+							let APR = (usdToken0Amount + usdToken1Amount) ? yocUSDAmountForCurrentPool / (usdToken0Amount + usdToken1Amount) : 0;
+							let totalLiquidity = totalToken0Amount * currency0Detail.price + totalToken1Amount * currency1Detail.price;
 
-    const getPools = async () => {
-        try {
-            const res: any = await axios.get(process.env.API_ADDRESS + `/farm/pools`)
-            return res;
-        } catch (err) {
-            return "Error";
-        }
-    }
+							console.log('yoc:', LPamountCurrentPool, totalLPAmount, yocUSDAmountForCurrentPool);
+							console.log('token0:', totalToken0Amount, usdToken0Amount);
+							console.log('token1:', totalToken1Amount, usdToken1Amount);
+							console.log("\n");
 
-    const checkPools = async () => {
-        console.log("Check Pools");
+							let balance, allowance, earned, lpAmount;
+							if (account) {
+								let userDetailResponse = await axios.get(process.env.API_ADDRESS + `/farm/user?address=${account}&farmId=${item.id}`);
+								let farmUserDetail;
+								if (userDetailResponse && userDetailResponse.data) farmUserDetail = userDetailResponse.data.farmData;
 
-        try {
-            let pools: PoolInterface[] = [], poolsData: any = [];
-            const res: any = await getPools();
-            poolsData = res.data.pools;
-            for (let i = 0; i < poolsData.length; i++) {
-                pools.push({
-                    loading: true
-                })
-            }
+								let PairContract = new Contract(
+									item.liquidity.pairAddress + '',
+									YOCPair.abi,
+									rpc_provider
+								)
+								balance = convertWeiToEth(String(await PairContract.balanceOf(account)), Number(item.liquidity.pairDecimals));
+								if (farmUserDetail) {
+									allowance = farmUserDetail.allowance ? farmUserDetail.allowance : 0;
+									lpAmount = farmUserDetail.amount;
+								}
 
-            setPairs(pools);
-            const totalAlloc = await farmContract.totalAllocPoint();
+								earned = convertWeiToEth(String(await farmContract.pendingYOC(item.poolId, account)), Number(YOC.decimals));
+							};
 
-            for (let index = 0; index < poolsData.length; index++) {
-                const item = pools[index];
-                const pId = poolsData[index].poolId;
-                const lpTokenAddress = poolsData[index].pairAddress;
-                const decimal = poolsData[index].pairDecimals;
-                const symbol = poolsData[index].pairSymbol;
+							data[i] = {
+								...item,
+								APR,
+								totalLiquidity,
+								loading: false,
 
-                let token0Address = poolsData[index].token0Address;
-                let token1Address = poolsData[index].token1Address;
-                let token0Decimal = poolsData[index].token0Decimals;
-                let token1Decimal = poolsData[index].token1Decimals;
-                let token0Symbol = poolsData[index].token0Symbol;
-                let token1Symbol = poolsData[index].token1Symbol;
-                let token0Contract = new Contract(
-                    token0Address,
-                    TokenTemplate.abi,
-                    rpc_provider_basic
-                );
-                let token1Contract = new Contract(
-                    token1Address,
-                    TokenTemplate.abi,
-                    rpc_provider_basic
-                );
+								balance: balance ? Number(balance) : 0,
+								lpAmount: lpAmount ? Number(lpAmount) : 0,
+								earned: earned ? Number(earned) : 0,
+								allowance: allowance,
+								approve: Number(allowance) ? true : false
+							};
+						}
+					}
+					setFarmPools([...data]);
+					console.log(data);
+				}
+			}
+		} catch (err) {
+			console.log(err);
+		}
+	}, [currencies.length, yocAmountYear, account, provider, farmContract]);
 
-                // APR
-                let APR, liquidity, alloc = poolsData[index].allocPoint;
-                {
-                    let yearYocUSDRes = Number(convertWeiToEth((await swapContract.getAmountsOut(
-                        convertEthToWei(String(Number(Number(alloc) / Number(totalAlloc) * 20 * 60 * 60 * 24 * 365).toFixed(YOC.decimals)), YOC.decimals),
-                        [
-                            YOC.address,
-                            USDCToken.address
-                        ]
-                    ))[1], USDCToken.decimals));
-                    console.log(`${index}YOC: `, yearYocUSDRes);
-                    let LPTotalUSDRes = 0;
-                    let amount0 = convertWeiToEth(await token0Contract.balanceOf(lpTokenAddress), token0Decimal);
-                    if (token0Address != USDCToken.address) {
-                        LPTotalUSDRes = Number(convertWeiToEth((await swapContract.getAmountsOut(
-                            convertEthToWei(amount0, token0Decimal),
-                            [
-                                token0Address,
-                                USDCToken.address
-                            ]
-                        ))[1], USDCToken.decimals));
-                    } else {
-                        LPTotalUSDRes = Number(amount0)
-                    }
-                    console.log(`${index}TOKEN0_USD: `, LPTotalUSDRes);
-                    let amount1 = convertWeiToEth(await token1Contract.balanceOf(lpTokenAddress), token1Decimal);
-                    if (token1Address != USDCToken.address) {
-                        LPTotalUSDRes += Number(convertWeiToEth((await swapContract.getAmountsOut(
-                            convertEthToWei(amount1, token1Decimal),
-                            [
-                                token1Address,
-                                USDCToken.address
-                            ]
-                        ))[1], USDCToken.decimals));
-                    } else {
-                        LPTotalUSDRes += Number(amount1)
-                    }
-                    console.log(`${index}TOKEN1_USD: `, LPTotalUSDRes);
-                    APR = Number(yearYocUSDRes / LPTotalUSDRes * 100);
-                    liquidity = LPTotalUSDRes
-                }
+	useEffect(() => {
+		(async () => {
+			let currencyResponse = await axios.get(process.env.API_ADDRESS + `/currency/all?account=${account}`);
+			if (currencyResponse && currencyResponse.data && currencyResponse.data.currencies) {
+				setCurrencies(currencyResponse.data.currencies.filter((item: any) => item.isActive === true && item.isDelete === false));
+			}
+		})();
 
-                let balance, allowance, earned, lpAmount;
-                if (account) {
-                    let PairContract = new Contract(
-                        lpTokenAddress,
-                        YOCPair.abi,
-                        rpc_provider_basic
-                    )
-                    earned = convertWeiToEth(String(await farmContract.pendingYOC(pId, account)), Number(YOC.decimals));
-                    balance = convertWeiToEth(String(await PairContract.balanceOf(account)), Number(decimal));
-                    allowance = await PairContract.allowance(account, YOCFarm.address);
-                    let userInfo = await farmContract.userInfo(pId, account);
-                    lpAmount = userInfo ? convertWeiToEth(String(userInfo[0]), Number(decimal)) : 0;
-                };
+		setTimeout(() => {
+			setAfter1second(true);
+			console.log("After 1 second")
+		}, 1500)
+	}, [])
 
-                pools[index] = {
-                    ...item,
-                    address: lpTokenAddress,
-                    decimal: decimal,
-                    symbol: symbol,
-                    token0: token0Symbol,
-                    token1: token1Symbol,
-                    liquidity: Number(liquidity),
-                    allocPoint: alloc,
-                    APR: APR,
-                    loading: false,
-                    pairId: pId,
+	useEffect(() => {
+		(async () => {
+			if (after1second) {
+				loadingStart();
+				await checkPools();
+				loadingEnd();
+			}
+		})()
+	}, [account, after1second, checkPools])
 
-                    balance: balance ? Number(balance) : 0,
-                    lpAmount: lpAmount ? Number(lpAmount) : 0,
-                    earned: earned ? Number(earned) : 0,
-                    approve: Number(allowance) ? true : false,
-                };
-                setPairs([...pools]);
-            }
-        } catch (err) {
-            console.log(err);
-        }
-    }
+	useEffect(() => {
+		setFarmUIToggle([...new Array(farmPools.length).map(item => 0)]);
+	}, [account, farmPools.length])
 
-    const updatePools = async () => {
-        console.log("Update Pools");
+	const togglePoolHandle = (index: number, type: string) => {
+		let rst: any[] = farmUIToggle.map((item: any, i: number) => {
+			return i === index ? (type === 'open' ? (item ? 0 : 1) : (item == 0 ? 2 : 0)) : item;
+		});
 
-        try {
-            let pools: PoolInterface[] = [...pairs.map((item) => {
-                return {
-                    ...item,
-                    loading: true,
-                }
-            })];
+		setFarmUIToggle([...rst]);
+	}
 
-            setPairs([...pools]);
+	const enableModalHandle = async (pair: PoolInterface) => {
+		setSelectFarmPool(pair)
+		setEnableModalShow(true);
+	}
 
-            for (let index = 0; index < pairs.length; index++) {
-                const item = pairs[index];
-                let balance, allowance, earned, lpAmount;
-                if (account) {
-                    let PairContract = new Contract(
-                        item.address + '',
-                        YOCPair.abi,
-                        rpc_provider_basic
-                    )
-                    earned = convertWeiToEth(String(await farmContract.pendingYOC(item.pairId, account)), Number(YOC.decimals));
-                    balance = convertWeiToEth(String(await PairContract.balanceOf(account)), Number(item.decimal));
-                    allowance = await PairContract.allowance(account, YOCFarm.address);
-                    let userInfo = await farmContract.userInfo(item.pairId, account);
-                    lpAmount = userInfo ? convertWeiToEth(String(userInfo[0]), Number(item.decimal)) : 0;
-                };
+	const enableHandle = async () => {
+		loadingStart();
+		try {
+			const pair: any = selectFarmPool;
+			let PairContract = new Contract(
+				pair.liquidity.pairAddress + '',
+				YOCPair.abi,
+				signer
+			)
+			await PairContract.approve(YOCFarm.address, MaxUint256);
+			await PairContract.on("Approval", async (args) => {
+				setFarmPools(farmPools.map((item: any) => item.liquidity.pairAddress == pair.liquidity.pairAddress ? { ...item, approve: true } : item));
+				setEnableModalShow(false);
+				loadingEnd();
+				alertShow({ content: `Approve Successfully`, status: 'success' });
 
-                pools[index] = {
-                    ...item,
-                    loading: false,
+				await axios.post(process.env.API_ADDRESS + "/farm/user/allowance", {
+					farmId: pair.id,
+					liquidityId: pair.liquidityId,
+					address: account,
+					balance: convertWeiToEth(MaxUint256, 18)
+				})
+			})
+		} catch (err) {
+			loadingEnd();
+		}
+	}
 
-                    balance: balance ? Number(balance) : 0,
-                    lpAmount: lpAmount ? Number(lpAmount) : 0,
-                    earned: earned ? Number(earned) : 0,
-                    approve: Number(allowance) ? true : false,
-                };
-                setPairs([...pools]);
-            }
-        } catch (err) {
-            console.log(err);
-        }
-    }
+	const stakeLPModalHandle = (pair: PoolInterface) => {
+		setSelectFarmPool(pair);
+		setStakeLpModalShow(true);
+	}
 
-    useEffect(() => {
-        setTimeout(() => {
-            setAfter1second(true);
-            console.log("After 1 second")
-        }, 3000)
-    }, [])
+	const unstakeModalHandle = (pair: PoolInterface) => {
+		setSelectFarmPool(pair);
+		setUnstakeLpModalShow(true);
+	}
 
-    useEffect(() => {
-        console.log(pairs);
-    }, [JSON.stringify(pairs)])
+	const setMaxStakeLpAmountHandle = () => {
+		setStakeLpAmount((selectFarmPool && Boolean(selectFarmPool.balance)) ? Number(selectFarmPool.balance) : 0);
+		setStakeLpMax(true);
+	}
 
-    const togglePairOpenHandle = (pairInfo: any) => {
-        if (pairInfo.loading) return;
-        let newPairOpen: PairOpenInterface[] = [];
-        for (let i = 0; i < pairs.length; i++) {
-            newPairOpen.push({
-                address: "" + (pairs[i].address),
-                toggle: pairsOpen[i] ? pairsOpen[i].toggle : false
-            });
-        }
-        setPairsOpen(newPairOpen.map((item) => {
-            return (item.address == pairInfo.address) ? {
-                ...item,
-                toggle: !item.toggle
-            } : item;
-        }));
-    }
+	const setMaxUnstakeAmountHandle = () => {
+		setUnstakeLpAmount((selectFarmPool && Boolean(selectFarmPool.lpAmount)) ? Number(selectFarmPool.lpAmount) : 0);
+		setUnstakeLpMax(true);
+	}
 
-    const enableModalHandle = (pair: PoolInterface) => {
-        setSelectPair(pair)
-        setEnableModalShow(true);
-    }
+	const stakeLPHandle = async (pair: any) => {
+		if (!stakeLpAmount) {
+			alertShow({ content: 'Please input the stakeLP amount exactly', status: 'error' });
+			return;
+		}
+		loadingStart();
+		try {
+			let PairContract = new Contract(
+				YOCFarm.address,
+				YOCFarm.abi,
+				signer
+			)
+			console.log(stakeLpAmount);
+			await PairContract.deposit(pair.poolId, convertEthToWei(String(stakeLpAmount), Number(selectFarmPool?.liquidity.pairDecimals)));
+			await PairContract.on('Deposit', (user, pid, amount) => {
+				setFarmPools(farmPools.map(item => item.liquidity.pairAddress == pair.liquidity.pairAddress ? { ...item, lpAmount: Number(item.lpAmount) + stakeLpAmount, balance: Number(item.balance) - stakeLpAmount } : item));
+				setStakeLpModalShow(false);
+				loadingEnd();
 
-    const enableHandle = async () => {
-        dispatch(loading_start() as any);
-        try {
-            const pair = selectPair;
-            let PairContract = new Contract(
-                pair?.address + '',
-                YOCPair.abi,
-                signer
-            )
-            const tx = await PairContract.approve(YOCFarm.address, MaxUint256);
-            await tx.wait();
-            setPairs(pairs.map(item => item.address == pair?.address ? { ...item, approve: true } : item));
-            setEnableModalShow(false);
-            dispatch(loading_end() as any);
-        } catch (err) {
-            dispatch(loading_end() as any);
-        }
-    }
+				console.log(user, pid, amount);
+				alertShow({ content: `Deposit Successfully`, text: `Amount: ${convertWeiToEth(amount, pair.liquidity.pairDecimals)} ${pair.liquidity.pairSymbol}`, status: 'success' });
+			})
+		} catch (err) {
+			console.log(err);
+			loadingEnd();
+		}
+	}
 
-    const stakeLPModalHandle = (pair: PoolInterface) => {
-        setSelectPair(pair);
-        setStakeLpModalShow(true);
-    }
+	const unstakeLPHandle = async (pair: any) => {
+		if (!unstakeLpAmount) {
+			alertShow({ content: 'Please input the unstakeLP amount exactly', status: 'error' });
+			return;
+		}
+		loadingStart();
+		try {
+			let PairContract = new Contract(
+				YOCFarm.address,
+				YOCFarm.abi,
+				signer
+			)
+			console.log(unstakeLpAmount);
+			await PairContract.withdraw(pair.poolId, convertEthToWei(String(unstakeLpAmount), Number(selectFarmPool?.liquidity.pairDecimals)));
+			await PairContract.on("Withdraw", (user, pid, amount, yocAmount) => {
+				setFarmPools([...farmPools.map(item => item.liquidity.pairAddress == pair.liquidity.pairAddress ? { ...item, lpAmount: Number(item.lpAmount) - unstakeLpAmount, balance: Number(item.balance) + unstakeLpAmount } : item)]);
+				setUnstakeLpModalShow(false);
+				updateWalletBalance();
+				loadingEnd();
 
-    const unstakeModalHandle = (pair: PoolInterface) => {
-        setSelectPair(pair);
-        setUnstakeLpModalShow(true);
-    }
+				console.log(user, pid, amount, yocAmount);
+				alertShow({ content: `Withdraw Successfully`, text: `Amount: ${convertWeiToEth(amount, 18)} ${pair.liquidity.pairSymbol}, Yoc: ${convertWeiToEth(yocAmount, YOC.decimals)}`, status: 'success' });
+			})
+		} catch (err) {
+			console.log(err);
+			loadingEnd();
+		}
+	}
 
-    const setMaxStakeLpAmountHandle = () => {
-        setStakeLpAmount((selectPair && Boolean(selectPair.balance)) ? Number(selectPair.balance) : 0);
-        setStakeLpMax(true);
-    }
+	const harvestHandle = async (pair: any) => {
+		loadingStart();
+		try {
+			let PairContract = new Contract(
+				YOCFarm.address,
+				YOCFarm.abi,
+				signer
+			)
+			await PairContract.withdraw(pair.poolId, 0);
+			await PairContract.on("Withdraw", (user, pid, amount, yocAmount) => {
+				setFarmPools([...farmPools.map(item => item.liquidity.pairAddress == pair.liquidity.pairAddress ? { ...item, earned: 0, balance: Number(item.balance) + Number(item.earned) } : item)]);
+				loadingEnd();
+				updateWalletBalance();
+				console.log(user, pid, amount, yocAmount);
+				alertShow({ content: 'Harvest Successfully', text: `\n\n Yoc: ${convertWeiToEth(yocAmount, YOC.decimals)}`, status: 'success' });
+			});
+		} catch (err) {
+			console.log(err);
+			loadingEnd();
+		}
+	}
 
-    const setMaxUnstakeAmountHandle = () => {
-        setUnstakeLpAmount((selectPair && Boolean(selectPair.lpAmount)) ? Number(selectPair.lpAmount) : 0);
-        setUnstakeLpMax(true);
-    }
+	const getCurrencyDetail = useCallback((address: string) => {
+		return currencies.find((currency: any) => currency.address === address);
+	}, [currencies]);
 
-    const stakeLPHandle = async (pair: PoolInterface) => {
-        if (!stakeLpAmount) {
-            dispatch(alert_show({ content: 'Please input the stakeLP amount exactly', status: 'error' }) as any)
-            return;
-        }
-        dispatch(loading_start() as any);
-        try {
-            let PairContract = new Contract(
-                YOCFarm.address,
-                YOCFarm.abi,
-                signer
-            )
-            console.log(stakeLpAmount);
-            const tx = await PairContract.deposit(pair.pairId, convertEthToWei(String(stakeLpAmount), Number(selectPair?.decimal)), {
-                gasLimit: 3000000
-            });
-            await tx.wait();
-            setPairs(pairs.map(item => item.address == pair?.address ? { ...item, lpAmount: Number(item.lpAmount) + stakeLpAmount, balance: Number(item.balance) - stakeLpAmount } : item));
-            setStakeLpModalShow(false);
-            dispatch(loading_end() as any);
-        } catch (err) {
-            console.log(err);
-            dispatch(loading_end() as any);
-        }
-    }
+	const finalFarmPools = useMemo(() => {
+		return farmPools.sort((a: any, b: any) => {
+			if (sortBy == "") {
+				return 0;
+			} else if (sortBy == 'earned') {
+				return b.earned - a.earned;
+			} else if (sortBy == 'apr') {
+				return 0;
+			} else if (sortBy == 'liquidity') {
+				return b.liquidity - a.liquidity;
+			} else {
+				return b.allocPoint - a.allocPoint;
+			}
+		}).filter((item: any) => {
+			if (item.loading == true) return true;
+			if (item?.liquidity.currency0.symbol.indexOf(searchText) != -1
+				|| item?.liquidity.currency1.symbol.indexOf(searchText) != -1
+				|| String(item.allocPoint).indexOf(searchText) != -1
+				|| String(item.totalLPAmount).indexOf(searchText) != -1
+				|| String(item.liquidity).indexOf(searchText) != -1
+				|| String(item.earned).indexOf(searchText) != -1
+				|| String(item.APR).indexOf(searchText) != -1) return true;
+		})
+	}, [searchText, sortBy, farmPools]);
 
-    const unstakeLPHandle = async (pair: PoolInterface) => {
-        if (!unstakeLpAmount) {
-            dispatch(alert_show({ content: 'Please input the unstakeLP amount exactly', status: 'error' }) as any)
-            return;
-        }
-        dispatch(loading_start() as any);
-        try {
-            let PairContract = new Contract(
-                YOCFarm.address,
-                YOCFarm.abi,
-                signer
-            )
-            console.log(unstakeLpAmount);
-            const tx = await PairContract.withdraw(pair.pairId, convertEthToWei(String(unstakeLpAmount), Number(selectPair?.decimal)), {
-                gasLimit: 3000000
-            });
-            await tx.wait();
-            setPairs(pairs.map(item => item.address == pair?.address ? { ...item, lpAmount: Number(item.lpAmount) - unstakeLpAmount, balance: Number(item.balance) + unstakeLpAmount } : item));
-            setUnstakeLpModalShow(false);
-            dispatch(loading_end() as any);
-        } catch (err) {
-            console.log(err);
-            dispatch(loading_end() as any);
-        }
-    }
+	return <>
+		<div className="container mx-auto">
+			<div className=" bg-bg-pattern p-4">
+				<div className="py-4 px-8 bg-primary-pattern flex flex-col items-end">
+					<h3 className="w-full text-left font-semibold text-xl mb-4">YOC Liquidity Mining</h3>
+					<p className="w-full text-left text-base mb-4">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed tortor felis nulla sit. Pretium fusce nisi, rutrum semper quam a amet a.
+						Elit a venenatis mattis massa sodales nec tellus. Nisl velit vel est, a mattis facilisi. </p>
+					<button className="px-4 py-2 mb-4 rounded flex items-center border-1 border-solid border-secondary">
+						<span className="text-sm mr-2">Read More...</span>
+						<img className="w-[20px]" src='./images/prev.png' alt='more' />
+					</button>
+				</div>
 
-    const harvestHandle = async (pair: PoolInterface) => {
-        dispatch(loading_start() as any);
-        try {
-            let PairContract = new Contract(
-                YOCFarm.address,
-                YOCFarm.abi,
-                signer
-            )
-            const tx = await PairContract.withdraw(pair.pairId, 0, {
-                gasLimit: 3000000
-            });
-            await tx.wait();
-            setPairs(pairs.map(item => item.address == pair?.address ? { ...item, earned: 0, balance: Number(item.balance) + Number(item.earned) } : item));
-            let YOCContract = new Contract(
-                YOC.address,
-                TokenTemplate.abi,
-                rpc_provider_basic
-            )
-            let balance = Number(convertWeiToEth(await YOCContract.balanceOf(account), 18));
-            dispatch({
-                type: WALLET_CONNECT,
-                payload: {
-                    balance: balance,
-                }
-            })
-            dispatch(loading_end() as any);
-        } catch (err) {
-            console.log(err);
-            dispatch(loading_end() as any);
-        }
-    }
+				<div className="">
+					<div className="mt-6">
+						<div className="flex justify-between items-center py-4">
+							<h3 className="font-semibold text-xl">Participating Pools</h3>
+							<h3 className="font-semibold text-xl">The Rewards Never Ends</h3>
+						</div>
+						<div className="text-base text-primary flex items-center">
+							<div className="flex border border-solid overflow-hidden h-[40px] border-secondary rounded-full mr-4">
+								<div className="cursor-pointer w-[100px] text-center px-4 py-1.5 bg-[#a4a2a878] rounded-full">Live</div>
+								<div className="cursor-pointer w-[100px] text-center px-4 py-1.5">Finished</div>
+							</div>
+							<select className="px-4 py-1 h-[40px] mr-4 flex bg-transparent border border-solid overflow-hidden border-secondary rounded" value={sortBy} onChange={(e: React.FormEvent) => setSortBy((e.target as any).value)}>
+								<option className="p-2 bg-dark-primary" value={''}>Sortby</option>
+								<option className="p-2 bg-dark-primary" value={'earned'}>Earned</option>
+								<option className="p-2 bg-dark-primary" value={'apr'}>APR</option>
+								<option className="p-2 bg-dark-primary" value={'liquidity'}>Liquidity</option>
+								<option className="p-2 bg-dark-primary" value={'multiplier'}>Multiplier</option>
+							</select>
+							<div className="h-[40px] rounded flex items-center border-1 border-solid border-secondary">
+								<input className="pl-2 py-1 bg-transparent" placeholder="Search Forms"
+									onChange={(e) => setSearchText(e.target.value)}
+								/>
+								<img className="w-[20px] mx-2" src="./images/search-status.png" alt="search" />
+							</div>
+						</div>
+					</div>
 
-    return <div>
-        <Navbar />
-        <div className="container mx-auto">
-            <div className=" bg-bg-pattern p-4">
-                <div className="py-4 px-8 bg-primary-pattern flex flex-col items-end">
-                    <h3 className="w-full text-left font-semibold text-xl mb-4">YOC Liquidity Mining</h3>
-                    <p className="w-full text-left text-base mb-4">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed tortor felis nulla sit. Pretium fusce nisi, rutrum semper quam a amet a.
-                        Elit a venenatis mattis massa sodales nec tellus. Nisl velit vel est, a mattis facilisi. </p>
-                    <button className="px-4 py-2 mb-4 rounded flex items-center border-1 border-solid border-secondary">
-                        <span className="text-sm mr-2">Read More...</span>
-                        <img className="w-[20px]" src='./images/prev.png' alt='more' />
-                    </button>
-                </div>
+					{
+						finalFarmPools.length == 0 ? (
+							<div className="mt-4 p-4 flex justify-between items-center bg-row-pattern">
+								<p className="">There is not pools</p>
+							</div>
+						) : (
+							finalFarmPools.map((item: any, index) => {
+								return (
+									<div key={index + "_"}>
+										<div className="mt-4 p-4 flex justify-between items-center bg-row-pattern cursor-pointer"
+											onClick={() => togglePoolHandle(index, 'open')}
+										>
+											<div className="flex items-center w-[calc(100%_-_50px)]">
+												<div className="w-[48px] h-[48px] mr-4">
+													<img className="w-full h-full" src="/images/pair.png" alt="pair" />
+												</div>
+												<div className="w-[120px] mr-4">
+													{
+														item.loading ? <div role="status" className="max-w-sm animate-pulse h-[24px] flex items-center">
+															<p className="h-[24px] w-[80px] bg-gray-200 rounded-full"></p>
+															&nbsp;/&nbsp;
+															<p className="h-[24px] w-[80px] bg-gray-200 rounded-full"></p>
+														</div> :
+															(`${item.liquidity.currency0.symbol} / ${item.liquidity.currency1.symbol}`)
+													}
+												</div>
+												<div className=" mr-8">
+													{
+														item.loading ? <div role="status" className="max-w-sm animate-pulse h-[24px] flex items-center">
+															<p className="h-[22px] w-[70px] bg-gray-200 rounded-full"></p>
+														</div> :
+															<button className="flex items-center rounded-full border-[1px] border-solid border-secondary bg-[#a4a2a878] px-1.5 py-1 text-primary">
+																<img className="h-[16px] mr-1" src="/images/verify.png" alt="verify" />
+																<span className="leading-[1] text-sm pr-2">Core</span>
+															</button>
+													}
+												</div>
+												<div className="min-w-[120px] w-[16%] mr-4">
+													<div className="mb-2">Earned</div>
+													{
+														item.loading ? <div role="status" className="max-w-sm animate-pulse h-[24px] flex items-center">
+															<p className="h-3 bg-gray-200 rounded-full w-12"></p>
+														</div> :
+															<p className="text-[#C7C7C7]">{item.earned ? item.earned.toFixed(3) : 0}</p>
+													}
+												</div>
+												<div className="min-w-[120px] w-[16%] mr-4">
+													<div className="mb-2">APR</div>
+													{
 
-                <div className="">
-                    <div className="mt-6">
-                        <div className="flex justify-between items-center py-4">
-                            <h3 className="font-semibold text-xl">Participating Pools</h3>
-                            <h3 className="font-semibold text-xl">The Rewards Never Ends</h3>
-                        </div>
-                        <div className="text-base text-primary flex items-center">
-                            <div className="flex border border-solid overflow-hidden h-[40px] border-secondary rounded-full mr-4">
-                                <div className="cursor-pointer w-[100px] text-center px-4 py-1.5 bg-[#a4a2a878] rounded-full">Live</div>
-                                <div className="cursor-pointer w-[100px] text-center px-4 py-1.5">Finished</div>
-                            </div>
-                            <select className="px-4 py-1 h-[40px] mr-4 flex bg-transparent border border-solid overflow-hidden border-secondary rounded" value={sortBy} onChange={(e: React.FormEvent) => setSortBy((e.target as any).value)}>
-                                <option className="p-2 bg-dark-primary" value={''}>Sortby</option>
-                                <option className="p-2 bg-dark-primary" value={'earned'}>Earned</option>
-                                <option className="p-2 bg-dark-primary" value={'apr'}>APR</option>
-                                <option className="p-2 bg-dark-primary" value={'liquidity'}>Liquidity</option>
-                                <option className="p-2 bg-dark-primary" value={'multiplier'}>Multiplier</option>
-                            </select>
-                            <div className="h-[40px] rounded flex items-center border-1 border-solid border-secondary">
-                                <input className="pl-2 py-1 bg-transparent" placeholder="Search Forms"
-                                    onChange={(e) => setSearchText(e.target.value)}
-                                />
-                                <img className="w-[20px] mx-2" src="./images/search-status.png" alt="search" />
-                            </div>
-                        </div>
-                    </div>
+														item.loading ? <div role="status" className="max-w-sm animate-pulse h-[24px] flex items-center">
+															<p className="h-3 bg-gray-200 rounded-full w-12"></p>
+														</div> :
+															<p className="text-[#C7C7C7]">{item.APR ? item.APR.toFixed(2) : 0}%</p>
+													}
+												</div>
+												<div className="min-w-[120px] w-[16%] mr-4">
+													<div className="mb-2">Liquidity</div>
+													{
 
-                    {
-                        pairs.sort((a: any, b: any) => {
-                            if (sortBy == "") {
-                                return 0;
-                            } else if (sortBy == 'earned') {
-                                return b.earned - a.earned;
-                            } else if (sortBy == 'apr') {
-                                return 0;
-                            } else if (sortBy == 'liquidity') {
-                                return b.liquidity - a.liquidity;
-                            } else {
-                                return b.allocPoint - a.allocPoint;
-                            }
-                        }).filter(item => {
-                            if (item.address?.indexOf(searchText) != -1
-                                || item.token0?.indexOf(searchText) != -1
-                                || item.token1?.indexOf(searchText) != -1
-                                || String(item.allocPoint)?.indexOf(searchText) != -1
-                                || String(item.liquidity)?.indexOf(searchText) != -1
-                                || String(item.earned)?.indexOf(searchText) != -1
-                                || String(item.APR)?.indexOf(searchText) != -1) return true;
-                        }).map((item, index) => {
-                            return (
-                                <div key={index + "_"}>
-                                    <div className="mt-4 p-4 flex justify-between items-center bg-row-pattern cursor-pointer"
-                                        onClick={() => togglePairOpenHandle(item)}
-                                    >
-                                        <div className="flex items-center w-[calc(100%_-_50px)]">
-                                            <div className="w-[48px] h-[48px] mr-4">
-                                                <img className="w-full h-full" src="/images/pair.png" alt="pair" />
-                                            </div>
-                                            <div className="w-[120px] mr-4">
-                                                {
-                                                    item.loading ? <div role="status" className="max-w-sm animate-pulse h-[24px] flex items-center">
-                                                        <p className="h-[24px] w-[80px] bg-gray-200 rounded-full"></p>
-                                                        &nbsp;/&nbsp;
-                                                        <p className="h-[24px] w-[80px] bg-gray-200 rounded-full"></p>
-                                                    </div> :
-                                                        (`${item.token0} / ${item.token1}`)
-                                                }
-                                            </div>
-                                            <div className=" mr-8">
-                                                {
-                                                    item.loading ? <div role="status" className="max-w-sm animate-pulse h-[24px] flex items-center">
-                                                        <p className="h-[22px] w-[70px] bg-gray-200 rounded-full"></p>
-                                                    </div> :
-                                                        <button className="flex items-center rounded-full border-[1px] border-solid border-secondary bg-[#a4a2a878] px-1.5 py-1 text-primary">
-                                                            <img className="h-[16px] mr-1" src="/images/verify.png" alt="verify" />
-                                                            <span className="leading-[1] text-sm pr-2">Core</span>
-                                                        </button>
-                                                }
-                                            </div>
-                                            <div className="min-w-[120px] w-[16%] mr-4">
-                                                <div className="mb-2">Earned</div>
-                                                {
-                                                    item.loading ? <div role="status" className="max-w-sm animate-pulse h-[24px] flex items-center">
-                                                        <p className="h-3 bg-gray-200 rounded-full w-12"></p>
-                                                    </div> :
-                                                        <p className="text-[#C7C7C7]">{item.earned ? item.earned.toFixed(3) : 0}</p>
-                                                }
-                                            </div>
-                                            <div className="min-w-[120px] w-[16%] mr-4">
-                                                <div className="mb-2">APR</div>
-                                                {
+														item.loading ? <div role="status" className="max-w-sm animate-pulse h-[24px] flex items-center">
+															<p className="h-3 bg-gray-200 rounded-full w-12"></p>
+														</div> :
+															<p className="text-[#C7C7C7]">{item.totalLiquidity ? item.totalLiquidity.toFixed(3) : 0} USD</p>
+													}
+												</div>
+												<div className="min-w-[120px] w-[16%] mr-4">
+													<div className="mb-2">Multiplier</div>
+													{
 
-                                                    item.loading ? <div role="status" className="max-w-sm animate-pulse h-[24px] flex items-center">
-                                                        <p className="h-3 bg-gray-200 rounded-full w-12"></p>
-                                                    </div> :
-                                                        <p className="text-[#C7C7C7]">{item.APR ? item.APR.toFixed(2) : 0}%</p>
-                                                }
-                                            </div>
-                                            <div className="min-w-[120px] w-[16%] mr-4">
-                                                <div className="mb-2">Liquidity</div>
-                                                {
+														item.loading ? <div role="status" className="max-w-sm animate-pulse h-[24px] flex items-center">
+															<p className="h-3 bg-gray-200 rounded-full w-12"></p>
+														</div> :
+															<p className="text-[#C7C7C7]">{item.allocPoint ? item.allocPoint : item.allocPoint} x</p>
+													}
+												</div>
+											</div>
+											<button onClick={() => togglePoolHandle(item, 'open')}>
+												<img className={`w-[24px] transition-all ${farmUIToggle[index] == 1 ? '' : 'rotate-180'}`} src="/images/arrow-up.png" alt="arrow-up" />
+											</button>
+										</div>
 
-                                                    item.loading ? <div role="status" className="max-w-sm animate-pulse h-[24px] flex items-center">
-                                                        <p className="h-3 bg-gray-200 rounded-full w-12"></p>
-                                                    </div> :
-                                                        <p className="text-[#C7C7C7]">{item.liquidity ? item.liquidity.toFixed(3) : 0} USD</p>
-                                                }
-                                            </div>
-                                            <div className="min-w-[120px] w-[16%] mr-4">
-                                                <div className="mb-2">Multiplier</div>
-                                                {
+										{
+											item.loading == false ? (
+												<div className={`flex overflow-hidden transition-all ${farmUIToggle[index] == 1 ? 'pt-4 h-[124px]' : 'h-0'}`} >
+													<div className="w-[160px] text-secondary flex flex-col justify-center">
+														<a className="mb-2" href={`/liquidity`}>Get LP</a>
+														<a className="mb-2" href={`${explorer}/address/${YOCFarm.address}`} >Contract Details</a>
+														<a href={`${explorer}/address/${item.address}`}>Pair Info</a>
+													</div>
+													<div className="h-[110px] px-4 py-4 ml-2 bg-normal-pattern w-[calc(50%_-_60px)] flex flex-col justify-between">
+														<div>
+															<h3 className="text-lg font-semibold">Earned</h3>
+															<p className="leading-4">{item.earned ? item.earned : 0}</p>
+														</div>
+														<div className="flex justify-end">
+															<button className="flex h-[36px] items-center rounded-full border-[1px] border-solid border-secondary bg-btn-primary px-3 py-1 text-primary disabled:bg-btn-disable disabled:border-[#0f5856]" disabled={!account || !item.approve || !item.earned}
+																onClick={() => harvestHandle(item)}
+															>
+																Harvest
+															</button>
+														</div>
+													</div>
+													<div className="h-[110px] px-4 py-4 ml-2 bg-normal-pattern w-[calc(50%_-_60px)] flex flex-col justify-between">
+														<div>
+															<h3 className="text-lg font-semibold">
+																{
+																	account ? (
+																		`${item.liquidity.pairSymbol}`
+																	) : (
+																		"Start Farming"
+																	)
+																}
+															</h3>
+														</div>
+														<div className="flex justify-end">
+															{
+																account ?
+																	(
+																		item.approve ?
+																			(
+																				item.lpAmount ? (
+																					<div className="w-full h-full flex items-center justify-between">
+																						<span className="font-semibold">{item.lpAmount ? item.lpAmount : 0}</span>
+																						<div className="flex items-center">
+																							<button className="border border-border-primary rounded-lg p-2.5 mr-2" onClick={() => unstakeModalHandle(item)}>
+																								<svg viewBox="0 0 24 24" color="primary" width="14px" xmlns="http://www.w3.org/2000/svg" className="text-border-primary"><path fill="currentColor" d="M18 13H6C5.45 13 5 12.55 5 12C5 11.45 5.45 11 6 11H18C18.55 11 19 11.45 19 12C19 12.55 18.55 13 18 13Z"></path></svg>
+																							</button>
+																							<button className="border border-border-primary rounded-lg p-2.5" onClick={() => stakeLPModalHandle(item)}>
+																								<svg viewBox="0 0 24 24" color="primary" width="14px" xmlns="http://www.w3.org/2000/svg" className="text-border-primary"><path fill="currentColor" d="M18 13H13V18C13 18.55 12.55 19 12 19C11.45 19 11 18.55 11 18V13H6C5.45 13 5 12.55 5 12C5 11.45 5.45 11 6 11H11V6C11 5.45 11.45 5 12 5C12.55 5 13 5.45 13 6V11H18C18.55 11 19 11.45 19 12C19 12.55 18.55 13 18 13Z"></path></svg>
+																							</button>
+																						</div>
+																					</div>
+																				) : (
+																					<button className="h-[36px] rounded text-sm w-[120px] bg-btn-primary shadow-btn-primary px-4 py-1.5 text-primary"
+																						onClick={() => stakeLPModalHandle(item)}
+																					>
+																						Stake LP
+																					</button>
+																				)
+																			)
+																			:
+																			<button className="h-[36px] rounded text-sm w-[120px] bg-btn-primary shadow-btn-primary px-4 py-1.5 text-primary"
+																				onClick={() => enableModalHandle(item)}
+																			>
+																				Enable
+																			</button>
+																	)
+																	:
+																	<button className="h-[36px] rounded text-sm w-[160px] bg-btn-secondary shadow-btn-secondary px-4 py-1.5 text-primary"
+																		onClick={() => {
+																			connectWallet()
+																		}}
+																	>
+																		Connect Wallet
+																	</button>
+															}
+														</div>
+													</div>
+												</div>
+											) : ""
+										}
+									</div>
+								)
+							})
+						)
+					}
+				</div>
 
-                                                    item.loading ? <div role="status" className="max-w-sm animate-pulse h-[24px] flex items-center">
-                                                        <p className="h-3 bg-gray-200 rounded-full w-12"></p>
-                                                    </div> :
-                                                        <p className="text-[#C7C7C7]">{item.allocPoint ? item.allocPoint : item.allocPoint} x</p>
-                                                }
-                                            </div>
-                                        </div>
-                                        <button onClick={() => togglePairOpenHandle(item)}>
-                                            <img className={`w-[24px] transition-all ${(pairsOpen && pairsOpen.find(i => i.address == item.address) && pairsOpen.find(i => i.address == item.address)?.toggle) ? '' : 'rotate-180'}`} src="/images/arrow-up.png" alt="arrow-up" />
-                                        </button>
-                                    </div>
+				<div className="flex items-center justify-center my-4">
+					<img className="w-[20px]" src="./images/prev.png" alt="prev" />
+					<span className="px-2 text-lg">Page {1} of {1}</span>
+					<img className="w-[20px]" src="./images/next.png" alt="next" />
+				</div>
+			</div>
+		</div>
 
-                                    <div className={`flex overflow-hidden transition-all ${(pairsOpen && pairsOpen.find(i => i.address == item.address) && pairsOpen.find(i => i.address == item.address)?.toggle) ? 'pt-4 h-[124px]' : 'h-0'}`} >
-                                        <div className="w-[160px] text-secondary flex flex-col justify-center">
-                                            <a className="mb-2" href={`/liquidity`}>Get LP</a>
-                                            <a className="mb-2" href={`https://goerli.etherscan.io/address/${YOCFarm.address}`} >Contract Details</a>
-                                            <a href={`https://goerli.etherscan.io/address/${item?.address}`}>Pair Info</a>
-                                        </div>
-                                        <div className="h-[110px] px-4 py-4 ml-2 bg-normal-pattern w-[calc(50%_-_60px)] flex flex-col justify-between">
-                                            <div>
-                                                <h3 className="text-lg font-semibold">Earned</h3>
-                                                <p className="leading-4">{item.earned ? item.earned : 0}</p>
-                                            </div>
-                                            <div className="flex justify-end">
-                                                <button className="flex h-[36px] items-center rounded-full border-[1px] border-solid border-secondary bg-btn-primary px-3 py-1 text-primary disabled:bg-btn-disable disabled:border-[#0f5856]" disabled={!account || !item.approve || !item.earned}
-                                                    onClick={() => harvestHandle(item)}
-                                                >
-                                                    Harvest
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <div className="h-[110px] px-4 py-4 ml-2 bg-normal-pattern w-[calc(50%_-_60px)] flex flex-col justify-between">
-                                            <div>
-                                                <h3 className="text-lg font-semibold">
-                                                    {
-                                                        account ? (
-                                                            `${item.symbol}`
-                                                        ) : (
-                                                            "Start Farming"
-                                                        )
-                                                    }
-                                                </h3>
-                                            </div>
-                                            <div className="flex justify-end">
-                                                {
-                                                    account ?
-                                                        (
-                                                            item.approve ?
-                                                                (
-                                                                    item.lpAmount ? (
-                                                                        <div className="w-full h-full flex items-center justify-between">
-                                                                            <span className="font-semibold">{item.lpAmount ? item.lpAmount : 0}</span>
-                                                                            <div className="flex items-center">
-                                                                                <button className="border border-border-primary rounded-lg p-2.5 mr-2" onClick={() => unstakeModalHandle(item)}>
-                                                                                    <svg viewBox="0 0 24 24" color="primary" width="14px" xmlns="http://www.w3.org/2000/svg" className="text-border-primary"><path fill="currentColor" d="M18 13H6C5.45 13 5 12.55 5 12C5 11.45 5.45 11 6 11H18C18.55 11 19 11.45 19 12C19 12.55 18.55 13 18 13Z"></path></svg>
-                                                                                </button>
-                                                                                <button className="border border-border-primary rounded-lg p-2.5" onClick={() => stakeLPModalHandle(item)}>
-                                                                                    <svg viewBox="0 0 24 24" color="primary" width="14px" xmlns="http://www.w3.org/2000/svg" className="text-border-primary"><path fill="currentColor" d="M18 13H13V18C13 18.55 12.55 19 12 19C11.45 19 11 18.55 11 18V13H6C5.45 13 5 12.55 5 12C5 11.45 5.45 11 6 11H11V6C11 5.45 11.45 5 12 5C12.55 5 13 5.45 13 6V11H18C18.55 11 19 11.45 19 12C19 12.55 18.55 13 18 13Z"></path></svg>
-                                                                                </button>
-                                                                            </div>
-                                                                        </div>
-                                                                    ) : (
-                                                                        <button className="h-[36px] rounded text-sm w-[120px] bg-btn-primary shadow-btn-primary px-4 py-1.5 text-primary"
-                                                                            onClick={() => stakeLPModalHandle(item)}
-                                                                        >
-                                                                            Stake LP
-                                                                        </button>
-                                                                    )
-                                                                )
-                                                                :
-                                                                <button className="h-[36px] rounded text-sm w-[120px] bg-btn-primary shadow-btn-primary px-4 py-1.5 text-primary"
-                                                                    onClick={() => enableModalHandle(item)}
-                                                                >
-                                                                    Enable
-                                                                </button>
-                                                        )
-                                                        :
-                                                        <button className="h-[36px] rounded text-sm w-[160px] bg-btn-secondary shadow-btn-secondary px-4 py-1.5 text-primary"
-                                                            onClick={() => {
-                                                                dispatch(walletConnect() as any);
-                                                            }}
-                                                        >
-                                                            Connect Wallet
-                                                        </button>
-                                                }
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            )
-                        })
-                    }
-                    {
-                        pairs.sort((a: any, b: any) => {
-                            if (sortBy == "") {
-                                return 0;
-                            } else if (sortBy == 'earned') {
-                                return b.earned - a.earned;
-                            } else if (sortBy == 'apr') {
-                                return 0;
-                            } else if (sortBy == 'liquidity') {
-                                return b.liquidity - a.liquidity;
-                            } else {
-                                return b.allocPoint - a.allocPoint;
-                            }
-                        }).filter(item => {
-                            if (item.address?.indexOf(searchText) != -1
-                                || item.token0?.indexOf(searchText) != -1
-                                || item.token1?.indexOf(searchText) != -1
-                                || String(item.allocPoint)?.indexOf(searchText) != -1
-                                || String(item.liquidity)?.indexOf(searchText) != -1
-                                || String(item.earned)?.indexOf(searchText) != -1
-                                || String(item.APR)?.indexOf(searchText) != -1) return true;
-                        }).length == 0 ? (
-                            <div className="mt-4 p-4 flex justify-between items-center bg-row-pattern">
-                                <p className="">There is not pools</p>
-                            </div>
-                        ) : ""
-                    }
-                </div>
+		<Modal size="small" show={enableModalShow} onClose={() => setEnableModalShow(false)}>
+			<div className="p-6 pt-8 text-primary">
+				<p className="text-lg py-4">Allow <span className="text-secondary">yoc.com</span> to spend your {selectFarmPool?.liquidity.currency0.symbol + "/" + selectFarmPool?.liquidity.currency1.symbol}?</p>
+				<p className="mb-6 text-sm leading-7">Do you trust this site? By granting this permission, you’re
+					allowing to withdraw your {selectFarmPool?.liquidity.currency0.symbol + "/" + selectFarmPool?.liquidity.currency1.symbol}
+					and automate transaction for you.</p>
 
-                <div className="flex items-center justify-center my-4">
-                    <img className="w-[20px]" src="./images/prev.png" alt="prev" />
-                    <span className="px-2 text-lg">Page {1} of {1}</span>
-                    <img className="w-[20px]" src="./images/next.png" alt="next" />
-                </div>
-            </div>
-        </div>
-        <Footer emptyLogo={true} />
+				<div className="flex justify-between">
+					<button className="w-full font-semibold rounded text-primary bg-btn-primary shadow-btn-primary px-4 py-2 mr-2" onClick={() => enableHandle()}>Confirm</button>
+					<button className="w-full font-semibold rounded text-primary bg-primary-pattern border-[0.5px] border-solid border-[#FFFFFF22] px-4 py-2" onClick={() => setEnableModalShow(false)}>Reject</button>
+				</div>
+			</div>
+		</Modal>
 
-        <Modal size="small" show={enableModalShow} onClose={() => setEnableModalShow(false)}>
-            <div className="p-6 pt-8 text-primary">
-                <p className="text-lg py-4">Allow <span className="text-secondary">yoc.com</span> to spend your {selectPair?.token0 + "/" + selectPair?.token1}?</p>
-                <p className="mb-6 text-sm leading-7">Do you trust this site? By granting this permission, you’re
-                    allowing to withdraw your {selectPair?.token0 + "/" + selectPair?.token1}
-                    and automate transaction for you.</p>
-                {/* <hr className="bg-white mb-4" /> */}
+		<Modal size="small" show={stakeLpModalShow} onClose={() => setStakeLpModalShow(false)}>
+			<div className="p-6 pt-8 flex flex-col text-primary">
+				<h3 className="font-semibold text-xl mb-6">Stake LP Tokens</h3>
+				<div className="flex justify-between mb-4">
+					<div className="w-[calc(100%_-_180px)]">
+						<p className="mb-4">Stake</p>
+						<input className="w-full px-2 py-1 rounded border-[1px] border-solid border-secondary bg-transparent text-dark-primary" value={stakeLpAmount} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setStakeLpAmount(Number(e.target.value)); setStakeLpMax(false); }} />
+					</div>
+					<div className="w-[160px]">
+						<p className="mb-4">Balance: {(selectFarmPool && selectFarmPool.balance) ? Number(selectFarmPool.balance).toFixed(6) : 0}</p>
+						<button className="text-primary bg-btn-secondary shadow-btn-secondary px-4 py-1 rounded" onClick={() => setMaxStakeLpAmountHandle()}>MAX</button>
+					</div>
+				</div>
+				<p className="mb-4">{`${selectFarmPool?.liquidity.currency0.symbol} & ${selectFarmPool?.liquidity.currency1.symbol}`}</p>
+				<a className="text-secondary mb-6" href={`${explorer}/address/${selectFarmPool?.liquidity.pairAddress}`}>Get LP</a>
 
-                {/* <div className="flex flex-col w-full mb-4 py-2">
-                    <div className="flex justify-between items-center font-semibold mb-4">
-                        <span>Transaction Fee</span>
-                        <span>{0.17} USD</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                        <span>A fee is associated with this request.</span>
-                        <span>{0.0023}</span>
-                    </div>
-                </div> */}
+				<div className="flex justify-between">
+					<button className="w-full font-semibold rounded text-primary bg-btn-primary shadow-btn-primary px-4 py-2 mr-2" onClick={() => stakeLPHandle(selectFarmPool as PoolInterface)}>Confirm</button>
+					<button className="w-full font-semibold rounded text-primary bg-primary-pattern border-[0.5px] border-solid border-[#FFFFFF22] px-4 py-2" onClick={() => setStakeLpModalShow(false)}>Reject</button>
+				</div>
+			</div>
+		</Modal>
 
-                <div className="flex justify-between">
-                    <button className="w-full font-semibold rounded text-primary bg-btn-primary shadow-btn-primary px-4 py-2 mr-2" onClick={() => enableHandle()}>Confirm</button>
-                    <button className="w-full font-semibold rounded text-primary bg-primary-pattern border-[0.5px] border-solid border-[#FFFFFF22] px-4 py-2" onClick={() => setEnableModalShow(false)}>Reject</button>
-                </div>
-            </div>
-        </Modal>
+		<Modal size="small" show={unstakeLpModalShow} onClose={() => setUnstakeLpModalShow(false)}>
+			<div className="p-6 pt-8 flex flex-col text-primary">
+				<h3 className="font-semibold text-xl mb-6">Unstake LP Tokens</h3>
+				<div className="flex justify-between mb-4">
+					<div className="w-[calc(100%_-_180px)]">
+						<p className="mb-4">Unstake</p>
+						<input className="w-full px-2 py-1 rounded border-[1px] border-solid border-secondary bg-transparent text-dark-primary" value={unstakeLpAmount} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setUnstakeLpAmount(Number(e.target.value)); setUnstakeLpMax(false); }} />
+					</div>
+					<div className="w-[160px]">
+						<p className="mb-4">Balance: {(selectFarmPool && selectFarmPool.lpAmount) ? selectFarmPool.lpAmount.toFixed(6) : 0}</p>
+						<button className="text-primary bg-btn-secondary shadow-btn-secondary px-4 py-1 rounded" onClick={() => setMaxUnstakeAmountHandle()}>MAX</button>
+					</div>
+				</div>
+				<p className="mb-4">{`${selectFarmPool?.liquidity.currency0.symbol} & ${selectFarmPool?.liquidity.currency1.symbol}`}</p>
+				<a className="text-secondary mb-6" href={`${explorer}/address/${selectFarmPool?.liquidity.pairAddress}`}>Get LP</a>
 
-        <Modal size="small" show={stakeLpModalShow} onClose={() => setStakeLpModalShow(false)}>
-            <div className="p-6 pt-8 flex flex-col text-primary">
-                <h3 className="font-semibold text-xl mb-6">Stake LP Tokens</h3>
-                <div className="flex justify-between mb-4">
-                    <div className="w-[calc(100%_-_180px)]">
-                        <p className="mb-4">Stake</p>
-                        <input className="w-full px-2 py-1 rounded border-[1px] border-solid border-secondary bg-transparent text-dark-primary" value={stakeLpAmount} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setStakeLpAmount(Number(e.target.value)); setStakeLpMax(false); }} />
-                    </div>
-                    <div className="w-[160px]">
-                        <p className="mb-4">Balance: {(selectPair && selectPair.balance) ? Number(selectPair.balance).toFixed(6) : 0}</p>
-                        <button className="text-primary bg-btn-secondary shadow-btn-secondary px-4 py-1 rounded" onClick={() => setMaxStakeLpAmountHandle()}>MAX</button>
-                    </div>
-                </div>
-                <p className="mb-4">{`${selectPair?.token0} & ${selectPair?.token1}`}</p>
-                <a className="text-secondary mb-6" href={`https://goerli.etherscan.io/address/${selectPair?.address}`}>Get LP</a>
-
-                <div className="flex justify-between">
-                    <button className="w-full font-semibold rounded text-primary bg-btn-primary shadow-btn-primary px-4 py-2 mr-2" onClick={() => stakeLPHandle(selectPair as PoolInterface)}>Confirm</button>
-                    <button className="w-full font-semibold rounded text-primary bg-primary-pattern border-[0.5px] border-solid border-[#FFFFFF22] px-4 py-2" onClick={() => setStakeLpModalShow(false)}>Reject</button>
-                </div>
-            </div>
-        </Modal>
-
-        <Modal size="small" show={unstakeLpModalShow} onClose={() => setUnstakeLpModalShow(false)}>
-            <div className="p-6 pt-8 flex flex-col text-primary">
-                <h3 className="font-semibold text-xl mb-6">Unstake LP Tokens</h3>
-                <div className="flex justify-between mb-4">
-                    <div className="w-[calc(100%_-_180px)]">
-                        <p className="mb-4">Unstake</p>
-                        <input className="w-full px-2 py-1 rounded border-[1px] border-solid border-secondary bg-transparent text-dark-primary" value={unstakeLpAmount} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setUnstakeLpAmount(Number(e.target.value)); setUnstakeLpMax(false); }} />
-                    </div>
-                    <div className="w-[160px]">
-                        <p className="mb-4">Balance: {(selectPair && selectPair.lpAmount) ? selectPair.lpAmount.toFixed(6) : 0}</p>
-                        <button className="text-primary bg-btn-secondary shadow-btn-secondary px-4 py-1 rounded" onClick={() => setMaxUnstakeAmountHandle()}>MAX</button>
-                    </div>
-                </div>
-                <p className="mb-4">{`${selectPair?.token0} & ${selectPair?.token1}`}</p>
-                <a className="text-secondary mb-6" href={`https://goerli.etherscan.io/address/${selectPair?.address}`}>Get LP</a>
-
-                <div className="flex justify-between">
-                    <button className="w-full font-semibold rounded text-primary bg-btn-primary shadow-btn-primary px-4 py-2 mr-2" onClick={() => unstakeLPHandle(selectPair as PoolInterface)}>Confirm</button>
-                    <button className="w-full font-semibold rounded text-primary bg-primary-pattern border-[0.5px] border-solid border-[#FFFFFF22] px-4 py-2" onClick={() => setUnstakeLpModalShow(false)}>Reject</button>
-                </div>
-            </div>
-        </Modal>
-    </div >
+				<div className="flex justify-between">
+					<button className="w-full font-semibold rounded text-primary bg-btn-primary shadow-btn-primary px-4 py-2 mr-2" onClick={() => unstakeLPHandle(selectFarmPool as PoolInterface)}>Confirm</button>
+					<button className="w-full font-semibold rounded text-primary bg-primary-pattern border-[0.5px] border-solid border-[#FFFFFF22] px-4 py-2" onClick={() => setUnstakeLpModalShow(false)}>Reject</button>
+				</div>
+			</div>
+		</Modal>
+	</>
 }
 
 export default Farm;

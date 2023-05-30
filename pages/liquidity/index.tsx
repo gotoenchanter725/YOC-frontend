@@ -1,29 +1,31 @@
+import Link from 'next/link';
 import React, { FC, useState, useEffect } from 'react';
-import { useDispatch, useSelector } from "react-redux";
 import { mathExact } from 'math-exact';
+import { MdArrowBack } from "react-icons/md";
 import { Contract, BigNumber, constants, utils } from 'ethers';
 const { MaxUint256, AddressZero, Zero } = constants;
+import axios from 'axios';
 
-import Navbar from '../src/components/common/Navbar';
-import FooterV2 from '../src/components/common/FooterV2';
-import SideMenuBar from '../src/components/widgets/SideMenuBar';
-import TokenComponent from '../src/components/widgets/TokenComponent';
-import SimpleLoading from "../src/components/widgets/SimpleLoading";
-import Modal from '../src/components/widgets/Modalv2';
+import SideMenuBar from '@components/widgets/SideMenuBar';
+import TokenComponent from '@components/widgets/TokenComponent';
+import SimpleLoading from "@components/widgets/SimpleLoading";
+import Modal from '@components/widgets/Modalv2';
 
-import { TOKENS, tokenInterface } from '../src/constants/tokens';
-import { TokenTemplate, YOCSwapRouter, YOCSwapFactory, WETH } from "../src/constants/contracts";
-import { alert_show, loading_end, loading_start, walletConnect } from "../store/actions";
-import { rpc_provider_basic } from '../utils/rpc_provider';
-import { convertEthToWei, convertRate, convertWeiToEth } from "../utils/unit";
+import { TOKENS, tokenInterface } from '../../src/constants/tokens';
+import { TokenTemplate, YOCSwapRouter, YOCSwapFactory, WETH } from "../../src/constants/contracts";
+import { rpc_provider_basic } from '../../utils/rpc_provider';
+import { convertEthToWei, convertRate, convertWeiToEth } from "../../utils/unit";
+
+import { useWallet, useAccount, useLoading, useAlert } from '@hooks/index';
 
 const tempMaxValue = 99999999999;
-const ethAddress = WETH;
 const txRunLimitTime = 1000 * 60 * 5; // 5 min
 
 const Liquidity: FC = () => {
-    const dispatch = useDispatch();
-    const { provider, signer, account, rpc_provider } = useSelector((state: any) => state.data);
+    const { account, provider, signer, rpc_provider } = useAccount();
+    const { loadingStart, loadingEnd } = useLoading();
+    const { alertShow } = useAlert();
+    const { connectWallet } = useWallet();
     const [typeIn, setTypeIn] = useState<tokenInterface>(TOKENS[0] as tokenInterface);
     const [typeOut, setTypeOut] = useState<tokenInterface>();
     const [amountIn, setAmountIn] = useState(0);
@@ -49,23 +51,20 @@ const Liquidity: FC = () => {
         }
     }, [provider, account])
 
-    const getINIT_CODE_PAIR_HASH = async () => {
-        let factoryContract = new Contract(
-            YOCSwapFactory.address,
-            YOCSwapFactory.abi,
-            rpc_provider_basic
-        )
-        console.log(factoryContract);
-        console.log(await factoryContract.INIT_CODE_PAIR_HASH());
-    }
-
     const calculateRate = async (in_: tokenInterface, out_: tokenInterface) => {
         if (!(in_ && out_)) return 0;
         try {
-            let res = await swapContract.getExpectLiquidityAmount((in_.address == "ETH" ? ethAddress : in_.address), (out_.address == "ETH" ? ethAddress : out_.address), convertEthToWei('1', in_.decimals));
-            let rate = convertWeiToEth(res, out_.decimals);
-            setRate(+rate);
-            return +rate;
+            // let res = await swapContract.getExpectLiquidityAmount(in_.address, out_.address, convertEthToWei('1', in_.decimals));
+            // let rate = convertWeiToEth(res, out_.decimals);
+            let res = await axios.get(process.env.API_ADDRESS + '/liquidity/rate?' + `in=${in_.address}&out=${out_.address}`);
+            if (res && res.data) {
+                let rate = 0;
+                if (res.data.rate) {
+                    rate = res.data.rate ? +1 / res.data.rate : 0;
+                }
+                setRate(rate);
+                return rate;
+            }
         } catch (error) {
             console.dir(error);
             return 0;
@@ -96,13 +95,13 @@ const Liquidity: FC = () => {
     }
 
     const setTypeInHandle = async (v: tokenInterface) => {
-        dispatch(loading_start() as any);
+        loadingStart();
         try {
             setAllowanceIn(tempMaxValue);
             setTypeIn(v);
             let r = await calculateRate(v, typeOut as tokenInterface);
             if (r) setAmountIn(mathExact('Divide', +amountOut, +r));
-            if (v.address == "ETH") {
+            if (v.address == WETH) {
                 let balance = await provider.getBalance(account);
                 setMyBalanceIn(+convertWeiToEth(balance, v.decimals));
             } else {
@@ -118,21 +117,21 @@ const Liquidity: FC = () => {
                 let allowAmount = await checkAllowance(v);
                 setAllowanceIn(Number(allowAmount));
             }
-            dispatch(loading_end() as any);
+            loadingEnd();
         } catch (error) {
             console.dir(error);
-            dispatch(loading_end() as any);
+            loadingEnd();
         }
     }
 
     const setTypeOutHandle = async (v: tokenInterface) => {
-        dispatch(loading_start() as any);
+        loadingStart();
         try {
             setAllowanceOut(tempMaxValue);
             setTypeOut(v);
             let r = await calculateRate(typeIn, v);
             if (r) setAmountOut(mathExact('Multiply', +amountIn, +r));
-            if (v.address == "ETH") {
+            if (v.address == WETH) {
                 let balance = await provider.getBalance(account);
                 setMyBalanceOut(+convertWeiToEth(balance, v.decimals));
             } else {
@@ -147,10 +146,10 @@ const Liquidity: FC = () => {
                 let allowAmount = await checkAllowance(v);
                 setAllowanceOut(Number(allowAmount));
             }
-            dispatch(loading_end() as any);
+            loadingEnd();
         } catch (error) {
             console.dir(error);
-            dispatch(loading_end() as any);
+            loadingEnd();
         }
     }
 
@@ -199,7 +198,7 @@ const Liquidity: FC = () => {
                     signer
                 );
                 let tx;
-                if (typeIn.address == "ETH") {
+                if (typeIn.address == WETH) {
                     console.log(typeOut.address);
                     console.log(convertEthToWei(String('1'), 18));
                     console.log(convertEthToWei(String(Number(+amountIn).toFixed(typeIn.decimals)), typeIn.decimals));
@@ -212,12 +211,11 @@ const Liquidity: FC = () => {
                         account,
                         Date.now() + txRunLimitTime + '',
                         // MaxUint256, 
-                        { 
-                            value: convertEthToWei(String(Number(+amountIn).toFixed(typeIn.decimals)), typeIn.decimals), 
-                            gasLimit: 3000000
+                        {
+                            value: convertEthToWei(String(Number(+amountIn).toFixed(typeIn.decimals)), typeIn.decimals),
                         }
                     );
-                } else if (typeOut.address == "ETH") {
+                } else if (typeOut.address == WETH) {
                     tx = await tokenContract.addLiquidityETH(
                         typeIn.address,
                         convertEthToWei(String(Number(+amountIn).toFixed(typeIn.decimals)), typeIn.decimals),
@@ -227,8 +225,7 @@ const Liquidity: FC = () => {
                         Date.now() + txRunLimitTime + '',
                         // MaxUint256, 
                         {
-                            value: convertEthToWei(String(Number(+amountOut).toFixed(typeOut.decimals)), typeOut.decimals), 
-                            gasLimit: 3000000
+                            value: convertEthToWei(String(Number(+amountOut).toFixed(typeOut.decimals)), typeOut.decimals),
                         }
                     );
                 } else {
@@ -242,9 +239,6 @@ const Liquidity: FC = () => {
                         account,
                         Date.now() + txRunLimitTime + '',
                         // MaxUint256, 
-                        {
-                            gasLimit: 3000000
-                        }
                     );
                 }
                 const receipt = await tx.wait();
@@ -253,11 +247,11 @@ const Liquidity: FC = () => {
                 setPendingLiquidity(false);
                 setConfirmDeposit(false)
                 setRate(amountIn / amountOut);
-                dispatch(alert_show({ content: 'Refund Initiated Successfully!', status: 'success' }) as any);
+                alertShow({ content: 'Add Liquidity Successfully!', status: 'success' });
             }
         } catch (error: any) {
             console.dir(error)
-            if (error.code == "UNPREDICTABLE_GAS_LIMIT") dispatch(alert_show({ content: 'Insufficient B amount', status: 'error' }) as any);
+            if (error.code == "UNPREDICTABLE_GAS_LIMIT") alertShow({ content: 'Insufficient B amount', status: 'error' });
             setPendingLiquidity(false);
             setConfirmDeposit(false)
         }
@@ -289,8 +283,7 @@ const Liquidity: FC = () => {
 
     return (
         <div className='relative'>
-            <Navbar />
-            <img className='absolute left-0 top-[10vh] h-[85vh]' src='./images/bg-effect-image.png' alt='effect' />
+            <img className='absolute left-0 top-[10vh] h-[85vh]' src='/images/bg-effect-image.png' alt='effect' />
             <div className='container !py-0 mx-auto min-h-[450px]'>
                 <div className='swap-container relative min-w-full min-h-full'>
                     <div className='absolute left-0 top-0 w-full h-full -z-[10]'>
@@ -298,8 +291,11 @@ const Liquidity: FC = () => {
                     </div>
                     <div className='w-full h-full flex justify-end items-start z-[20]'>
                         <div className='flex flex-col  bg-bg-pattern rounded shadow-big w-[400px] mt-[100px] mr-[5vw]'>
-                            <div className='px-3 py-6'>
-                                <h3 className='relative text-2xl font-semibold text-primary text-center' onClick={() => getINIT_CODE_PAIR_HASH()}>
+                            <div className='px-3 pb-6 pt-8'>
+                                <h3 className='relative text-2xl font-semibold text-primary text-center'>
+                                    {/* <Link href={'/liquidity'}>
+                                        <MdArrowBack className='cursor-pointer absolute left-0 top-0' />
+                                    </Link> */}
                                     Liquidity
                                     <div className='absolute right-0 top-0'>
                                         <img className='h-[35px]' src='/images/swap-header.png' alt='swap' />
@@ -322,7 +318,7 @@ const Liquidity: FC = () => {
                                             pendingApproveIn ?
                                                 <SimpleLoading className="w-[20px]" />
                                                 : (
-                                                    ((!allowanceIn && (typeIn && typeIn.address != "ETH")) || allowanceIn < amountIn) ?
+                                                    ((!allowanceIn && (typeIn && typeIn.address != WETH)) || allowanceIn < amountIn) ?
                                                         <button className='bg-btn-primary px- w-full px-2 text-sm rounded shadow-btn-primary' onClick={() => approveHandle(typeIn, 'in')}>approve</button>
                                                         : ""
                                                 )
@@ -346,7 +342,7 @@ const Liquidity: FC = () => {
                                             pendingApproveOut ?
                                                 <SimpleLoading className="w-[20px]" />
                                                 : (
-                                                    ((!allowanceOut && (typeOut && typeOut.address != "ETH")) || allowanceOut < amountOut) ?
+                                                    ((!allowanceOut && (typeOut && typeOut.address != WETH)) || allowanceOut < amountOut) ?
                                                         <button className='bg-btn-primary px- w-full px-2 text-sm rounded shadow-btn-primary' onClick={() => approveHandle(typeOut as tokenInterface, 'out')}>approve</button>
                                                         : ""
                                                 )
@@ -365,7 +361,7 @@ const Liquidity: FC = () => {
                                         : (account ?
                                             <button className='bg-btn-primary w-full py-5 my-10 text-3xl rounded-lg shadow-btn-primary z-[100] disabled:bg-btn-disable' disabled={(allowanceIn < amountIn || allowanceOut < amountOut || !+amountIn || amountIn > myBalanceIn || !+amountOut || amountOut > myBalanceOut) as boolean} onClick={() => setConfirmDeposit(true)}>Add liquidity</button>
                                             :
-                                            <button className='bg-btn-primary w-full py-5 my-10 text-3xl rounded-lg shadow-btn-primary' onClick={() => dispatch(walletConnect() as any)}>Connect Wallet</button>
+                                            <button className='bg-btn-primary w-full py-5 my-10 text-3xl rounded-lg shadow-btn-primary' onClick={() => connectWallet()}>Connect Wallet</button>
                                         )
                                 }
                             </div>
@@ -374,7 +370,6 @@ const Liquidity: FC = () => {
                     </div>
                 </div>
             </div>
-            <FooterV2 />
 
             <Modal size='small' show={confirmDeposit} onClose={() => { setConfirmDeposit(false) }}>
                 <div className='w-full flex flex-col justify-around items-center py-8 px-12 text-white'>

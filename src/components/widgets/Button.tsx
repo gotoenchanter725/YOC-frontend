@@ -6,10 +6,11 @@ type Props = {
     bgColor?: string;
     color?: string;
     className?: string;
+    disabled?: boolean;
 }
 
-const Button:FC<Props> = ({text, onClick, bgColor="#2d86f2", color="white", className}) => {
-    return <div className={"app-button "+className} onClick={onClick} style={{backgroundColor: bgColor, color: color}}>{text}</div>
+const Button: FC<Props> = ({ text, onClick, bgColor = "#43e3e091", color = "white", className, disabled = false }) => {
+    return <button disabled={disabled} className={`app-button !rounded ${className} ${disabled ? 'disabled' : ''}`} onClick={onClick} style={{ backgroundColor: bgColor, color: color }}>{text}</button>
 }
 
 export default Button;

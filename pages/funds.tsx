@@ -1,36 +1,40 @@
 import React, { FC, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { BsFillPlusSquareFill } from "react-icons/bs";
 import { Contract, ethers } from "ethers";
 import {
     USDCToken,
     Project,
-    TokenTemplate, 
+    TokenTemplate,
     AdminWalletAddress
 } from "../src/constants/contracts";
-import Footer from "../src/components/common/Footer";
-import Navbar from "../src/components/common/Navbar";
-import Card from "../src/components/widgets/Card";
-import ShowMoreIcon from "../src/components/widgets/ShowMoreIcon";
+import Card from "@components/widgets/Card";
+import ShowMoreIcon from "@components/widgets/ShowMoreIcon";
 import { projectInfos } from "../store/actions";
 
+import useLoading from "@hooks/useLoading";
+import useAlert from "@hooks/useAlert";
 
 const Fund: FC = () => {
+    const [step, setStep] = useState(0);
     const dispatch = useDispatch();
-
     const { projects, signer, account, rpc_provider } = useSelector((state: any) => state.data);
-
-    const [loading, setLoading] = useState(false);
-
+    const { loadingStart, loadingEnd } = useLoading();
+    const { alertShow } = useAlert();
     const [showMoreFlag, setShowMoreFlag] = useState(false);
 
     // for project 1 buy function
     const buyToken = async (amount: any, tokenPrice: any, poolAddress: string, investAddress: string, investDecimal: any, shareDecimal: any) => {
         if (account == undefined) {
-            alert("Please connect to the Metamask!");
+            alertShow({
+                status: 'failed',
+                content: 'Please connect to the Metamask!'
+            })
             return;
         } else if (account == AdminWalletAddress) {
-            console.log("Admin can't buy token");
+            alertShow({
+                status: 'failed',
+                content: 'Admin can\'t buy token!'
+            })
             return;
         }
         const ProjectContractInstance = new Contract(poolAddress, Project.abi, signer);
@@ -38,16 +42,19 @@ const Fund: FC = () => {
         let investAmount = ethers.utils.parseUnits(amount, investDecimal);
         let shareAmount = ethers.utils.parseUnits((amount * tokenPrice).toFixed(2), shareDecimal);
         try {
+            loadingStart();
             let approve_investToken = await investTokenInstance.approve(poolAddress, investAmount);
-            setLoading(true);
             await approve_investToken.wait();
 
-            let participate = await ProjectContractInstance.participate(investAmount, shareAmount);
+            console.log(amount);
+            let participate = await ProjectContractInstance.participate(investAmount, shareAmount, {
+                gasLimit: 300000
+            });
             await participate.wait();
-            setLoading(false);
+            loadingEnd();
 
         } catch (ex) {
-            setLoading(false);
+            loadingEnd();
             console.log("buy token error: ", ex)
         }
     }
@@ -55,7 +62,10 @@ const Fund: FC = () => {
     // for project 1 refund function
     const refund = async (poolAddress: string, tokenPrice: any, shareAddress: string, investDecimal: any, shareDecimal: any) => {
         if (account == undefined) {
-            alert("Please connect to the Metamask!");
+            alertShow({
+                status: 'failed',
+                content: 'Please connect to the Metamask!'
+            })
             return;
         }
         const ProjectContractInstance = new Contract(poolAddress, Project.abi, signer);
@@ -64,7 +74,10 @@ const Fund: FC = () => {
         let shareAmount = await shareTokenInstance.balanceOf(account);
         let shareAmountToEth = Number(ethers.utils.formatUnits(shareAmount, shareDecimal));
         if (shareAmountToEth == 0) {
-            alert(`Your balance is zero!`);
+            alertShow({
+                status: 'failed',
+                content: 'Your balance is zero!'
+            })
             return
         }
 
@@ -72,31 +85,34 @@ const Fund: FC = () => {
             let investAmount = ethers.utils.parseUnits((shareAmountToEth / tokenPrice).toString(), investDecimal)
 
             let approve_ytest = await shareTokenInstance.approve(poolAddress, shareAmount);
-            setLoading(true);
+            loadingStart();
             await approve_ytest.wait();
 
             let refund = await ProjectContractInstance.refund(shareAmount, investAmount);
             await refund.wait();
-            setLoading(false);
+            loadingEnd();
         } catch (ex) {
-            setLoading(false);
+            loadingEnd();
         }
     }
 
     // claim function
     const claim = async (poolAddress: string) => {
         if (account == undefined) {
-            alert("Please connect to the Metamask!");
+            alertShow({
+                status: 'failed',
+                content: 'Please connect to the Metamask!'
+            })
             return;
         }
         const ProjectContractInstance = new Contract(poolAddress, Project.abi, signer);
         try {
-            setLoading(true);
+            loadingStart();
             let claim = await ProjectContractInstance.claim();
             await claim.wait();
-            setLoading(false);
+            loadingEnd();
         } catch (ex) {
-            setLoading(false);
+            loadingEnd();
         }
     }
 
@@ -122,58 +138,59 @@ const Fund: FC = () => {
         }
     }, [account, dispatch, rpc_provider])
 
-    return <div>
-        <Navbar />
+    return <>
         <div className="container">
-            <p className="title">
-                Welcome to the new investment world where you can be part of Your Own Company
-            </p>
-            <p className="add_token_btn" onClick={addToken}>
-                <BsFillPlusSquareFill />
-                Add Invest Token
-            </p>
-            <div className="project-list open-projects">
-                <p className="title">Open Projects</p>
-                <div className="card-list">
-                    {
-                        projects.filter((item: any) => item.endDate >= Date.now() && item.currentStatus < 70).map((item: any, index: number) => {
+            <div className="flex justify-between items-center py-8">
+                <p className="leading-[1.5] w-[55%] lg:w-[50%] text-xl lg:text-4xl font-semibold">
+                    Welcome to the new investment world where you can be part of Your Own Company
+                </p>
+                <img className="hidden lg:block w-[45%] h-full" src="/images/fund-bg.png" />
+                <img className="block lg:hidden w-[40%] h-full" src="/images/fund-bg-mobile.png" />
+            </div>
+            <div className="flex justify-between items-center my-6">
+                <div className="flex">
+                    <div className={`bg-primary-pattern text-center ${step == 0 ? 'bg-secondary-pattern shadow-btn-primary' : ''} cursor-pointer rounded py-2 lg:py-4 px-6 lg:px-10 mr-2 lg:mr-4 text-base lg:text-xl text-white font-medium`} onClick={() => { setStep(0) }}>Open Projects</div>
+                    <div className={`bg-primary-pattern text-center ${step == 1 ? 'bg-secondary-pattern shadow-btn-primary' : ''} cursor-pointer rounded py-2 lg:py-4 px-6 lg:px-10 mr-2 lg:mr-4 text-base lg:text-xl text-white font-medium`} onClick={() => { setStep(1) }}>Ongoing Projects</div>
+                    <div className={`bg-primary-pattern text-center ${step == 2 ? 'bg-secondary-pattern shadow-btn-primary' : ''} cursor-pointer rounded py-2 lg:py-4 px-6 lg:px-10 mr-2 lg:mr-4 text-base lg:text-xl text-white font-medium`} onClick={() => { setStep(2) }}>Closed Projects</div>
+                    <div className={`bg-primary-pattern text-center ${step == 3 ? 'bg-secondary-pattern shadow-btn-primary' : ''} cursor-pointer rounded py-2 lg:py-4 px-6 lg:px-10 mr-2 lg:mr-4 text-base lg:text-xl text-white font-medium`} onClick={() => { setStep(3) }}>My Projects</div>
+                </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+                {
+                    step == 0 ?
+                        projects.filter((item: any) => (item && item.endDate >= Date.now() && item.currentStatus < item.ongoingPercent)).map((item: any, index: number) => {
                             return (
                                 <Card key={`card- + ${index}`} item={item} poolAddress={item} buyAction={buyToken} provider={rpc_provider} status="open" />
                             )
-                        })
-                    }
-                </div>
-            </div>
-            <div className="project-list ongoing-projects">
-                <p className="title">Ongoing Projects</p>
-                <div className="card-list">
-                    {
-                        projects.filter((item: any) => item.currentStatus >= 70).map((item: any, index: number) => {
+                        }) :
+                        step == 1 ?
+                            projects.filter((item: any) => (item && item.currentStatus >= item.ongoingPercent)).map((item: any, index: number) => {
+                                return (
+                                    <Card key={`card- + ${index}`} item={item} poolAddress={item} buyAction={buyToken} claimAction={claim} provider={rpc_provider} status="ongoing" />
+                                )
+                            }) :
+                            step == 2 ?
+                                projects.filter((item: any) => (item && item.endDate < Date.now() && item.currentStatus < item.ongoingPercent)).map((item: any, index: number) => {
+                                    return (
+                                        <Card key={`card- + ${index}`} item={item} poolAddress={item} refundAction={refund} provider={rpc_provider} status="close" />
+                                    )
+                                }) : ""
+                }
+                {
+                    step == 3 ?
+                        projects.filter((item: any) => item && Number(item.investTokenBalance)).map((item: any, index: number) => {
                             return (
                                 <Card key={`card- + ${index}`} item={item} poolAddress={item} buyAction={buyToken} claimAction={claim} provider={rpc_provider} status="ongoing" />
                             )
                         })
-                    }
-                </div>
-            </div>
-            <div className="project-list close-projects">
-                <p className="title">Closed Projects</p>
-                <div className="card-list">
-                    {
-                        projects.filter((item: any) => item.endDate < Date.now() && item.currentStatus < 70).map((item: any, index: number) => {
-                            return (
-                                <Card key={`card- + ${index}`} item={item} poolAddress={item} refundAction={refund} provider={rpc_provider} status="close" />
-                            )
-                        })
-                    }
-                </div>
+                        : ""
+                }
             </div>
             {
                 showMoreFlag ? <ShowMoreIcon text="Show More" /> : null
             }
         </div>
-        <Footer />
-    </div>
+    </>
 }
 
 export default Fund;
