@@ -36,12 +36,12 @@ module.exports = {
         // text color
         'primary': 'white',
         'secondary': '#2AF6FF',
-        'dark-primary': "#8B8B8B",
-        'dark-secondary': '#496067',
+        'dark-primary': "#999999",
+        'dark-secondary': '#bbbbbb',
         // button background
         'btn-primary': 'rgba(67, 227, 224, 0.57)',
         'btn-secondary': '#7212EF',
-        'btn-disable': "#2a4142", 
+        'btn-disable': "#2a4142",
         // border
         'border-primary': '#97FBFF',
         // bg color
@@ -53,14 +53,11 @@ module.exports = {
         'secondary-pattern': "linear-gradient(90.46deg, rgba(83, 75, 177, 0.12) -18.76%, rgba(228, 204, 81, 0.12) 72.39%)",
         'bg-pattern': 'linear-gradient(180deg, rgba(0, 220, 159, 0.105) 34.7%, rgba(188, 44, 216, 0.06) 100%)',
         'arrow-down': "url('./public/images/arrow-down.png')",
-        'tr-gradient': 'radial-gradient(50.03% 50.02% at 49.8% 50.03%, rgba(66, 232, 224, 0.85) 0%, #36A6A1 43.75%, #00000000 100%)', 
-        'normal-pattern': 'linear-gradient(90.46deg, rgba(118, 118, 118, 0.12) -18.76%, rgba(173, 173, 173, 0.12) 72.39%)', 
-        'row-pattern': 'linear-gradient(90.46deg, rgba(0, 220, 159, 0.12) -18.76%, rgba(173, 173, 173, 0.12) 72.39%)', 
-        'home-box1': "linear-gradient(0deg, rgb(230, 73, 128) 0%, rgb(121, 80, 242) 100%)", 
-        'home-box2': "linear-gradient(0deg, rgb(134, 142, 150) 0%, rgb(253, 126, 20) 100%)", 
-        'home-box3': "linear-gradient(0deg, rgb(121, 80, 242) 0%, rgb(64, 192, 87) 100%)", 
-        'home-box4': "linear-gradient(0deg, rgb(250, 176, 5) 0%, rgb(64, 192, 87) 100%)", 
-        'box-pattern': "linear-gradient(90.46deg, rgba(30, 30, 30, 0.06) -18.76%, rgba(252, 252, 252, 0.083) 72.39%);"
+        'tr-gradient': 'radial-gradient(50.03% 50.02% at 49.8% 50.03%, rgba(66, 232, 224, 0.85) 0%, #36A6A1 43.75%, #00000000 100%)',
+        'normal-pattern': 'linear-gradient(90.46deg, rgba(118, 118, 118, 0.12) -18.76%, rgba(173, 173, 173, 0.12) 72.39%)',
+        'row-pattern': 'linear-gradient(90.46deg, rgba(0, 220, 159, 0.12) -18.76%, rgba(173, 173, 173, 0.12) 72.39%)',
+        'box-pattern': "linear-gradient(90.46deg, rgba(30, 30, 30, 0.06) -18.76%, rgba(252, 252, 252, 0.083) 72.39%)",
+        'card-pattern': "linear-gradient(180deg, rgba(0, 220, 159, 0.1) 34.7%, rgba(188, 44, 216, 0.02) 100%)"
       },
       boxShadow: {
         'big': '0px 4px 35px #2af6ff5c',

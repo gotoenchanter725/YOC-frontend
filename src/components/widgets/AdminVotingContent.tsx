@@ -34,7 +34,7 @@ const AdminVotingContent: FC<Props> = ({ handleClose, projectTitle, votingQueryD
     for (let i = 0; i < amountAnswer; i++) {
         answerList.push(<div className="input_control answer_item" key={i}>
             <label htmlFor="">Answer {i + 1}</label>
-            <input className="border border-solid border-black text-base px-2 py-1 rounded" type="text" onChange={(e) => handleAnswerArr(e.target.value, i)} value={answerArr[i]} />
+            <input className="text-white rounded border border-[#FFFFFF22] bg-transparent bg-primary-pattern px-4 py-2 outline-none" type="text" onChange={(e) => handleAnswerArr(e.target.value, i)} value={answerArr[i]} />
         </div>)
     }
 
@@ -53,33 +53,33 @@ const AdminVotingContent: FC<Props> = ({ handleClose, projectTitle, votingQueryD
     }
 
     return <div className="admin_voting_content">
-        <div className='input_field'>
+        <div className='input_field text-white'>
             <div className="input_control query_title">
                 <label htmlFor="">Query Title</label>
-                <input className="border border-solid border-black text-base px-2 py-1 rounded" type="text" onChange={(e) => setQueryTitle(e.target.value)} value={queryTitle} />
+                <input className="text-white rounded border border-[#FFFFFF22] bg-transparent bg-primary-pattern px-4 py-2 outline-none" type="text" onChange={(e) => setQueryTitle(e.target.value)} value={queryTitle} />
             </div>
             <div className="input_control query_content">
                 <label htmlFor="">Question?</label>
-                <textarea className="border border-solid border-black text-base px-2 py-1 rounded" rows={3} onChange={(e) => setQueryContent(e.target.value)} value={queryContent} />
+                <textarea className="text-white rounded border border-[#FFFFFF22] bg-transparent bg-primary-pattern px-4 py-2 outline-none" rows={3} onChange={(e) => setQueryContent(e.target.value)} value={queryContent} />
             </div>
             <div className="input_control amount_answer">
                 <label htmlFor="">Amount of Answer</label>
-                <input className="border border-solid border-black text-base px-2 py-1 rounded" type="number" onChange={(e) => handleAmountAnswer(+e.target.value)} value={amountAnswer} />
+                <input className="text-white rounded border border-[#FFFFFF22] bg-transparent bg-primary-pattern px-4 py-2 outline-none" type="number" onChange={(e) => handleAmountAnswer(+e.target.value)} value={amountAnswer} />
             </div>
             {answerList}
             <div className="input_control start_date">
                 <label htmlFor="">Start Date</label>
-                <input className="border border-solid border-black text-base px-2 py-1 rounded" type="date" onChange={(e) => setStartDate(new Date(e.target.value).getTime().toString())} />
+                <input className="text-white rounded border border-[#FFFFFF22] bg-transparent bg-primary-pattern px-4 py-2 outline-none" type="date" onChange={(e) => setStartDate(new Date(e.target.value).getTime().toString())} />
             </div>
             <div className="input_control end_date">
                 <label htmlFor="">End Date</label>
-                <input className="border border-solid border-black text-base px-2 py-1 rounded" type="date" onChange={(e) => setEndDate(new Date(e.target.value).getTime().toString())} />
+                <input className="text-white rounded border border-[#FFFFFF22] bg-transparent bg-primary-pattern px-4 py-2 outline-none" type="date" onChange={(e) => setEndDate(new Date(e.target.value).getTime().toString())} />
             </div>
         </div>
 
         <div className="d-flex btn_group">
-            <Button className="saveBtn" text="Launch" onClick={saveVotingQuestion} />
-            <Button className="cancelBtn" text="Cancel" onClick={cancelVoting} />
+            <Button className="" text="Launch" onClick={saveVotingQuestion} />
+            <Button className="!bg-dark-primary" text="Cancel" onClick={cancelVoting} />
         </div>
     </div>
 }

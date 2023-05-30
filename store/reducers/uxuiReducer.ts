@@ -5,6 +5,7 @@ const initialState = {
     alertModal: false, 
     alertType: 'success', 
     alertContent: '',
+    alertText: '', 
 };
 
 const uxuiReducer = (state = initialState, action: any) => {
@@ -24,7 +25,8 @@ const uxuiReducer = (state = initialState, action: any) => {
                 ...state, 
                 alertModal: true, 
                 alertType: action.payload.status, 
-                alertContent: action.payload.content
+                alertContent: action.payload.content,
+                alertText: action.payload.text,
             }
         case ALERT_HIDDEN:
             return {

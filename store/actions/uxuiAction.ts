@@ -17,6 +17,7 @@ export const alert_show = (param: any) => (dispatch: any) => {
         type: ALERT_SHOW, 
         payload: {
             content: param.content, 
+            text: param.text, 
             status: param.status
         }
     })

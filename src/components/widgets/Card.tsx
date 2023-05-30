@@ -1,18 +1,22 @@
-import React, { FC, useState, useEffect, useRef } from "react";
+import React, { FC, useState, useEffect, useRef, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Contract, ethers } from "ethers";
 import ProgressBar from "./ProgressBar";
 import Button from "./Button";
-import Modal from "./Modal";
+import { BsFillTrashFill } from "react-icons/bs";
 import ModalV2 from "./Modalv2";
 import AdminVotingContent from "./AdminVotingContent";
 import UserVotingContent from "./UserVotingContent";
 import UserVotingResult from "./UserVotingResultModal";
-import { Project, ProjectDetail } from "../../constants/contracts";
+import { Project, ProjectDetail, TokenTemplate, USDCToken } from "../../constants/contracts";
 import { loading_end, loading_start, updateProjectInfo } from "../../../store/actions";
 import { VotingQueryInterface, VotingResultInterface } from "../../interfaces/voting";
 import axios from "axios";
 import VotingHistory from "./VotingHistoryModalContent";
+
+import useLoading from "@hooks/useLoading";
+import useAlert from "@hooks/useAlert";
+import { convertWeiToEth } from "utils/unit";
 
 interface Props {
     item?: any;
@@ -27,13 +31,21 @@ interface Props {
 }
 
 interface detailProjectInterface {
-    shareToken: string, 
-    shareTokenDecimals: number, 
-    shareTokenSellAmount: number, 
+    shareToken: string,
+    shareTokenDecimals: number,
+    shareTokenSellAmount: number,
+}
+
+interface detailTokenInterface {
+    contract: Contract,
+    symbol: string,
+    decimals: number
 }
 
 const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAction, admin, status }) => {
     const dispatch = useDispatch();
+    const { loadingStart, loadingEnd } = useLoading();
+    const { alertShow } = useAlert();
     const { projects, account, rpc_provider } = useSelector((state: any) => state.data);
     const [showBuyTokenModal, setShowBuyTokenModal] = useState(false);
     const [showDepositModal, setShowDepositModal] = useState(false);
@@ -44,36 +56,95 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
     const [usdAmount, setUsdAmount] = useState("");
     const [votingQueryDetail, setvotingQueryDetail] = useState<VotingQueryInterface>({});
     const [userVotingDetail, setUserVotingDetail] = useState<{}>({});
-    const [votingResult, setVotingResult] = useState<VotingResultInterface[]>([{}]);
-    const [currentUserAnswer, setcurrentUserAnswer] = useState();
+    const [votingResult, setVotingResult] = useState<VotingResultInterface[]>([]);
+    const [currentUserAnswer, setCurrentUserAnswer] = useState<Number>();
+    const [currentUserIsBet, setCurrentUserIsBet] = useState(false);
     const [currentUserBalance, setcurrentUserBalance] = useState('');
-    const [votingResponse, setVotingRsponse] = useState<VotingQueryInterface[]>([{}]);
+    const [votingResponse, setVotingRsponse] = useState<VotingQueryInterface[]>([]);
     const [detailProject, setDetailProject] = useState<detailProjectInterface>();
     const [load, setLoad] = useState(false);
-    const [refund, setRefund] = useState<any>();
+    const [investContract, setInvestContract] = useState<detailTokenInterface>();
+    const [shareContract, setShareContract] = useState<detailTokenInterface>();
 
     useEffect(() => {
-        if (rpc_provider && account) {
-            try {
-                const projectDetail = new Contract(item.poolAddress, Project.abi, rpc_provider);
-                projectDetail.on('Participated', (address, amount1, amount2) => {
-                    dispatch(updateProjectInfo(projects, address, account) as any);
-                });
-
-                projectDetail.on('Refund', (address, amount1, amount2) => {
-                    dispatch(updateProjectInfo(projects, address, account) as any);
-                });
-
-                projectDetail.on('claimed', (address, amount) => {
-                    dispatch(updateProjectInfo(projects, address, account) as any);
+        (async () => {
+            if (item.investToken && rpc_provider) {
+                const investToken = new Contract(item.investToken, USDCToken.abi, rpc_provider);
+                const investTokenSymbol = await investToken.symbol();
+                const investTokenDecimals = await investToken.decimals();
+                setInvestContract({
+                    contract: investToken,
+                    symbol: investTokenSymbol,
+                    decimals: investTokenDecimals
                 })
 
-                projectDetail.on('profitDeposited', (address, amount) => {
+                const shareToken = new Contract(item.shareToken, TokenTemplate.abi, rpc_provider);
+                const shareTokenSymbol = await shareToken.symbol();
+                const shareTokenDecimals = await shareToken.decimals();
+                setShareContract({
+                    contract: shareToken,
+                    symbol: shareTokenSymbol,
+                    decimals: shareTokenDecimals
+                })
+            }
+        })();
+    }, [item, rpc_provider, account])
+
+    useEffect(() => {
+        if (rpc_provider && account && investContract && shareContract) {
+            try {
+                const projectDetail = new Contract(item.poolAddress, Project.abi, rpc_provider);
+                projectDetail.on('Participated', (address, amount1, amount2, user) => {
                     dispatch(updateProjectInfo(projects, address, account) as any);
+
+                    if (user == account) {
+                        let realShareAmount = convertWeiToEth(amount1, shareContract ? shareContract.decimals : 16)
+                        let realInvestAmount = convertWeiToEth(amount2, investContract ? investContract.decimals : 16)
+                        alertShow({
+                            content: `Participated ${realShareAmount} ${shareContract?.symbol}, ${realInvestAmount} ${investContract?.symbol} Successfully`,
+                            status: 'success'
+                        })
+                    }
+                });
+
+                projectDetail.on('Refund', (address, amount1, amount2, user) => {
+                    dispatch(updateProjectInfo(projects, address, account) as any);
+
+                    if (user == account) {
+                        let realShareAmount = convertWeiToEth(amount1, shareContract ? shareContract.decimals : 16)
+                        let realInvestAmount = convertWeiToEth(amount2, investContract ? investContract.decimals : 16)
+                        alertShow({
+                            content: `Refund ${realShareAmount} ${shareContract?.symbol}, ${realInvestAmount} ${investContract?.symbol} Successfully`,
+                            status: 'success'
+                        })
+                    }
+                });
+
+                projectDetail.on('Claimed', (address, amount, user) => {
+                    dispatch(updateProjectInfo(projects, address, account) as any);
+
+                    if (user == account) {
+                        let realAmount = convertWeiToEth(amount, investContract ? investContract.decimals : 16)
+                        alertShow({
+                            content: `Dividend Claimed ${realAmount} ${investContract?.symbol} Successfully`,
+                            status: 'success'
+                        })
+                    }
+                })
+
+                projectDetail.on('ProfitDeposited', (address, amount, user) => {
+                    dispatch(updateProjectInfo(projects, address, account) as any);
+
+                    if (user == account) {
+                        let realAmount = convertWeiToEth(amount, investContract ? investContract.decimals : 16)
+                        alertShow({
+                            content: `Deposit ${realAmount} ${investContract?.symbol} Successfully`,
+                            status: 'success'
+                        })
+                    }
                 });
 
                 (async () => {
-                    console.log('ok')
                     axios.get(process.env.API_ADDRESS + `/voting/projectTitle/${item.name}`).then(res => {
                         let rst = res.data.votingQueryDetail;
                         rst = rst.sort((a: any, b: any) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime()).map((item: any) => new Date(item.endDate).getTime() > new Date().getTime() ? { ...item, ongoing: true } : { ...item, ongoing: false })
@@ -88,17 +159,21 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
                 console.log("event listen error: ", ex);
             }
         }
-    }, [account, rpc_provider]);
+    }, [account, rpc_provider, investContract, shareContract]);
 
-    const getVotingInfo = () => {
-        dispatch(loading_start() as any);
+    const getVotingInfo = useCallback(() => {
+        loadingStart();
         let votingQuery = votingResponse.find((item: any) => ((new Date() >= new Date(item.startDate)) && (new Date() <= new Date(item.endDate))));
+        console.log(votingQuery);
         if (votingQuery) {
             // There is an ongoing voting poll
             setvotingQueryDetail(votingQuery);
             if (admin) {
-                alert('There is an ongoing Voting Poll.');
-                dispatch(loading_end() as any);
+                alertShow({
+                    content: "There is an ongoing Voting Poll.",
+                    status: 'failed'
+                })
+                loadingEnd()
             } else {
                 if (account) {
                     axios.get(process.env.API_ADDRESS + `/voting/projectTitle/${item.name}/accountAddress/${account}`).then(async (res) => {
@@ -118,10 +193,10 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
                             console.log(balanceInfo)
                             setcurrentUserBalance(balance);
                         }
+                        setShowVotingModal(true);
+                        loadingEnd()
                     });
                 }
-                setShowVotingModal(true);
-                dispatch(loading_end() as any);
             }
         } else if (votingResponse && votingResponse.length && !admin) {
             console.log(votingResponse);
@@ -142,7 +217,7 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
                             state: res.data.votingResult.find((votingInfo: any) => votingInfo.userAddress === item).votingState
                         }
                         if (item == account) {
-                            setcurrentUserAnswer(result.state);
+                            setCurrentUserAnswer(result.state);
                         }
                         return result;
                     });
@@ -158,7 +233,7 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
                     setVotingResult(result)
                 }
                 setShowVotingResultModal(true);
-                dispatch(loading_end() as any);
+                loadingEnd()
             });
         } else {
             setvotingQueryDetail({});
@@ -167,12 +242,15 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
             if (admin) {
                 setShowVotingModal(true);
             } else {
-                alert('There is no any ongoing Voting Poll');
+                alertShow({
+                    content: "There is no any ongoing Voting Poll.",
+                    status: 'failed'
+                })
                 // getVotingInfo();
             }
-            dispatch(loading_end() as any);
+            loadingEnd()
         }
-    }
+    }, [votingResponse, admin]);
 
     const inputTokenAmount: React.KeyboardEventHandler<HTMLInputElement> = (e) => {
         (e.target as HTMLInputElement).value;
@@ -241,6 +319,8 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
                 const detailContract = new Contract(ProjectDetail.address || '', ProjectDetail.abi, rpc_provider);
                 let shareTokenAddress = detailProject.shareToken;
                 let balanceInfo = await detailContract.getTokenInfo(shareTokenAddress, userAddressArr);
+                setCurrentUserIsBet(false);
+                setCurrentUserAnswer(-1);
                 let temp = userAddressArr.map((item: string) => {
                     let result = {
                         userAddress: item,
@@ -248,7 +328,8 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
                         state: res.data.votingResult.find((votingInfo: any) => votingInfo.userAddress === item).votingState
                     }
                     if (item == account) {
-                        setcurrentUserAnswer(result.state);
+                        setCurrentUserAnswer(result.state);
+                        setCurrentUserIsBet(true);
                     }
                     return result;
                 });
@@ -272,6 +353,10 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
         setShowVotingHistoryModal(true)
     }
 
+    // const deleteProjectHandle = async (item: any) => {
+    //     console.log(item.poolAddress);
+    // }
+
     let btnGroup;
     if (status == 'open') {
         btnGroup = admin ?
@@ -291,128 +376,136 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
                 <div>
                     <p>{`claim amount: ${(item.claimAmount || 0).toFixed(2)} USDC`}</p>
                 </div>
-                <Button className={item.claimAmount > 0 && !item.claimable ? "" : "disabled"} text="Claim Dividend" onClick={claimHandler} />
+                <Button disabled={!(item.claimAmount > 0 && !item.claimable)} text="Claim Dividend" onClick={claimHandler} />
                 <Button text="Add Token" onClick={() => addToken()} />
             </div>
     } else {
-        btnGroup = <Button className={refund ? "" : "disabled"} text="Refund" onClick={refundHandler} />
+        btnGroup = <Button className={"mt-1"} text="Refund" onClick={refundHandler} />
     }
     return (<div className="app-card">
-        <div className="d-flex justify-between align-center">
-            <img src={item.logoSrc} width={40} height={30} alt="" />
-            <p className="project-name">{item.name}</p>
-            <div className="token-price">1 USD = {item.tokenPrice} {item.name}</div>
-        </div>
-        <p className="explanation">
-            {item.explanation}
-        </p>
-        <div className="d-flex justify-between">
-            <p>Total Raise</p>
-            <p>Total Amount</p>
-        </div>
-        <div className="d-flex justify-between" style={{ marginBottom: '5px' }}>
-            <div className="d-flex align-center" style={{ gap: '5px' }}>
-                <img src="/images/usd.png" width={35} height={35} alt="" />
-                <p>{item.totalRaise.toLocaleString()}</p>
+        <div className="w-full card-header">
+            <div className="d-flex justify-between align-center">
+                <img src={item.logoSrc} width={40} height={30} alt="" />
+                <p className="project-name">{item.name}</p>
+                <div className="token-price">1 USD = {item.tokenPrice} {item.name}</div>
+                {/* <button onClick={() => deleteProjectHandle(item)} className='p-2 rounded bg-btn-primary text-white ml-2'><BsFillTrashFill /></button> */}
             </div>
-            <div className="d-flex align-center" style={{ gap: '5px' }}>
-                <img src={item.symbolImage} width={35} height={35} alt="" />
-                <p>{item.totalYTEST.toLocaleString()}</p>
-            </div>
+            <p className="explanation">
+                {item.explanation}
+            </p>
         </div>
-        <ProgressBar percent={item.currentStatus} />
-        <div className="d-flex justify-between" style={{ margin: '5px 0 10px' }}>
-            <p>{item.currentStatus.toFixed(2)}%</p>
-            <p>{(item.currentStatus * item.totalYTEST / 100).toLocaleString()}/{item.totalYTEST.toLocaleString(
-
-            )}</p>
-        </div>
-        <div className="extra-info">
-            <div>
-                <a href={item.projectURL} target="_blank" rel="noreferrer">Go to project page</a>
-                <a href={`https://testnet.bscscan.com/token/${item.shareToken}#balances`} target="_blank" rel="noreferrer">Go to xscan to Token Address</a>
-                <p>ROI: Aprox. {item.ROI} months</p>
-                <p>APR: Aprox. {item.APR}%</p>
-                <p>Category: {item.category}</p>
-                <p>End Date: {(new Date(item.endDate)).toLocaleDateString()}</p>
-                {/* {
-                    status == 'ongoing' ? <a className="open_vote_btn" onClick={() => getVotingInfo()}>Voting Poll</a> : ''
-                } */}
-                {
-                    (status == 'ongoing' && votingResponse.length && (new Date(String(votingResponse[0].endDate)).getTime() >= new Date().getTime())) ? <a className="open_vote_btn" onClick={() => getVotingInfo()}>Voting Poll</a> : ''
-                }
-                {
-                    (status == 'ongoing' && votingResponse.length) ?
-                        <a className="open_vote_btn" onClick={() => votingHistoryModalHandle()}>Voting History</a>
-                        : ""
-                }
+        <div className="card-content">
+            <div className="d-flex justify-between">
+                <p>Total Raise</p>
+                <p>Total Amount</p>
             </div>
-            <div>
-                <div className="right-info m-b-1">
-                    <p>USDC: {(Number(item.investTokenBalance) || 0).toFixed(2) || 0}</p>
-                    <p>{item.name}: {(Number(item.shareTokenBalance) || 0).toFixed(2) || 0}</p>
+            <div className="d-flex justify-between" style={{ marginBottom: '5px' }}>
+                <div className="d-flex align-center" style={{ gap: '5px' }}>
+                    <img src="/images/usd.png" width={35} height={35} alt="" />
+                    <p>{item.totalRaise.toLocaleString()}</p>
                 </div>
-                <div className="btn-group">
-                    {btnGroup}
+                <div className="d-flex align-center" style={{ gap: '5px' }}>
+                    <img src={item.symbolImage} width={35} height={35} alt="" />
+                    <p>{item.totalYTEST.toLocaleString()}</p>
+                </div>
+            </div>
+            <ProgressBar percent={item.currentStatus} />
+            <div className="d-flex justify-between" style={{ margin: '5px 0 10px' }}>
+                <p>{item.currentStatus.toFixed(2)}%</p>
+                <p>{(item.currentStatus * item.totalYTEST / 100).toLocaleString()}/{item.totalYTEST.toLocaleString(
+
+                )}</p>
+            </div>
+            <div className="extra-info">
+                <div>
+                    <a href={item.projectURL} target="_blank" rel="noreferrer">Go to project page</a>
+                    <a href={`https://testnet.bscscan.com/token/${item.shareToken}#balances`} target="_blank" rel="noreferrer">Go to xscan to Token Address</a>
+                    <p>ROI: Aprox. {item.ROI} months</p>
+                    <p>APR: Aprox. {item.APR}%</p>
+                    <p>Category: {item.category}</p>
+                    <p>End Date: {(new Date(item.endDate)).toLocaleDateString()}</p>
+                    {
+                        status == 'ongoing' && !votingResponse.length && admin ? <Button className="mt-1" text="Creat Voting" onClick={() => getVotingInfo()}></Button> : ''
+                    }
+                    {
+                        (status == 'ongoing' && votingResponse && votingResponse.length) ? <Button className="mt-1" text={(new Date(String(votingResponse[0].endDate)).getTime() < new Date().getTime()) && admin ? "Create Voting" : "Voting Poll"} onClick={() => getVotingInfo()}></Button> : ''
+                    }
+                    {
+                        (status == 'ongoing' && votingResponse && votingResponse.length) ?
+                            <Button className="mt-1" text="Voting History" onClick={() => votingHistoryModalHandle()}></Button>
+                            : ""
+                    }
+                </div>
+                <div>
+                    <div className="right-info m-b-1">
+                        <p>USDC: {(Number(item.investTokenBalance) || 0).toFixed(2) || 0}</p>
+                        <p>{item.name}: {(Number(item.shareTokenBalance) || 0).toFixed(2) || 0}</p>
+                    </div>
+                    <div className="btn-group">
+                        {btnGroup}
+                    </div>
                 </div>
             </div>
         </div>
         <div id="modal-root"></div>
 
         {/* Buy Token Modal */}
-        <Modal
+        <ModalV2
             show={showBuyTokenModal}
             onClose={() => setShowBuyTokenModal(false)}
-            title="How much do you want?"
         >
-            <div className="modal_content buy_token_modal">
+            <div className="modal_content buy_token_modal p-4">
+                <p className='text-center text-2xl w-full text-white py-6 font-bold'>How much do you want?</p>
                 <div className="input_field">
-                    <div className="input_control">
-                        <input className="token_amount" placeholder="0.00" onInput={inputTokenAmount} value={tokenAmount} />
-                        <span>{item.name}</span>
+                    <div className="w-full relative flex items-center justify-between mb-4">
+                        <input className="w-[calc(100%_-_60px)] text-white rounded border border-[#FFFFFF22] bg-transparent bg-primary-pattern px-4 py-2 outline-none" placeholder="0.00" onInput={inputTokenAmount} value={tokenAmount} />
+                        <span className="mr-1">{item.name}</span>
                     </div>
-                    <div className="d-flex justify-between align-center">
+                    <div className="d-flex justify-between align-center mb-4">
                         <span>Available: {(item.totalYTEST - (item.currentStatus * item.totalYTEST / 100)).toFixed(2)} </span>
-                        <Button className="max-btn" text="Max" onClick={setMaxTokenAmountValue} bgColor="#0c54ad" />
+                        <Button className="max-btn !bg-btn-primary" text="Max" onClick={setMaxTokenAmountValue} bgColor="#0c54ad" />
                     </div>
-                    <div className="input_control">
-                        <input className="usd_amount" placeholder="0.00" onInput={inputUSDAmount} value={usdAmount} />
-                        <span>USD</span>
+                    <div className="w-full relative flex items-center justify-between mb-4">
+                        <input className="w-[calc(100%_-_60px)] text-white rounded border border-[#FFFFFF22] bg-transparent bg-primary-pattern px-4 py-2 outline-none" placeholder="0.00" onInput={inputUSDAmount} value={usdAmount} />
+                        <span className="mr-1">USD</span>
                     </div>
-                    <div className="d-flex justify-between align-center mb-5">
+                    <div className="d-flex justify-between align-center mb-4">
                         <span>Available: {item.availableMaxUsdValue}</span>
-                        <Button className="max-btn" text="Max" onClick={setMaxUsdAmountValue} bgColor="#0c54ad)" />
+                        <Button className="max-btn !bg-btn-primary" text="Max" onClick={setMaxUsdAmountValue} bgColor="#0c54ad)" />
                     </div>
                 </div>
-                <Button text="Buy Token" onClick={() => { buyAction(usdAmount, item.tokenPrice, item.poolAddress, item.investToken, item.investDecimal, item.shareDecimal); setShowBuyTokenModal(false); }} />
+                <div className="w-full flex justify-end">
+                    <Button text="Buy Token" onClick={() => { buyAction(usdAmount, item.tokenPrice, item.poolAddress, item.investToken, item.investDecimal, item.shareDecimal); setShowBuyTokenModal(false); }} />
+                    <Button className="!bg-dark-primary ml-2" text="Cancel" onClick={() => { setShowBuyTokenModal(false); }} />
+                </div>
             </div>
-        </Modal>
+        </ModalV2>
 
         {/* for deposit modal */}
-        <Modal
+        <ModalV2
             show={showDepositModal}
             onClose={() => setShowDepositModal(false)}
-            title="How much do you want?"
         >
-            <div className="modal_content">
-                <div className="input_field">
-                    <div className="input_control">
-                        <input className="usd_amount" placeholder="0.00" onInput={inputUSDAmount} value={usdAmount} />
-                        <span>USD</span>
-                    </div>
+            <div className="modal_content p-4">
+                <p className='text-center text-2xl w-full text-white py-4 font-bold'>How much do you want?</p>
+                <div className="input_field mb-4">
+                    <input className="w-[calc(100%_-_50px)] text-white rounded border border-[#FFFFFF22] bg-transparent bg-primary-pattern px-4 py-2 outline-none" placeholder="0.00" onInput={inputUSDAmount} value={usdAmount} />
+                    <span className="text-right ml-4 text-white">USD</span>
                 </div>
-                <Button text="Deposit" onClick={() => { depositAction(item.poolAddress, item.investToken, usdAmount, item.investDecimal); setShowDepositModal(false) }} />
+                <div className="flex justify-end">
+                    <Button className="mr-2" text="Deposit" onClick={() => { depositAction(item.poolAddress, item.investToken, usdAmount, item.investDecimal); setShowDepositModal(false) }} />
+                    <Button className="!bg-dark-primary" text="Cancel" onClick={() => { setShowDepositModal(false) }} />
+                </div>
             </div>
-        </Modal>
+        </ModalV2>
 
         {/* for voting modal */}
-        <Modal
+        <ModalV2
             show={showVotingModal}
             onClose={() => setShowVotingModal(false)}
-            title=""
         >
-            <div className="modal_content voting_modal">
-                <div className="d-flex align-center voting_header">
+            <div className="modal_content voting_modal !p-4">
+                <div className="d-flex align-center voting_header !border-dark-primary text-white my-4">
                     <img src={item.logoSrc} width={40} height={40} alt="" />
                     <p>{item.name}</p>
                 </div>
@@ -423,22 +516,21 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
                         <UserVotingContent handleClose={() => setShowVotingModal(false)} votingQueryDetail={votingQueryDetail} userVotingDetail={userVotingDetail} currentUserBalance={currentUserBalance} />
                 }
             </div>
-        </Modal>
+        </ModalV2>
 
         {/* for voting result modal */}
-        <Modal
+        <ModalV2
             show={showVotingResultModal}
             onClose={() => setShowVotingResultModal(false)}
-            title=""
         >
-            <div className="modal_content voting_modal">
-                <div className="d-flex align-center voting_header">
+            <div className="modal_content voting_modal !p-4">
+                <div className="d-flex align-center voting_header !border-dark-primary text-white my-4">
                     <img src={item.logoSrc} width={40} height={40} alt="" />
                     <p>{item.name}</p>
                 </div>
                 <UserVotingResult handleClose={() => setShowVotingResultModal(false)} votingQueryDetail={votingQueryDetail} votingResult={votingResult} currentUserAnswer={currentUserAnswer} />
             </div>
-        </Modal>
+        </ModalV2>
 
         <ModalV2
             show={showVotingHistoryModal}
@@ -452,6 +544,7 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
                     votingQueryDetail={votingQueryDetail}
                     item={item}
                     currentUserAnswer={currentUserAnswer}
+                    currentUserIsBet={currentUserIsBet}
                     load={load}
                     selectHistoryItem={(i: Number) => selectHistoryItem(i)}
                     show={showVotingHistoryModal}

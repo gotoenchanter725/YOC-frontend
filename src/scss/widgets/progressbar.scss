@@ -1,12 +1,13 @@
 .app-progressbar {
     height: 12px;
     width: 100%;
-    background-color: #1e618b;
+    background: linear-gradient(110.26deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.2) 99.52%);
     border-radius: 2px;
+
     .completed {
         height: 100%;
         border-radius: inherit;
-        background-color: #2d86f2;
+        background-color: #43e3e091;
         text-align: right;
     }
 }

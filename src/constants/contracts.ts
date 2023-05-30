@@ -11,11 +11,13 @@ import YOCFarmABI from "../../contracts/YocFarming.sol/YOCMasterChef.json";
 import YOCStakingABI from "../../contracts/YocStaking.sol/YocStaking.json";
 import TokenStakingABI from "../../contracts/TokenStaking.sol/TokenStaking.json";
 
-const AdminWalletAddress = process.env.AdminWalletAddress + "";
+import { NETWORK, CONTRACT_ADDRESS } from "../config/contract";
+
+const AdminWalletAddress = CONTRACT_ADDRESS.AdminWalletAddress + "";
 
 const ProjectManager = {
-    ...ProjectManageABI, 
-    address: process.env.ProjectManagerAddress + ""
+    ...ProjectManageABI,
+    address: CONTRACT_ADDRESS.ProjectManagerAddress + ""
 };
 
 const Project = {
@@ -23,66 +25,66 @@ const Project = {
 }
 
 const ProjectDetail = {
-    ...ProjectDetailABI, 
-    address: process.env.ProjectDetailAddress + ""
+    ...ProjectDetailABI,
+    address: CONTRACT_ADDRESS.ProjectDetailAddress + ""
 }
 
 const TokenTemplate = TokenTemplateABI;
 
-const WETH = process.env.WETH + "";
+const WETH = CONTRACT_ADDRESS.WETH + "";
 
 const YOC = {
-    address: process.env.YOCAddress + "", 
-    decimals: 18, 
-    symbol: "YOC", 
-    name: "YOC-FoundersCoin", 
+    address: CONTRACT_ADDRESS.YOCAddress + "",
+    decimals: 18,
+    symbol: "YOC",
+    name: "YOC-FoundersCoin",
     ...YOCABI
 }
 
 const USDCToken = {
-    ...USDCTokenABI, 
-    decimals: 6, 
-    symbol: "USDC", 
-    name: "USDC-FoundersCoin", 
-    address: process.env.USDCAddress + ""
+    ...USDCTokenABI,
+    decimals: 6,
+    symbol: "USDC",
+    name: "USDC-FoundersCoin",
+    address: CONTRACT_ADDRESS.USDCAddress + ""
 }
 
 const YOCSwapFactory = {
-    ...YOCSwapFactoryABI, 
-    address: process.env.YOCSwapFactoryAddress + ""
+    ...YOCSwapFactoryABI,
+    address: CONTRACT_ADDRESS.YOCSwapFactoryAddress + ""
 }
 
 const YOCSwapRouter = {
-    ...YOCSwapRouterAPI, 
-    address: process.env.YOCSwapRouterAddress + ""
+    ...YOCSwapRouterAPI,
+    address: CONTRACT_ADDRESS.YOCSwapRouterAddress + ""
 }
 
 const YOCPair = {
-    ...YOCPairABI, 
+    ...YOCPairABI,
 }
 
 const YOCFarm = {
-    ...YOCFarmABI, 
-    address: process.env.YOCFarmAddress + ""
+    ...YOCFarmABI,
+    address: CONTRACT_ADDRESS.YOCFarmAddress
 }
 
 const YOCPool = {
-    ...YOCStakingABI, 
-    TokenABI: TokenStakingABI.abi, 
+    ...YOCStakingABI,
+    TokenABI: TokenStakingABI.abi,
 }
 
 export {
-    AdminWalletAddress, 
-    ProjectManager, 
-    Project, 
-    ProjectDetail, 
-    TokenTemplate, 
-    WETH, 
-    USDCToken, 
-    YOC, 
-    YOCSwapRouter, 
-    YOCSwapFactory, 
-    YOCFarm, 
+    AdminWalletAddress,
+    ProjectManager,
+    Project,
+    ProjectDetail,
+    TokenTemplate,
+    WETH,
+    USDCToken,
+    YOC,
+    YOCSwapRouter,
+    YOCSwapFactory,
+    YOCFarm,
     YOCPool,
     YOCPair
 }

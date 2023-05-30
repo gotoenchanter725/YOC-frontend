@@ -35,7 +35,7 @@ const SideMenuBar = () => {
                 }
                 <div className='flex justify-between items-center bg-primary-pattern px-4 py-5 text-xl cursor-pointer' onClick={() => setBtnMenuBarToggle(false)}>
                     Less Options
-                    <img src='./images/drop-up.png' alt='drop-up' />
+                    <img src='/images/drop-up.png' alt='drop-up' />
                 </div>
             </div>
         </div>

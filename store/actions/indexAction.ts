@@ -10,6 +10,7 @@ import {
   TokenTemplate,
 } from "../../src/constants/contracts";
 import { convertWeiToEth } from "../../utils/unit";
+import { NETWORK } from "../../src/config/contract";
 
 let web3Modal: any;
 
@@ -18,6 +19,7 @@ const projectDetailInfo = async (address: any, connectedAddress = "0x00000000000
     let detailAddress = ProjectDetail.address;
     const detailContract = new Contract(detailAddress, ProjectDetail.abi, rpc_provider_basic);
     let detailProject = await detailContract.getProjectDetails(address, connectedAddress);
+    // console.log(detailProject);
 
     const projectDetailObj: any = {};
     const shareTokenAddress = detailProject.shareToken;
@@ -45,6 +47,7 @@ const projectDetailInfo = async (address: any, connectedAddress = "0x00000000000
     projectDetailObj.totalYTEST = totalYTEST_temp;
     projectDetailObj.currentStatus = Number((totalYTEST_temp - shareTokenAmount_temp) * 100 / totalYTEST_temp);
     projectDetailObj.endDate = Number(ethers.utils.formatUnits(detailProject.endDate, 0));
+    projectDetailObj.ongoingPercent = Number(detailProject.ongoingPercent);
     projectDetailObj.name = detailProject.title;
     projectDetailObj.logoSrc = detailProject.icon;
     projectDetailObj.symbolImage = detailProject.symbolImage;
@@ -59,6 +62,7 @@ const projectDetailInfo = async (address: any, connectedAddress = "0x00000000000
     projectDetailObj.investToken = investTokenAddress;
     projectDetailObj.projectURL = detailProject.projectWebsite;
     if (connectedAddress) {
+      console.log(address, connectedAddress);
       projectDetailObj.claimAmount = Number(ethers.utils.formatUnits(detailProject.claimableAmount, investDecimal_temp));
       projectDetailObj.claimable = detailProject.claimable;
       projectDetailObj.investTokenBalance = ethers.utils.formatUnits(detailProject.investTokenBalance, investDecimal_temp);
@@ -148,7 +152,6 @@ export const updateProjectInfo = (projectList: any, projectAddress: any, account
 };
 
 export const walletConnect = () => async (dispatch: any) => {
-  const rpc_provider = rpc_provider_basic;
   try {
     const providerOptions = {
       injected: {
@@ -164,8 +167,8 @@ export const walletConnect = () => async (dispatch: any) => {
         package: WalletConnectProvider,
         options: {
           rpc: {
-            1: process.env.MAIN_NETWORK_URL,
-            5: process.env.TEST_NETWORK_URL
+            1: NETWORK.mainnet.RPC_URL,
+            5: NETWORK.testnet.RPC_URL
           }
         }
       },
@@ -208,11 +211,11 @@ export const walletConnect = () => async (dispatch: any) => {
 
     const instance = await web3Modal.connect();
 
-    if (Number(instance.chainId) !== Number(process.env.CHAIN_ID)) {
+    if (Number(instance.chainId) !== Number(process.env.env === "development" ? NETWORK.testnet.CHAIN_ID : NETWORK.mainnet.CHAIN_ID)) {
       try {
         await window.web3.currentProvider.request({
           method: "wallet_switchEthereumChain",
-          params: [{ chainId: `0x${Number(process.env.CHAIN_ID).toString(16)}` }]
+          params: [{ chainId: `0x${Number(process.env.env === "development" ? NETWORK.testnet.CHAIN_ID : NETWORK.mainnet.CHAIN_ID).toString(16)}` }]
         });
       } catch (error: any) {
         alert(error.message);
@@ -252,11 +255,11 @@ export const walletConnect = () => async (dispatch: any) => {
       type: WALLET_CONNECT,
       payload: {
         account: account,
-        balance: balance, 
+        balance: balance,
         provider: provider,
         chainId: instance.chainId,
         signer: signer,
-        rpc_provider: rpc_provider
+        rpc_provider: rpc_provider_basic
       }
     })
 

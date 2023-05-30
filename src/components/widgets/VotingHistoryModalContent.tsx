@@ -14,11 +14,12 @@ type Props = {
     item: any;
     selectHistoryItem: any;
     currentUserAnswer: any;
+    currentUserIsBet: boolean;
     load: any;
     show: any;
 }
 
-const VotingHistory: FC<Props> = ({ votingResponse, votingResult, votingQueryDetail, item, selectHistoryItem, currentUserAnswer, load, show }) => {
+const VotingHistory: FC<Props> = ({ votingResponse, votingResult, votingQueryDetail, item, selectHistoryItem, currentUserAnswer, currentUserIsBet, load, show }) => {
     const [historyItem, setHistoryItem] = useState<Number>(0);
 
     useEffect(() => {
@@ -39,9 +40,10 @@ const VotingHistory: FC<Props> = ({ votingResponse, votingResult, votingQueryDet
             let percent = (votingResult[i].sum / totalAmount * 100);
             isNaN(percent) ? percent = 0 : '';
             answerList.push(
-                <div key={i} className="flex items-center py-1">
+                <div key={i} className={`flex items-center py-1`}>
                     <p className="text-left w-[100px]">{i + 1}.  {answerArr[i]}: </p>
                     <p>{percent.toFixed(2)}%</p>
+                    {i == currentUserAnswer ? (<div className="ml-3 rounded-full w-[8px] h-[8px] bg-secondary"></div>) : ""}
                 </div>)
         }
     } else {
@@ -69,7 +71,7 @@ const VotingHistory: FC<Props> = ({ votingResponse, votingResult, votingQueryDet
                 </div>
                 <div className="w-[calc(100%_-_200px)] flex flex-col justify-between p-4 relative">
                     {
-                        currentUserAnswer ? (
+                        currentUserIsBet ? (
                             <div className="absolute rounded border-b-[0.5px] border-l-[2px] border-solid border-[#ffffff4d] -right-1 top-[10px] px-2 pt-[4px] pb-[1px] bg-primary-pattern -skew-x-12">You bet</div>
                         ) : ""
                     }

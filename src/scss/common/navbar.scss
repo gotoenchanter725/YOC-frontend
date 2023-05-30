@@ -1,7 +1,7 @@
 .heander-container {
     .navbar-list {
         .item {
-            @apply relative text-primary px-2 py-1.5 mx-0 xl:mx-1 2xl:mx-3 font-medium border-t-[2px] border-transparent transition-colors;
+            @apply relative text-primary px-1 py-1.5 mx-0 xl:mx-1.5 font-medium border-t-[2px] border-transparent transition-colors;
             &.active {
                 @apply text-secondary border-t-[2px] border-secondary;
             }
@@ -54,4 +54,41 @@
             font-size: 1.125rem;
         }
     }
+}
+
+.mobile-header-container {
+    .item {
+        @apply relative text-primary px-2 py-1.5 mx-0 xl:mx-1.5 font-medium border-t-[2px] border-transparent transition-colors overflow-hidden;
+        
+        &.active {
+            @apply text-secondary border-t-[2px] border-secondary;
+        }
+
+        &.children::before {
+            @apply absolute top-1.5 right-1.5 w-[24px] h-[24px] content-['_'] bg-[length:100%_100%];
+            background-image: url(../../../public/images/arrow-down.png);
+        }
+    }
+
+    
+    .sub-mobile-header {
+        max-height: 0;
+        height: 0px;
+        transition: all 0.3s;
+
+        input:checked~label {
+            .arrow svg {
+                transform: rotate(90deg);
+            }
+        }
+    }
+
+    input:checked~.sub-mobile-header {
+        height: 100%;
+        max-height: 500px;
+    }
+}
+
+.mobile-show {
+    left: 0px !important;
 }

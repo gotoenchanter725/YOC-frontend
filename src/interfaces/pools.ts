@@ -14,7 +14,7 @@ export interface PoolInterface {
     totalShare?: number, 
     approve?: boolean, 
     pairId?: number, 
-    decimal?: number, 
+    decimals?: number, 
     symbol?: string,
     PairContract?: Contract, 
     token0Contract?: Contract, 
@@ -30,7 +30,7 @@ export interface StakeInterface {
     pId?: number, 
     address?: string;
     stakingContract?: Contract, 
-    decimal?: number;
+    decimals?: number;
     name?: string;
     symbol?: string;
     amount?: number;

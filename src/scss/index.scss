@@ -76,6 +76,36 @@
     margin-bottom: 1px;
 }
 
+.container {
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+
+    @media only screen and (min-width: 860px) {
+        max-width: 100%;
+    }
+
+    @media only screen and (min-width: 1440px) {
+        max-width: 90%;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    @media only screen and (min-width: 1720px) {
+        width: 90%;
+        margin-left: auto;
+        margin-right: auto;
+        max-width: 1440px;
+    }
+
+    @media only screen and (min-width: 10720px) {
+        width: 90%;
+        margin-left: auto;
+        margin-right: auto;
+        max-width: 1640px;
+    }
+}
+
 .apexcharts-candlestick-area {
     // fill: crimson !important;
     // stroke: yellow;
@@ -95,7 +125,25 @@
 
 .apexcharts-menu {
     background: #013c5e !important;
+
     .apexcharts-menu-item:hover {
         background: #012e47 !important;
     }
+}
+
+
+.bg-home-box1 {
+    background: linear-gradient(0deg, rgb(230, 73, 128) 0%, rgb(121, 80, 242) 100%);
+}
+
+.bg-home-box2 {
+    background: linear-gradient(0deg, rgb(134, 142, 150) 0%, rgb(253, 126, 20) 100%);
+}
+
+.bg-home-box3 {
+    background: linear-gradient(0deg, rgb(121, 80, 242) 0%, rgb(64, 192, 87) 100%);
+}
+
+.bg-home-box4 {
+    background: linear-gradient(0deg, rgb(250, 176, 5) 0%, rgb(64, 192, 87) 100%)
 }
