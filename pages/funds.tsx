@@ -1,6 +1,7 @@
 import React, { FC, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Contract, ethers } from "ethers";
+import { Contract, ethers, constants } from "ethers";
+const { MaxUint256 } = constants;
 import {
     USDCToken,
     Project,
@@ -23,7 +24,7 @@ const Fund: FC = () => {
     const [showMoreFlag, setShowMoreFlag] = useState(false);
 
     // for project 1 buy function
-    const buyToken = async (amount: any, tokenPrice: any, poolAddress: string, investAddress: string, investDecimal: any, shareDecimal: any) => {
+    const buyToken = async (amount: any, tokenPrice: any, poolAddress: string, investAddress: string, investDecimal: any, shareDecimal: any, investAllowance: any) => {
         if (account == undefined) {
             alertShow({
                 status: 'failed',
@@ -43,10 +44,12 @@ const Fund: FC = () => {
         let shareAmount = ethers.utils.parseUnits((amount * tokenPrice).toFixed(2), shareDecimal);
         try {
             loadingStart();
-            let approve_investToken = await investTokenInstance.approve(poolAddress, investAmount);
-            await approve_investToken.wait();
 
-            console.log(amount);
+            if (amount > investAllowance) {
+                let approve_investToken = await investTokenInstance.approve(poolAddress, MaxUint256);
+                await approve_investToken.wait();
+            }
+
             let participate = await ProjectContractInstance.participate(investAmount, shareAmount, {
                 gasLimit: 300000
             });
@@ -60,7 +63,7 @@ const Fund: FC = () => {
     }
 
     // for project 1 refund function
-    const refund = async (poolAddress: string, tokenPrice: any, shareAddress: string, investDecimal: any, shareDecimal: any) => {
+    const refund = async (poolAddress: string, tokenPrice: any, shareAddress: string, investDecimal: any, shareDecimal: any, stakeAllowance: any) => {
         if (account == undefined) {
             alertShow({
                 status: 'failed',
@@ -84,9 +87,11 @@ const Fund: FC = () => {
         try {
             let investAmount = ethers.utils.parseUnits((shareAmountToEth / tokenPrice).toString(), investDecimal)
 
-            let approve_ytest = await shareTokenInstance.approve(poolAddress, shareAmount);
             loadingStart();
-            await approve_ytest.wait();
+            if (shareAmount > stakeAllowance) {
+                let approve_ytest = await shareTokenInstance.approve(poolAddress, shareAmount);
+                await approve_ytest.wait();
+            }
 
             let refund = await ProjectContractInstance.refund(shareAmount, investAmount);
             await refund.wait();
@@ -178,9 +183,9 @@ const Fund: FC = () => {
                 }
                 {
                     step == 3 ?
-                        projects.filter((item: any) => item && Number(item.investTokenBalance)).map((item: any, index: number) => {
+                        projects.filter((item: any) => item && item.joinState).map((item: any, index: number) => {
                             return (
-                                <Card key={`card- + ${index}`} item={item} poolAddress={item} buyAction={buyToken} claimAction={claim} provider={rpc_provider} status="ongoing" />
+                                <Card key={`card- + ${index}`} item={item} poolAddress={item} buyAction={buyToken} claimAction={claim} refundAction={refund} provider={rpc_provider} status="my" />
                             )
                         })
                         : ""

@@ -1,284 +1,148 @@
+import React, { FC, useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import React, { FC, useState, useEffect } from 'react';
-import { mathExact } from 'math-exact';
-import { MdArrowBack } from "react-icons/md";
 import { Contract, BigNumber, constants, utils } from 'ethers';
 const { MaxUint256, AddressZero, Zero } = constants;
-import axios from 'axios';
 
 import SideMenuBar from '@components/widgets/SideMenuBar';
-import TokenComponent from '@components/widgets/TokenComponent';
 import SimpleLoading from "@components/widgets/SimpleLoading";
 import Modal from '@components/widgets/Modalv2';
 
-import { TOKENS, tokenInterface } from '../../src/constants/tokens';
-import { TokenTemplate, YOCSwapRouter, YOCSwapFactory, WETH } from "../../src/constants/contracts";
-import { rpc_provider_basic } from '../../utils/rpc_provider';
-import { convertEthToWei, convertRate, convertWeiToEth } from "../../utils/unit";
+import { TokenTemplate, YOCSwapRouter, YOCSwapFactory, WETH, YOCPair } from "../../src/constants/contracts";
+import { useWallet, useAccount, useLoading, useAlert, useUserLiquidity, useNetwork, useCurrency } from '@hooks/index';
+import { convertEthToWei, convertWeiToEth } from 'utils/unit';
 
-import { useWallet, useAccount, useLoading, useAlert } from '@hooks/index';
-
-const tempMaxValue = 99999999999;
 const txRunLimitTime = 1000 * 60 * 5; // 5 min
 
 const Liquidity: FC = () => {
-    const { account, provider, signer, rpc_provider } = useAccount();
-    const { loadingStart, loadingEnd } = useLoading();
-    const { alertShow } = useAlert();
+    const { account, signer } = useAccount();
     const { connectWallet } = useWallet();
-    const [typeIn, setTypeIn] = useState<tokenInterface>(TOKENS[0] as tokenInterface);
-    const [typeOut, setTypeOut] = useState<tokenInterface>();
-    const [amountIn, setAmountIn] = useState(0);
-    const [amountOut, setAmountOut] = useState(0);
-    const [myBalanceIn, setMyBalanceIn] = useState(0);
-    const [myBalanceOut, setMyBalanceOut] = useState(0);
-    const [allowanceIn, setAllowanceIn] = useState(0);
-    const [allowanceOut, setAllowanceOut] = useState(0);
-    const [pendingLiquidity, setPendingLiquidity] = useState(false);
-    const [pendingApproveIn, setPendingApproveIn] = useState(false);
-    const [pendingApproveOut, setPendingApproveOut] = useState(false);
-    const [confirmDeposit, setConfirmDeposit] = useState(false);
-    const [rate, setRate] = useState(0);
-    const [swapContract] = useState(new Contract(
-        YOCSwapRouter.address,
-        YOCSwapRouter.abi,
-        rpc_provider_basic
-    ));
+    const { explorer } = useNetwork();
+    const { alertShow } = useAlert();
+    const { loadingStart, loadingEnd } = useLoading();
+    const { getCurrencyDetail } = useCurrency(); 
+    const { liquidities: pools, loadLiquidityPools, isLoading } = useUserLiquidity();
+    const [liquidityToggle, setLiquidityToggle] = useState<Number[]>([]);
+    const [removeLiquidityModel, setRemoveLiquidityModel] = useState(false);
+    const [LpAmount, setLpAmount] = useState("0");
+    const [selectPool, setSelectPool] = useState<any>();
+
+    const swapContract = useMemo(() => {
+        return new Contract(
+            YOCSwapRouter.address,
+            YOCSwapRouter.abi,
+            signer
+        )
+    }, [YOCSwapRouter, signer]);
 
     useEffect(() => {
-        if (provider && account) {
-            setTypeInHandle(TOKENS[0])
-        }
-    }, [provider, account])
+        setLiquidityToggle([...new Array(pools.length).map(item => 0)]);
+    }, [account, pools.length])
 
-    const calculateRate = async (in_: tokenInterface, out_: tokenInterface) => {
-        if (!(in_ && out_)) return 0;
-        try {
-            // let res = await swapContract.getExpectLiquidityAmount(in_.address, out_.address, convertEthToWei('1', in_.decimals));
-            // let rate = convertWeiToEth(res, out_.decimals);
-            let res = await axios.get(process.env.API_ADDRESS + '/liquidity/rate?' + `in=${in_.address}&out=${out_.address}`);
-            if (res && res.data) {
-                let rate = 0;
-                if (res.data.rate) {
-                    rate = res.data.rate ? +1 / res.data.rate : 0;
-                }
-                setRate(rate);
-                return rate;
+    const togglePoolHandle = (index: number) => {
+        let rst: any[] = liquidityToggle.map((item: any, i: number) => {
+            return i === index ? !item : item;
+        });
+
+        setLiquidityToggle([...rst]);
+    }
+
+    const openRemoveLiquidityModel = (pool: any) => {
+        setRemoveLiquidityModel(true);
+        setSelectPool(pool);
+    }
+
+    const setMaxLpAmountHandle = async () => {
+        if (selectPool) {
+            setLpAmount(selectPool.LPBalance);
+        }
+    }
+
+    const approveHandle = async () => {
+        if (selectPool) {
+            try {
+                loadingStart();
+                const pairContract = new Contract(selectPool.item.liquidity.pairAddress, YOCPair.abi, signer);
+                let tx = await pairContract.approve(YOCSwapRouter.address, MaxUint256);
+                const MaxAllowanceAmount = convertWeiToEth(MaxUint256, 18);
+                let tmpPool = selectPool;
+                tmpPool.allowance = MaxAllowanceAmount;
+                setSelectPool(tmpPool);
+                await tx.wait();
+                loadingEnd();
+                alertShow({
+                    status: "success",
+                    content: "Approve Successfully!"
+                })
+            } catch (err) {
+                loadingEnd();
             }
+        }
+    }
+
+    const removeLiquidityHandle = async () => {
+        try {
+            loadingStart();
+            swapContract.on('RemoveLiquidity', (addresses, amounts) => {
+                // token0, token1, pair, userAddress
+                // amount0, amount1, lp
+                // if (amounts[3] == account) {
+                    let currency0 = getCurrencyDetail(addresses[0]);
+                    let currency1 = getCurrencyDetail(addresses[1]);
+                    let realAmount0 = convertWeiToEth(amounts[0], currency0.decimals);
+                    let realAmount1 = convertWeiToEth(amounts[1], currency1.decimals);
+                    alertShow({
+                        status: "success", 
+                        content: `Remove liquidity Successfully!`, 
+                        text: `Sent ${currency0.symbol}: ${realAmount0} ${currency1.symbol}: ${realAmount1}`
+                    })
+                // }
+            })
+            let tx;
+            if (selectPool.currency0.address == WETH) {
+                tx = await swapContract.removeLiquidityETH(
+                    selectPool.currency1.address,
+                    convertEthToWei(LpAmount, 18),
+                    0,
+                    0,
+                    account,
+                    Date.now() + txRunLimitTime + '',
+                    {
+                        gasLimit: 300000
+                    }
+                )
+            } else if (selectPool.currency1.address == WETH) {
+                tx = await swapContract.removeLiquidityETH(
+                    selectPool.currency0.address,
+                    convertEthToWei(LpAmount, 18),
+                    0,
+                    0,
+                    account,
+                    Date.now() + txRunLimitTime + '',
+                    {
+                        gasLimit: 300000
+                    }
+                )
+            } else {
+                tx = await swapContract.removeLiquidity(
+                    selectPool.currency0.address,
+                    selectPool.currency1.address,
+                    convertEthToWei(LpAmount, 18),
+                    0,
+                    0,
+                    account,
+                    Date.now() + txRunLimitTime + '',
+                    {
+                        gasLimit: 202166
+                    }
+                )
+            }
+            await tx.wait();
+            loadLiquidityPools();
+            loadingEnd();
+            setRemoveLiquidityModel(false);
         } catch (error) {
-            console.dir(error);
-            return 0;
-        }
-    }
-
-    const checkAllowance = async (token: tokenInterface) => {
-        if (!token) return false;
-        let tokenContract = new Contract(
-            token.address,
-            TokenTemplate.abi,
-            rpc_provider_basic
-        );
-        let approveAmount = convertWeiToEth((await tokenContract.allowance(account, YOCSwapRouter.address)), token.decimals);
-        // let approveAmount = await tokenContract.allowance(account, YOCSwapRouter.address);
-        console.log(approveAmount);
-        return approveAmount;
-    }
-
-    const setAmountInHandle = (v: number) => {
-        setAmountIn(v);
-        if (+rate) setAmountOut(mathExact('Multiply', +v, +rate));
-    }
-
-    const setAmountOutHandle = (v: number) => {
-        setAmountOut(v)
-        if (+rate) setAmountIn(mathExact('Divide', +v, +rate));
-    }
-
-    const setTypeInHandle = async (v: tokenInterface) => {
-        loadingStart();
-        try {
-            setAllowanceIn(tempMaxValue);
-            setTypeIn(v);
-            let r = await calculateRate(v, typeOut as tokenInterface);
-            if (r) setAmountIn(mathExact('Divide', +amountOut, +r));
-            if (v.address == WETH) {
-                let balance = await provider.getBalance(account);
-                setMyBalanceIn(+convertWeiToEth(balance, v.decimals));
-            } else {
-                const contract = new Contract(
-                    v.address,
-                    TokenTemplate.abi,
-                    rpc_provider
-                );
-
-                let balance = await contract.balanceOf(account);
-                setMyBalanceIn(+convertWeiToEth(balance, v.decimals));
-
-                let allowAmount = await checkAllowance(v);
-                setAllowanceIn(Number(allowAmount));
-            }
-            loadingEnd();
-        } catch (error) {
-            console.dir(error);
             loadingEnd();
         }
-    }
-
-    const setTypeOutHandle = async (v: tokenInterface) => {
-        loadingStart();
-        try {
-            setAllowanceOut(tempMaxValue);
-            setTypeOut(v);
-            let r = await calculateRate(typeIn, v);
-            if (r) setAmountOut(mathExact('Multiply', +amountIn, +r));
-            if (v.address == WETH) {
-                let balance = await provider.getBalance(account);
-                setMyBalanceOut(+convertWeiToEth(balance, v.decimals));
-            } else {
-                const contract = new Contract(
-                    v.address,
-                    TokenTemplate.abi,
-                    rpc_provider
-                );
-                let balance = await contract.balanceOf(account);
-                setMyBalanceOut(+convertWeiToEth(balance, v.decimals));
-
-                let allowAmount = await checkAllowance(v);
-                setAllowanceOut(Number(allowAmount));
-            }
-            loadingEnd();
-        } catch (error) {
-            console.dir(error);
-            loadingEnd();
-        }
-    }
-
-    const approveHandle = async (token: tokenInterface, type: string) => {
-        let tokenContract = new Contract(
-            token.address,
-            TokenTemplate.abi,
-            signer
-        );
-
-        try {
-            let amount = 0;
-            if (type == "in") {
-                setPendingApproveIn(true);
-                amount = amountIn;
-            } else {
-                setPendingApproveOut(true);
-                amount = amountOut;
-            }
-            let tx = await tokenContract.approve(YOCSwapRouter.address, MaxUint256);
-            const receipt = await tx.wait();
-            console.log(receipt.events)
-            if (type == "in") {
-                setPendingApproveIn(false);
-                setAllowanceIn(amount);
-            } else {
-                setPendingApproveOut(false);
-                setAllowanceOut(amount);
-            }
-        } catch (err) {
-            if (type == "in") {
-                setPendingApproveIn(false);
-            } else {
-                setPendingApproveOut(false);
-            }
-        }
-    }
-
-    const addLiquidity = async () => {
-        try {
-            if (typeIn && typeOut) {
-                setPendingLiquidity(true);
-                let tokenContract = new Contract(
-                    YOCSwapRouter.address,
-                    YOCSwapRouter.abi,
-                    signer
-                );
-                let tx;
-                if (typeIn.address == WETH) {
-                    console.log(typeOut.address);
-                    console.log(convertEthToWei(String('1'), 18));
-                    console.log(convertEthToWei(String(Number(+amountIn).toFixed(typeIn.decimals)), typeIn.decimals));
-                    console.log(convertEthToWei(String(Number(+amountOut).toFixed(typeOut.decimals)), typeOut.decimals));
-                    tx = await tokenContract.addLiquidityETH(
-                        typeOut.address,
-                        convertEthToWei(String(Number(+amountOut).toFixed(typeOut.decimals)), typeOut.decimals),
-                        convertEthToWei(String(Number(+amountOut).toFixed(typeOut.decimals)), typeOut.decimals), // 0
-                        convertEthToWei(String(Number(+amountIn).toFixed(typeIn.decimals)), typeIn.decimals), // 0
-                        account,
-                        Date.now() + txRunLimitTime + '',
-                        // MaxUint256, 
-                        {
-                            value: convertEthToWei(String(Number(+amountIn).toFixed(typeIn.decimals)), typeIn.decimals),
-                        }
-                    );
-                } else if (typeOut.address == WETH) {
-                    tx = await tokenContract.addLiquidityETH(
-                        typeIn.address,
-                        convertEthToWei(String(Number(+amountIn).toFixed(typeIn.decimals)), typeIn.decimals),
-                        convertEthToWei(String(Number(+amountIn).toFixed(typeIn.decimals)), typeIn.decimals), // 0
-                        convertEthToWei(String(Number(+amountOut).toFixed(typeOut.decimals)), typeOut.decimals), // 0
-                        account,
-                        Date.now() + txRunLimitTime + '',
-                        // MaxUint256, 
-                        {
-                            value: convertEthToWei(String(Number(+amountOut).toFixed(typeOut.decimals)), typeOut.decimals),
-                        }
-                    );
-                } else {
-                    tx = await tokenContract.addLiquidity(
-                        typeIn.address,
-                        typeOut.address,
-                        convertEthToWei(String(Number(+amountIn).toFixed(typeIn.decimals)), typeIn.decimals),
-                        convertEthToWei(String(Number(+amountOut).toFixed(typeOut.decimals)), typeOut.decimals),
-                        '0', // convertEthToWei(String(Number(+amountIn).toFixed(typeIn.decimals)), typeIn.decimals), 
-                        '0', // convertEthToWei(String(Number(+amountOut).toFixed(typeOut.decimals)), typeOut.decimals),
-                        account,
-                        Date.now() + txRunLimitTime + '',
-                        // MaxUint256, 
-                    );
-                }
-                const receipt = await tx.wait();
-                setMyBalanceIn(+mathExact('Subtract', +myBalanceIn, +amountIn));
-                setMyBalanceOut(+mathExact('Subtract', +myBalanceOut, +amountOut));
-                setPendingLiquidity(false);
-                setConfirmDeposit(false)
-                setRate(amountIn / amountOut);
-                alertShow({ content: 'Add Liquidity Successfully!', status: 'success' });
-            }
-        } catch (error: any) {
-            console.dir(error)
-            if (error.code == "UNPREDICTABLE_GAS_LIMIT") alertShow({ content: 'Insufficient B amount', status: 'error' });
-            setPendingLiquidity(false);
-            setConfirmDeposit(false)
-        }
-    }
-
-    const changeTokenEach = () => {
-        const tempType = typeIn;
-        setTypeIn(typeOut as tokenInterface);
-        setTypeOut(tempType as tokenInterface);
-
-        const tempBalance = myBalanceIn;
-        setMyBalanceIn(myBalanceOut);
-        setMyBalanceOut(tempBalance);
-
-        const tempAmount = amountIn;
-        setAmountIn(amountOut);
-        setAmountOut(tempAmount);
-
-        if (rate) setRate(1 / rate);
-
-        const tempAllowance = allowanceIn;
-        setAllowanceIn(allowanceOut);
-        setAllowanceOut(tempAllowance);
-
-        const tempPendingApprove = pendingApproveIn;
-        setPendingApproveIn(pendingApproveOut);
-        setPendingApproveOut(tempPendingApprove);
     }
 
     return (
@@ -291,78 +155,81 @@ const Liquidity: FC = () => {
                     </div>
                     <div className='w-full h-full flex justify-end items-start z-[20]'>
                         <div className='flex flex-col  bg-bg-pattern rounded shadow-big w-[400px] mt-[100px] mr-[5vw]'>
-                            <div className='px-3 pb-6 pt-8'>
+                            <div className='px-3 py-6'>
                                 <h3 className='relative text-2xl font-semibold text-primary text-center'>
-                                    {/* <Link href={'/liquidity'}>
-                                        <MdArrowBack className='cursor-pointer absolute left-0 top-0' />
-                                    </Link> */}
-                                    Liquidity
+                                    Your Liquidity
                                     <div className='absolute right-0 top-0'>
                                         <img className='h-[35px]' src='/images/swap-header.png' alt='swap' />
                                     </div>
                                 </h3>
-                                <p className='text-dark-secondary mt-4 text-center'>Lorum Ipsum deposit stir</p>
+                                <p className='text-dark-secondary mt-4 text-center'>Remove liquidity to receive tokens back</p>
                             </div>
                             <div className='relative px-3 py-6 bg-primary-pattern border border-[#ffffff28] rounded -mx-[1px]'>
-                                <div className='flex flex-col justify-between'>
-                                    <label className='mb-2' htmlFor='first'>Input</label>
-                                    <TokenComponent type={typeIn} setType={(v) => setTypeInHandle(v)} amount={amountIn} setAmount={(v) => setAmountInHandle(v)} ignoreValue={typeOut} disabled={!Boolean(account)} />
-                                </div>
-                                <div className='flex items-center justify-between'>
-                                    <div className='flex items-center py-3'>
-                                        <label className='text-sm mr-2'>Balance:</label>
-                                        <span className='text-sm text-[#8B8B8B]'>{myBalanceIn}</span>
-                                    </div>
-                                    <div className='flex items-center'>
-                                        {
-                                            pendingApproveIn ?
-                                                <SimpleLoading className="w-[20px]" />
-                                                : (
-                                                    ((!allowanceIn && (typeIn && typeIn.address != WETH)) || allowanceIn < amountIn) ?
-                                                        <button className='bg-btn-primary px- w-full px-2 text-sm rounded shadow-btn-primary' onClick={() => approveHandle(typeIn, 'in')}>approve</button>
-                                                        : ""
-                                                )
-                                        }
-                                    </div>
-                                </div>
-                                <div className='absolute z-[1] left-1/2 aspect-[1/1] -bottom-[calc(20px_+_0.5rem)] -translate-x-1/2 cursor-pointer'><img src='/images/swap.png' alt="swap" width={40} height={40} onClick={() => changeTokenEach()} /></div>
-                            </div>
-                            <div className='relative -z-0 px-3 pt-6 pb-4 mt-1 bg-secondary-pattern border border-[#ffffff28] rounded -mx-[1px]'>
-                                <div className='flex flex-col justify-between'>
-                                    <label className='mb-2' htmlFor='second'>Input</label>
-                                    <TokenComponent type={typeOut} setType={(v) => setTypeOutHandle(v)} amount={amountOut} setAmount={(v) => setAmountOutHandle(v)} ignoreValue={typeIn} disabled={!Boolean(account)} />
-                                </div>
-                                <div className='flex items-center justify-between'>
-                                    <div className='flex items-center py-3'>
-                                        <label className='text-sm mr-2'>Balance:</label>
-                                        <span className='text-sm text-[#8B8B8B]'>{myBalanceOut}</span>
-                                    </div>
-                                    <div className='flex items-center'>
-                                        {
-                                            pendingApproveOut ?
-                                                <SimpleLoading className="w-[20px]" />
-                                                : (
-                                                    ((!allowanceOut && (typeOut && typeOut.address != WETH)) || allowanceOut < amountOut) ?
-                                                        <button className='bg-btn-primary px- w-full px-2 text-sm rounded shadow-btn-primary' onClick={() => approveHandle(typeOut as tokenInterface, 'out')}>approve</button>
-                                                        : ""
-                                                )
-                                        }
-                                    </div>
-                                </div>
+                                {
+                                    !account ? <p className='text-center'>Connect to a wallet to view your liquidity.</p> : (
+                                        <div>
+                                            <div>
+                                                {
+                                                    isLoading ?
+                                                        <div className='w-full flex items-center justify-center'>
+                                                            <SimpleLoading className='w-[30px]' />
+                                                        </div>
+                                                        :
+                                                        !pools.length ?
+                                                            <p className='text-dark-secondary my-3 text-center'>No liquidity found.</p>
+                                                            :
+                                                            (
+                                                                pools.map((item: any, index) => {
+
+                                                                    let percentage = 0;
+                                                                    if (item && item.item && item.item.liquidity && item.item.liquidity.amount) {
+                                                                        percentage = item.LPBalance / item.item.liquidity.amount
+                                                                    }
+
+                                                                    return <div key={'liquidity-' + index} className={`p-3 bg-[#1e231de6] rounded mb-2 transition-all overflow-hidden ${liquidityToggle[index] ? 'h-[210px]' : 'h-[50px]'}`}>
+                                                                        <div className='flex justify-between items-center'>
+                                                                            <div className='flex justify-between items-center'>
+                                                                                <img className='w-6 mr-2' src={item.currency0.image} alt="" />
+                                                                                <img className='w-6 mr-2' src={item.currency1.image} alt="" />
+                                                                                <p className='text-lg font-bold'>{item.currency0.symbol}/{item.currency1.symbol}</p>
+                                                                            </div>
+                                                                            <img className={`transition cursor-pointer ${liquidityToggle[index] ? 'rotate-[180deg]' : ''}`} src="/images/drop-down.png" alt="" onClick={() => togglePoolHandle(index)} />
+                                                                        </div>
+
+                                                                        <div className='w-full'>
+                                                                            <div className='flex justify-between items-center mt-2'>
+                                                                                <span>{item.currency0.symbol}</span>
+                                                                                <span>{percentage * item.item.liquidity.amount0}</span>
+                                                                            </div>
+                                                                            <div className='flex justify-between items-center mt-2'>
+                                                                                <span>{item.currency1.symbol}</span>
+                                                                                <span>{percentage * item.item.liquidity.amount1}</span>
+                                                                            </div>
+                                                                            <div className='flex justify-between items-center mt-2'>
+                                                                                <span>Share of pool</span>
+                                                                                <span>{percentage * 100}%</span>
+                                                                            </div>
+                                                                            <button className='bg-btn-primary w-full mt-4 py-2 text-xl rounded-lg shadow-btn-primary z-[100] disabled:bg-btn-disable' onClick={() => openRemoveLiquidityModel(item)}>Remove liquidity</button>
+                                                                        </div>
+                                                                    </div>
+                                                                })
+                                                            )
+                                                }
+                                            </div>
+                                            <div className='flex flex-col items-center justify-center'>
+                                                <p className='text-dark-secondary mb-2.5 text-center'>Don't see a pair you joined?</p>
+                                                <Link href={'/liquidity/find'}><a className='w-full rounded text-center mx-4 bg-transparent px-6 py-3 text-lg leading-none border border-btn-primary'>Find other LP tokens</a></Link>
+                                            </div>
+                                        </div>
+                                    )
+                                }
                             </div>
                             <div className='px-3 py-4'>
-                                {/* <div className='flex justify-between items-center'>
-                                    <p className='text-primary text-lg font-semibold'>LP Tokens</p>
-                                    <span className='text-secondary text-md'>{Number(rate).toFixed(2)}</span>
-                                </div> */}
                                 {
-                                    pendingLiquidity ?
-                                        <button className='bg-btn-primary w-full flex justify-around items-center py-5 my-10 text-3xl rounded-lg shadow-btn-primary z-[100]' ><SimpleLoading className='w-[36px] h-[36px]' /></button>
-                                        : (account ?
-                                            <button className='bg-btn-primary w-full py-5 my-10 text-3xl rounded-lg shadow-btn-primary z-[100] disabled:bg-btn-disable' disabled={(allowanceIn < amountIn || allowanceOut < amountOut || !+amountIn || amountIn > myBalanceIn || !+amountOut || amountOut > myBalanceOut) as boolean} onClick={() => setConfirmDeposit(true)}>Add liquidity</button>
-                                            :
-                                            <button className='bg-btn-primary w-full py-5 my-10 text-3xl rounded-lg shadow-btn-primary' onClick={() => connectWallet()}>Connect Wallet</button>
-                                        )
+                                    account ?
+                                        <Link href={'/liquidity/add'}><a><button className='bg-btn-primary w-full py-5 my-5 text-3xl rounded-lg shadow-btn-primary z-[100] disabled:bg-btn-disable'>Add liquidity</button></a></Link>
+                                        :
+                                        <button className='bg-btn-primary w-full py-5 my-5 text-3xl rounded-lg shadow-btn-primary' onClick={() => connectWallet()}>Connect Wallet</button>
                                 }
                             </div>
                         </div>
@@ -371,47 +238,31 @@ const Liquidity: FC = () => {
                 </div>
             </div>
 
-            <Modal size='small' show={confirmDeposit} onClose={() => { setConfirmDeposit(false) }}>
-                <div className='w-full flex flex-col justify-around items-center py-8 px-12 text-white'>
-                    <p className='text-base font-semibold w-full mb-2'>{typeIn?.symbol}/{typeOut?.symbol} Tokens</p>
-                    <h2 className='text-3xl font-semibold w-full py-3 mb-6 leading-8 border-b-2 border-solid border-white'>
-                        {/* {"232.09"} */}
-                    </h2>
-                    <div className='mb-8 w-full'>
-                        <div className='w-full flex justify-between items-center mb-2'>
-                            <p className='text-lg font-semibold '>{typeIn?.symbol} Deposited</p>
-                            <p className='text-lg font-semibold'>{amountIn}</p>
+            <Modal size='small' show={removeLiquidityModel} onClose={() => { setRemoveLiquidityModel(false) }}>
+                <div className="p-6 pt-8 flex flex-col text-primary">
+                    <h3 className="font-semibold text-xl mb-6">Remove Liquidity</h3>
+                    <div className="flex flex-col justify-between mb-4">
+                        <div className="flex justify-between item-center mb-4">
+                            <p className="">{`${selectPool && selectPool.currency0 && selectPool.currency0.symbol}/${selectPool && selectPool.currency1 && selectPool.currency1.symbol} LP`}</p>
+                            <p className="">Balance: {selectPool && selectPool.LPBalance}</p>
                         </div>
-                        <div className='w-full flex justify-between items-center'>
-                            <p className='text-lg font-semibold '>{typeOut?.symbol} Deposited</p>
-                            <p className='text-lg font-semibold'>{amountOut}</p>
+                        <div className="flex justify-between item-center">
+                            <input className="w-full mr-4 px-2 py-1 rounded border-[1px] border-solid border-secondary bg-transparent text-dark-primary" value={LpAmount} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLpAmount(e.target.value)} />
+                            <button className="text-primary bg-btn-secondary shadow-btn-secondary px-4 py-1 rounded" onClick={() => setMaxLpAmountHandle()}>MAX</button>
                         </div>
                     </div>
-                    <div className='flex flex-col w-full justify-between'>
-                        <span className='text-lg mb-2'>Rates</span>
-                        <div className='flex flex-col w-full min-w-[200px]'>
-                            <div className='flex justify-between'>
-                                <div className='w-[70px] flex justify-between'>
-                                    <span>{"1"} {typeIn?.symbol}</span>
-                                    <span>=</span>
-                                </div>
-                                <span className='text-ellipsis'>{Number(+(rate ? rate : convertRate(amountOut, amountIn))).toFixed(typeOut ? typeOut.decimals : 16)} {typeOut?.symbol}</span>
-                            </div>
-                            <div className='flex justify-between'>
-                                <div className='w-[70px] flex justify-between'>
-                                    <span>{"1"} {typeOut?.symbol}</span>
-                                    <span>=</span>
-                                </div>
-                                <span className='text-ellipsis'>{Number(+rate ? mathExact('Divide', 1, +rate) : convertRate(amountIn, amountOut)).toFixed(typeIn ? typeIn.decimals : 16)} {typeIn?.symbol}</span>
-                            </div>
-                        </div>
+                    <a className="text-secondary mb-6" href={`${explorer}/address/${selectPool?.item.liquidity.pairAddress}`}>Get LP</a>
+
+                    <div className="flex justify-between">
+                        {
+                            selectPool && +selectPool.allowance ? (
+                                <button className="w-full font-semibold rounded text-primary bg-btn-primary shadow-btn-primary px-4 py-2 mr-2" onClick={() => removeLiquidityHandle()}>Confirm</button>
+                            ) : (
+                                <button className="w-full font-semibold rounded text-primary bg-btn-primary shadow-btn-primary px-4 py-2 mr-2" onClick={() => approveHandle()}>Approve</button>
+                            )
+                        }
+                        <button className="w-full font-semibold rounded text-primary bg-primary-pattern border-[0.5px] border-solid border-[#FFFFFF22] px-4 py-2" onClick={() => setRemoveLiquidityModel(false)}>Reject</button>
                     </div>
-                    {
-                        pendingLiquidity ?
-                            <button className='bg-btn-primary max-w-[350px] w-full flex items-center justify-around py-4 mt-6 text-3xl rounded-lg shadow-btn-primary z-[100]' ><SimpleLoading className='w-[36px] h-[36px]' /></button>
-                            :
-                            <button className='bg-btn-primary max-w-[350px] w-full py-4 mt-6 text-3xl rounded-lg shadow-btn-primary' onClick={() => addLiquidity()}>Confirm Deposit</button>
-                    }
                 </div>
             </Modal>
         </div>

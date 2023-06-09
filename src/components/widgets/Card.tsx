@@ -16,6 +16,7 @@ import VotingHistory from "./VotingHistoryModalContent";
 
 import useLoading from "@hooks/useLoading";
 import useAlert from "@hooks/useAlert";
+import useNetwork from "@hooks/useNetwork";
 import { convertWeiToEth } from "utils/unit";
 
 interface Props {
@@ -26,7 +27,7 @@ interface Props {
     claimAction?: any;
     depositAction?: any;
     provider?: any;
-    status?: string;
+    status: string;
     admin?: boolean;
 }
 
@@ -46,6 +47,7 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
     const dispatch = useDispatch();
     const { loadingStart, loadingEnd } = useLoading();
     const { alertShow } = useAlert();
+    const { explorer } = useNetwork();
     const { projects, account, rpc_provider } = useSelector((state: any) => state.data);
     const [showBuyTokenModal, setShowBuyTokenModal] = useState(false);
     const [showDepositModal, setShowDepositModal] = useState(false);
@@ -65,10 +67,18 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
     const [load, setLoad] = useState(false);
     const [investContract, setInvestContract] = useState<detailTokenInterface>();
     const [shareContract, setShareContract] = useState<detailTokenInterface>();
+    const [projectStatus, setProjectStatus] = useState("");
 
     useEffect(() => {
         (async () => {
             if (item.investToken && rpc_provider) {
+                if (status == 'my') {
+                    if (item.endDate >= Date.now() && item.currentStatus < item.ongoingPercent) setProjectStatus("open");
+                    else if (item.currentStatus >= item.ongoingPercent) setProjectStatus("ongoing");
+                    else setProjectStatus("close");
+                } else {
+                    setProjectStatus(status);
+                }
                 const investToken = new Contract(item.investToken, USDCToken.abi, rpc_provider);
                 const investTokenSymbol = await investToken.symbol();
                 const investTokenDecimals = await investToken.decimals();
@@ -164,7 +174,6 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
     const getVotingInfo = useCallback(() => {
         loadingStart();
         let votingQuery = votingResponse.find((item: any) => ((new Date() >= new Date(item.startDate)) && (new Date() <= new Date(item.endDate))));
-        console.log(votingQuery);
         if (votingQuery) {
             // There is an ongoing voting poll
             setvotingQueryDetail(votingQuery);
@@ -277,7 +286,7 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
     };
 
     const refundHandler: React.MouseEventHandler<HTMLDivElement> = () => {
-        refundAction(item.poolAddress, item.tokenPrice, item.shareToken, item.investDecimal, item.shareDecimal)
+        refundAction(item.poolAddress, item.tokenPrice, item.shareToken, item.investDecimal, item.shareDecimal, item.investAllowance)
     }
 
     const claimHandler: React.MouseEventHandler<HTMLDivElement> = () => {
@@ -358,7 +367,7 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
     // }
 
     let btnGroup;
-    if (status == 'open') {
+    if (projectStatus == 'open') {
         btnGroup = admin ?
             <div className="btn-group">
             </div> :
@@ -366,7 +375,7 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
                 <Button text="Buy Token" onClick={openBuyTokenModal} />
                 <Button text="Add Token" onClick={() => addToken()} />
             </div>
-    } else if (status == 'ongoing') {
+    } else if (projectStatus == 'ongoing') {
         btnGroup = admin ?
             <div className="btn-group">
                 <Button text="Deposit Profit" onClick={() => setShowDepositModal(true)} />
@@ -379,8 +388,8 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
                 <Button disabled={!(item.claimAmount > 0 && !item.claimable)} text="Claim Dividend" onClick={claimHandler} />
                 <Button text="Add Token" onClick={() => addToken()} />
             </div>
-    } else {
-        btnGroup = <Button className={"mt-1"} text="Refund" onClick={refundHandler} />
+    } else if (projectStatus == 'close') {
+        btnGroup = <Button className={"mt-1"} text={"Refund"} disabled={item.shareTokenBalance == 0} onClick={refundHandler} />
     }
     return (<div className="app-card">
         <div className="w-full card-header">
@@ -419,16 +428,16 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
             <div className="extra-info">
                 <div>
                     <a href={item.projectURL} target="_blank" rel="noreferrer">Go to project page</a>
-                    <a href={`https://testnet.bscscan.com/token/${item.shareToken}#balances`} target="_blank" rel="noreferrer">Go to xscan to Token Address</a>
+                    <a href={`${explorer}/token/${item.shareToken}#balances`} target="_blank" rel="noreferrer">Go to xscan to Token Address</a>
                     <p>ROI: Aprox. {item.ROI} months</p>
                     <p>APR: Aprox. {item.APR}%</p>
                     <p>Category: {item.category}</p>
                     <p>End Date: {(new Date(item.endDate)).toLocaleDateString()}</p>
                     {
-                        status == 'ongoing' && !votingResponse.length && admin ? <Button className="mt-1" text="Creat Voting" onClick={() => getVotingInfo()}></Button> : ''
+                        status == 'ongoing' && !votingResponse.length && admin ? <Button className="mt-1" text="Create Voting" onClick={() => getVotingInfo()}></Button> : ''
                     }
                     {
-                        (status == 'ongoing' && votingResponse && votingResponse.length) ? <Button className="mt-1" text={(new Date(String(votingResponse[0].endDate)).getTime() < new Date().getTime()) && admin ? "Create Voting" : "Voting Poll"} onClick={() => getVotingInfo()}></Button> : ''
+                        (status == 'ongoing' && votingResponse && votingResponse.length) ? <Button className="mt-1" text={(new Date(String(votingResponse[0].endDate)).getTime() < new Date().getTime()) && admin ? "Create Voting" : "Voting Poll"} disabled={(new Date(String(votingResponse[0].endDate)).getTime() < new Date().getTime()) && !admin} onClick={() => getVotingInfo()}></Button> : ''
                     }
                     {
                         (status == 'ongoing' && votingResponse && votingResponse.length) ?
@@ -475,7 +484,7 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
                     </div>
                 </div>
                 <div className="w-full flex justify-end">
-                    <Button text="Buy Token" onClick={() => { buyAction(usdAmount, item.tokenPrice, item.poolAddress, item.investToken, item.investDecimal, item.shareDecimal); setShowBuyTokenModal(false); }} />
+                    <Button text="Buy Token" onClick={() => { buyAction(usdAmount, item.tokenPrice, item.poolAddress, item.investToken, item.investDecimal, item.shareDecimal, item.stakeAllowance); setShowBuyTokenModal(false); }} />
                     <Button className="!bg-dark-primary ml-2" text="Cancel" onClick={() => { setShowBuyTokenModal(false); }} />
                 </div>
             </div>

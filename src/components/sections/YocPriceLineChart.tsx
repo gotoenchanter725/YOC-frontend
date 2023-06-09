@@ -25,7 +25,7 @@ const LineChart = () => {
                 strokeWidth: 2,
             },
         },
-        colors: ['#2AF6FF', '##00DC9F2B'],
+        colors: ['#2AF6FF', '#00DC9F2B'],
         xaxis: {
             type: 'datetime',
             tooltip: {
@@ -39,7 +39,7 @@ const LineChart = () => {
         },
         markers: {
             size: [4],
-            colors: ['#2AF6FF', '##00DC9F2B'],
+            colors: ['#2AF6FF', '#00DC9F2B'],
             strokeColors: '#fff',
             strokeWidth: 2,
             strokeOpacity: 0.9,
@@ -56,19 +56,7 @@ const LineChart = () => {
 
     const [series, setSeries] = useState([{
         name: "Price",
-        data: [{
-            x: new Date(1538830100000),
-            y: [140]
-        }, {
-            x: new Date(1538830200000),
-            y: [130]
-        }, {
-            x: new Date(1538830300000),
-            y: [190]
-        }, {
-            x: new Date(1538830800000),
-            y: [110]
-        }]
+        data: []
     }]);
 
     useEffect(() => {
@@ -97,7 +85,7 @@ const LineChart = () => {
                 <Chart
                     options={options}
                     series={series}
-                    type={"line"}
+                    type={"candlestick"}
                     height={window.innerWidth / 4}
                 />
             }

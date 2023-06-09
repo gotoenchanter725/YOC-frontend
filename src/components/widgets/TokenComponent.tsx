@@ -1,12 +1,12 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { tokenInterface } from "../../constants/tokens";
-import { useCurrency } from "../../hooks/useTokens";
+import { useCurrency } from "@hooks/useTokens";
 
 interface propsInterface {
     type: any,
     setType: (item: tokenInterface) => void,
-    amount: any,
-    setAmount: (item: any) => void,
+    amount?: any,
+    setAmount?: (item: any) => void,
     ignoreValue?: any,
     disabled?: boolean,
     side?: string
@@ -26,7 +26,7 @@ const TokenComponent = (props: propsInterface) => {
     }
 
     const changeAmountHandle = (v: any) => {
-        if (!isNaN(Number(v))) {
+        if (!isNaN(Number(v)) && props.setAmount) {
             props.setAmount(v);
         }
     }
@@ -50,13 +50,17 @@ const TokenComponent = (props: propsInterface) => {
                 {
                     props.type ? (
                         <>
-                            <div className={`flex items-center mr-2 ${(props.side && props.side == "right") ? "order-2" : "order-1"}`}>
-                                <div className={`ml-2 mr-1 w-[24px]`}>
+                            <div className={`flex items-center p-2 ${(props.side && props.side == "right") ? "order-2" : "order-1"}`}>
+                                <div className={`mr-1 w-[24px]`}>
                                     <img className='rounded-full w-full aspect-[1/1]' src={props.type.image} alt='coin' />
                                 </div>
                                 <button className={`px-1 text-lg font-semibold text-secondary bg-transparent`} disabled={props.disabled} onClick={() => setToggle(!toggle)}>{props.type.symbol}</button>
                             </div>
-                            <input className={`bg-transparent text-right text-lg w-full block p-2 ${(props.side && props.side == "right") ? "order-1 !text-left" : "order-2"}`} placeholder='0.00' value={showNumber(props.amount)} disabled={props.disabled} onChange={(e) => changeAmountHandle(e.target.value)} />
+                            {
+                                props.setAmount ?
+                                    <input className={`bg-transparent text-right text-lg w-full block p-2 ${(props.side && props.side == "right") ? "order-1 !text-left" : "order-2"}`} placeholder='0.00' value={showNumber(props.amount)} disabled={props.disabled} onChange={(e) => changeAmountHandle(e.target.value)} />
+                                    : ""
+                            }
                         </>
                     ) : (
                         <button className='p-2 text-lg font-semibold text-secondary bg-transparent' onClick={() => setToggle(!toggle)} disabled={props.disabled}>Select Token</button>

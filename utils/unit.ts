@@ -20,6 +20,7 @@ export const convertRate = function (in_: any, out_: any) {
 }
 
 export const showBigNumber = (v: any) => {
+    if (Number(v) == 0) return "0";
     const number = new BigNumber(v);
     const formattedNumber = number.toFormat(3, BigNumber.ROUND_DOWN, {
         decimalSeparator: ',',

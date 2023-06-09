@@ -11,10 +11,10 @@ import arrowRightImage from "../../../public/images/arrow-right.png";
 import YOCb from "../../../public/images/coins/YOCb.png";
 import YOCe from "../../../public/images/coins/YOCe.png";
 
-import useAccount from "../../hooks/useAccount"
-import useWallet from "../../hooks/useWallet"
-import useAdmin from "../../hooks/useAdmin";
-import useNetwork from "../../hooks/useNetwork";
+import useAccount from "@hooks/useAccount"
+import useWallet from "@hooks/useWallet"
+import useAdmin from "@hooks/useAdmin";
+import useNetwork from "@hooks/useNetwork";
 import { YOC } from "../../constants/contracts";
 
 const menuData = [
@@ -115,8 +115,8 @@ const Navbar = () => {
                 <nav className="hidden md:flex container heander-container !py-4 mx-auto justify-between items-center">
                     <div className="flex justify-between items-center">
                         <Link href={'/'}>
-                            <div className="cursor-pointer min-w-[120px] scale-[1.3]">
-                                <img className="w-[142px] h-[85px]" src={'/images/logo-menu.png'} alt="App Logo" />
+                            <div className="cursor-pointer min-w-[120px]">
+                                <img className="w-[142px] h-[64px] relative -top-2" src={'/images/logo-menu.png'} alt="App Logo" />
                             </div>
                         </Link>
 

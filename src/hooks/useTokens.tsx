@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { tokenInterface } from "../constants/tokens";
 
@@ -20,7 +20,12 @@ const useCurrency = () => {
         })();
     }, [])
 
-    return { tokens, isLoading, error };
+    const getCurrencyDetail = useCallback((address: string) => {
+        let item: tokenInterface = tokens.find((item => item.address == address)) as tokenInterface;
+        return item;
+    }, [tokens]);
+
+    return { tokens, getCurrencyDetail, isLoading, error };
 }
 
 const useLiquidityPools = () => {

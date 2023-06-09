@@ -1,5 +1,5 @@
 import axios from "axios";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import useAccount from "./useAccount";
 
 const useUserLiquidity = () => {
@@ -7,6 +7,7 @@ const useUserLiquidity = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
     const { account } = useAccount();
+    const [reload, setReload] = useState(0);
 
     useEffect(() => {
         if (!account) return;
@@ -21,9 +22,13 @@ const useUserLiquidity = () => {
             }
 
         })();
-    }, [account])
+    }, [account, reload])
 
-    return { liquidities, isLoading, error };
+    const loadLiquidityPools = useCallback(() => {
+        setReload(reload + 1);
+    }, [reload, setReload])
+
+    return { liquidities, loadLiquidityPools, isLoading, error };
 }
 
 export {

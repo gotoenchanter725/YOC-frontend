@@ -2,8 +2,8 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import React, { useEffect } from "react";
 import { BsListTask } from "react-icons/bs"
-import useAccount from "../../hooks/useAccount";
-import useAdmin from "../../hooks/useAdmin";
+import useAccount from "@hooks/useAccount";
+import useAdmin from "@hooks/useAdmin";
 
 
 const adminMenus = [
@@ -44,7 +44,7 @@ const adminMenus = [
     },
 ]
 
-import useWallet from "../../hooks/useWallet";
+import useWallet from "@hooks/useWallet";
 import SimpleLoading from "../widgets/SimpleLoading";
 
 const MenuBar = () => {

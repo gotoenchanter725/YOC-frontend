@@ -30,7 +30,7 @@ const networks = [
 const Network: FC = () => {
     return <div className="container">
         <div className="w-full flex flex-col items-center">
-            <a className="w-[70%]">
+            <a className="w-[60%] mb-12">
                 <img src="/images/logo-menu.png" alt="logo" />
             </a>
 

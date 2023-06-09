@@ -19,7 +19,6 @@ const projectDetailInfo = async (address: any, connectedAddress = "0x00000000000
     let detailAddress = ProjectDetail.address;
     const detailContract = new Contract(detailAddress, ProjectDetail.abi, rpc_provider_basic);
     let detailProject = await detailContract.getProjectDetails(address, connectedAddress);
-    // console.log(detailProject);
 
     const projectDetailObj: any = {};
     const shareTokenAddress = detailProject.shareToken;
@@ -29,17 +28,6 @@ const projectDetailInfo = async (address: any, connectedAddress = "0x00000000000
     const totalRaise_temp = Number(ethers.utils.formatUnits(detailProject.investTotalAmount, investDecimal_temp));
     const totalYTEST_temp = Number(ethers.utils.formatUnits(detailProject.shareTokenSellAmount, shareDecimal_temp));
     const shareTokenAmount_temp = Number(ethers.utils.formatUnits(detailProject.shareTokenBalanceTemp, shareDecimal_temp));
-
-    // console.log(
-    //   shareTokenAddress,
-    //   await detailContract.getTokenInfo(
-    //     shareTokenAddress,
-    //     [
-    //       connectedAddress,
-    //       connectedAddress
-    //     ]
-    //   )
-    // );
 
     projectDetailObj.poolAddress = address;
     projectDetailObj.APR = Number(ethers.utils.formatUnits(detailProject.apr, 0));
@@ -62,11 +50,13 @@ const projectDetailInfo = async (address: any, connectedAddress = "0x00000000000
     projectDetailObj.investToken = investTokenAddress;
     projectDetailObj.projectURL = detailProject.projectWebsite;
     if (connectedAddress) {
-      console.log(address, connectedAddress);
       projectDetailObj.claimAmount = Number(ethers.utils.formatUnits(detailProject.claimableAmount, investDecimal_temp));
       projectDetailObj.claimable = detailProject.claimable;
+      projectDetailObj.joinState = detailProject.joinState;
       projectDetailObj.investTokenBalance = ethers.utils.formatUnits(detailProject.investTokenBalance, investDecimal_temp);
       projectDetailObj.shareTokenBalance = ethers.utils.formatUnits(detailProject.shareTokenBalance, shareDecimal_temp);
+      projectDetailObj.investTokenAllowance = ethers.utils.formatUnits(detailProject.investTokenAllowance, investDecimal_temp);
+      projectDetailObj.shareTokenAllowance = ethers.utils.formatUnits(detailProject.shareTokenAllowance, shareDecimal_temp);
 
       let availableTokenTotalPrice = ((totalYTEST_temp - (projectDetailObj.currentStatus * totalYTEST_temp / 100)) / projectDetailObj.tokenPrice).toFixed(2);
       let maxValue = Number(availableTokenTotalPrice) < Number(projectDetailObj.investTokenBalance) ? availableTokenTotalPrice : projectDetailObj.investTokenBalance;
@@ -240,7 +230,6 @@ export const walletConnect = () => async (dispatch: any) => {
 
     provider.on("accountsChanged", (accounts) => {
       dispatch(walletConnect())
-      console.log(accounts);
     });
 
     // Subscribe to chainId change

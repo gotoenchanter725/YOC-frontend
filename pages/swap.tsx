@@ -192,10 +192,10 @@ const Swap: FC = () => {
             let amount = 0;
             if (type == "in") {
                 setPendingApproveIn(true);
-                amount = amountIn;
+                amount = tempMaxValue;
             } else {
                 setPendingApproveOut(true);
-                amount = amountOut;
+                amount = tempMaxValue;
             }
             let tx = await tokenContract.approve(YOCSwapRouter.address, MaxUint256);
             const receipt = await tx.wait();
@@ -442,7 +442,7 @@ const Swap: FC = () => {
                                                     <button className='bg-btn-primary w-full flex items-center justify-around py-5 my-10 text-3xl rounded-lg shadow-btn-primary'><SimpleLoading className='w-[36px] h-[36px]' /></button>
                                                 ) : (
                                                     account ?
-                                                        <button className='bg-btn-primary w-full py-5 my-10 text-3xl rounded-lg shadow-btn-primary disabled:bg-btn-disable' disabled={(!+allowanceIn || !+allowanceOut || !+amountIn || amountIn > myBalanceIn || !amountOut || !rate) as boolean} onClick={() => confirmSwapHandle()}>Swap</button>
+                                                        <button className='bg-btn-primary w-full py-5 my-10 text-3xl rounded-lg shadow-btn-primary disabled:bg-btn-disable' disabled={(!+allowanceIn || !+amountIn || amountIn > myBalanceIn || !amountOut || !rate) as boolean} onClick={() => confirmSwapHandle()}>Swap</button>
                                                         :
                                                         <button className='bg-btn-primary w-full py-5 my-10 text-3xl rounded-lg shadow-btn-primary' onClick={() => dispatch(walletConnect() as any)}>Connect Wallet</button>
                                                 )

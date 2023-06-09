@@ -76,7 +76,7 @@ const Farm: FC = () => {
 							let usdToken0Amount = LPamountCurrentPool / totalLPAmount * totalToken0Amount * currency0Detail.price;
 							let usdToken1Amount = LPamountCurrentPool / totalLPAmount * totalToken1Amount * currency1Detail.price;
 							let APR = (usdToken0Amount + usdToken1Amount) ? yocUSDAmountForCurrentPool / (usdToken0Amount + usdToken1Amount) : 0;
-							let totalLiquidity = totalToken0Amount * currency0Detail.price + totalToken1Amount * currency1Detail.price;
+							let totalLiquidity = usdToken0Amount + usdToken1Amount;
 
 							console.log('yoc:', LPamountCurrentPool, totalLPAmount, yocUSDAmountForCurrentPool);
 							console.log('token0:', totalToken0Amount, usdToken0Amount);
@@ -557,13 +557,13 @@ const Farm: FC = () => {
 		<Modal size="small" show={stakeLpModalShow} onClose={() => setStakeLpModalShow(false)}>
 			<div className="p-6 pt-8 flex flex-col text-primary">
 				<h3 className="font-semibold text-xl mb-6">Stake LP Tokens</h3>
-				<div className="flex justify-between mb-4">
-					<div className="w-[calc(100%_-_180px)]">
-						<p className="mb-4">Stake</p>
-						<input className="w-full px-2 py-1 rounded border-[1px] border-solid border-secondary bg-transparent text-dark-primary" value={stakeLpAmount} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setStakeLpAmount(Number(e.target.value)); setStakeLpMax(false); }} />
+				<div className="flex flex-col justify-between mb-4">
+					<div className="flex justify-between item-center mb-4">
+						<p className="">Stake</p>
+						<p className="">Balance: {(selectFarmPool && selectFarmPool.balance) ? Number(selectFarmPool.balance).toFixed(6) : 0}</p>
 					</div>
-					<div className="w-[160px]">
-						<p className="mb-4">Balance: {(selectFarmPool && selectFarmPool.balance) ? Number(selectFarmPool.balance).toFixed(6) : 0}</p>
+					<div className="flex justify-between item-center">
+						<input className="w-full mr-4 px-2 py-1 rounded border-[1px] border-solid border-secondary bg-transparent text-dark-primary" value={stakeLpAmount} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setStakeLpAmount(Number(e.target.value)); setStakeLpMax(false); }} />
 						<button className="text-primary bg-btn-secondary shadow-btn-secondary px-4 py-1 rounded" onClick={() => setMaxStakeLpAmountHandle()}>MAX</button>
 					</div>
 				</div>
@@ -580,13 +580,13 @@ const Farm: FC = () => {
 		<Modal size="small" show={unstakeLpModalShow} onClose={() => setUnstakeLpModalShow(false)}>
 			<div className="p-6 pt-8 flex flex-col text-primary">
 				<h3 className="font-semibold text-xl mb-6">Unstake LP Tokens</h3>
-				<div className="flex justify-between mb-4">
-					<div className="w-[calc(100%_-_180px)]">
-						<p className="mb-4">Unstake</p>
-						<input className="w-full px-2 py-1 rounded border-[1px] border-solid border-secondary bg-transparent text-dark-primary" value={unstakeLpAmount} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setUnstakeLpAmount(Number(e.target.value)); setUnstakeLpMax(false); }} />
+				<div className="flex flex-col justify-between mb-4">
+					<div className="flex justify-between item-center mb-4">
+						<p className="">Unstake</p>
+						<p className="">Balance: {(selectFarmPool && selectFarmPool.lpAmount) ? selectFarmPool.lpAmount.toFixed(6) : 0}</p>
 					</div>
-					<div className="w-[160px]">
-						<p className="mb-4">Balance: {(selectFarmPool && selectFarmPool.lpAmount) ? selectFarmPool.lpAmount.toFixed(6) : 0}</p>
+					<div className="flex justify-between item-center">
+						<input className="w-full mr-4 px-2 py-1 rounded border-[1px] border-solid border-secondary bg-transparent text-dark-primary" value={unstakeLpAmount} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setUnstakeLpAmount(Number(e.target.value)); setUnstakeLpMax(false); }} />
 						<button className="text-primary bg-btn-secondary shadow-btn-secondary px-4 py-1 rounded" onClick={() => setMaxUnstakeAmountHandle()}>MAX</button>
 					</div>
 				</div>
