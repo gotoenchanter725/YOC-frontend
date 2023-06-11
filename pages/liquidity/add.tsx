@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import React, { FC, useState, useEffect } from 'react';
+import React, { FC, useState, useEffect, useMemo } from 'react';
 import { mathExact } from 'math-exact';
 import { MdArrowBack } from "react-icons/md";
 import { Contract, BigNumber, constants, utils } from 'ethers';
@@ -39,10 +39,17 @@ const Liquidity: FC = () => {
     const [pendingApproveOut, setPendingApproveOut] = useState(false);
     const [confirmDeposit, setConfirmDeposit] = useState(false);
     const [rate, setRate] = useState(0);
-    const [swapContract] = useState(new Contract(
-        YOCSwapRouter.address,
-        YOCSwapRouter.abi,
-        rpc_provider_basic
+    const YOCSwapContract = useMemo(() => {
+        return new Contract(
+            YOCSwapRouter.address,
+            YOCSwapRouter.abi,
+            signer
+        )
+        }, [signer]);
+    const [YOCSwapFactoryContract] = useState(new Contract(
+        YOCSwapFactory.address,
+        YOCSwapFactory.abi,
+        signer
     ));
 
     useEffect(() => {
@@ -54,7 +61,7 @@ const Liquidity: FC = () => {
     const calculateRate = async (in_: tokenInterface, out_: tokenInterface) => {
         if (!(in_ && out_)) return 0;
         try {
-            // let res = await swapContract.getExpectLiquidityAmount(in_.address, out_.address, convertEthToWei('1', in_.decimals));
+            // let res = await YOCSwapContract.getExpectLiquidityAmount(in_.address, out_.address, convertEthToWei('1', in_.decimals));
             // let rate = convertWeiToEth(res, out_.decimals);
             let res = await axios.get(process.env.API_ADDRESS + '/liquidity/rate?' + `in=${in_.address}&out=${out_.address}`);
             if (res && res.data) {
@@ -192,24 +199,19 @@ const Liquidity: FC = () => {
         try {
             if (typeIn && typeOut) {
                 setPendingLiquidity(true);
-                let tokenContract = new Contract(
-                    YOCSwapRouter.address,
-                    YOCSwapRouter.abi,
-                    signer
-                );
                 let tx;
                 if (typeIn.address == WETH) {
                     console.log(typeOut.address);
                     console.log(convertEthToWei(String('1'), 18));
                     console.log(convertEthToWei(String(Number(+amountIn).toFixed(typeIn.decimals)), typeIn.decimals));
                     console.log(convertEthToWei(String(Number(+amountOut).toFixed(typeOut.decimals)), typeOut.decimals));
-                    tx = await tokenContract.addLiquidityETH(
+                    tx = await YOCSwapContract.addLiquidityETH(
                         typeOut.address,
                         convertEthToWei(String(Number(+amountOut).toFixed(typeOut.decimals)), typeOut.decimals),
                         '0',
                         '0',
                         account,
-                        Date.now() + txRunLimitTime + '',
+                        MaxUint256,
                         // MaxUint256, 
                         {
                             value: convertEthToWei(String(Number(+amountIn).toFixed(typeIn.decimals)), typeIn.decimals),
@@ -217,13 +219,13 @@ const Liquidity: FC = () => {
                         }
                     );
                 } else if (typeOut.address == WETH) {
-                    tx = await tokenContract.addLiquidityETH(
+                    tx = await YOCSwapContract.addLiquidityETH(
                         typeIn.address,
                         convertEthToWei(String(Number(+amountIn).toFixed(typeIn.decimals)), typeIn.decimals),
                         '0',
                         '0',
                         account,
-                        Date.now() + txRunLimitTime + '',
+                        MaxUint256,
                         // MaxUint256, 
                         {
                             value: convertEthToWei(String(Number(+amountOut).toFixed(typeOut.decimals)), typeOut.decimals),
@@ -231,7 +233,7 @@ const Liquidity: FC = () => {
                         }
                     );
                 } else {
-                    tx = await tokenContract.addLiquidity(
+                    tx = await YOCSwapContract.addLiquidity(
                         typeIn.address,
                         typeOut.address,
                         convertEthToWei(String(Number(+amountIn).toFixed(typeIn.decimals)), typeIn.decimals),
@@ -239,7 +241,7 @@ const Liquidity: FC = () => {
                         '0',
                         '0',
                         account,
-                        Date.now() + txRunLimitTime + '',
+                        MaxUint256,
                         // MaxUint256, 
                         {
                             gasLimit: 1850000

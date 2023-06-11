@@ -146,7 +146,7 @@ const HomePage: FC = () => {
               <div className="w-full flex justify-between mb-4">
                 <p className="text-2xl font-light">Trading Volume</p>
               </div>
-              <YocPriceLineChart />
+              {/* <YocPriceLineChart /> */}
             </div>
             <p className="hidden lg:block lg:w-[25%] text-lg font-extralight leading-8">
               YOC token is at the core of this
@@ -158,7 +158,7 @@ const HomePage: FC = () => {
       </div>
     </div>
 
-    <TotalLockedBubbleChartSection />
+    {/* <TotalLockedBubbleChartSection /> */}
 
     <div className="w-full mb-8">
       <div className="container mx-auto">
@@ -169,7 +169,7 @@ const HomePage: FC = () => {
                 <p className="text-2xl font-light">Trading Volume</p>
                 <Period value={period} setValue={(v) => setPeriod(v)} />
               </div>
-              <TradingChart period={period} />
+              {/* <TradingChart period={period} /> */}
             </div>
             <div className="hidden lg:block w-[25%]">
               <p className="text-2xl font-light mb-6">Description</p>
