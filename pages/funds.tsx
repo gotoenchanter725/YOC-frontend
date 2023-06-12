@@ -45,7 +45,7 @@ const Fund: FC = () => {
         try {
             loadingStart();
 
-            if (amount > investAllowance) {
+            if (amount > +investAllowance) {
                 let approve_investToken = await investTokenInstance.approve(poolAddress, MaxUint256);
                 await approve_investToken.wait();
             }

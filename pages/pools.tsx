@@ -204,7 +204,7 @@ const Pools: FC = () => {
 	}
 
 	const enableHandle = async () => {
-		// loadingStart();
+		loadingStart();
 		try {
 			const pool = selectPool;
 			let tokenContract = new Contract(
@@ -212,8 +212,7 @@ const Pools: FC = () => {
 				TokenTemplate.abi,
 				signer
 			)
-			const tx = await tokenContract.approve(String(pool?.address), MaxUint256);
-			await tokenContract.on("Approval", async () => {
+			tokenContract.on("Approval", async () => {
 				setStakePools(stakePools.map(item => item.address == pool?.address ? { ...item, approve: true } : item));
 				setEnableModalShow(false);
 				loadingEnd();
@@ -225,6 +224,7 @@ const Pools: FC = () => {
 					balance: convertWeiToEth(MaxUint256, pool.currency.decimals)
 				})
 			})
+			await tokenContract.approve(String(pool?.address), MaxUint256);
 		} catch (err) {
 			loadingEnd();
 		}
@@ -262,17 +262,19 @@ const Pools: FC = () => {
 				isYocCheck(pool.currency.id) ? YOCPool.abi : YOCPool.TokenABI,
 				signer
 			)
+			stakeContract.on('Deposit', (user, amount) => {
+				if (user == account) {
+					setStakePools(stakePools.map(item => item.address == pool?.address ? { ...item, amount: Number(item.amount) + Number(convertWeiToEth(amount, pool?.currency.decimals)), balance: Number(item.balance) - stakeAmount } : item));
+					setStakeModalShow(false);
+					loadingEnd();
+
+					console.log(user, amount);
+					alertShow({ content: `Deposit Successfully`, text: `Amount: ${convertWeiToEth(amount, pool?.currency.decimals)} ${pool?.currency.symbol}`, status: 'success' });
+				}
+			})
 			await stakeContract.deposit(convertEthToWei(String(stakeAmount), Number(pool?.currency.decimals)), {
 				gasLimit: 3000000
 			});
-			await stakeContract.on('Deposit', (user, amount) => {
-				setStakePools(stakePools.map(item => item.address == pool?.address ? { ...item, amount: Number(item.amount) + Number(convertWeiToEth(amount, pool?.currency.decimals)), balance: Number(item.balance) - stakeAmount } : item));
-				setStakeModalShow(false);
-				loadingEnd();
-
-				console.log(user, amount);
-				alertShow({ content: `Deposit Successfully`, text: `Amount: ${convertWeiToEth(amount, pool?.currency.decimals)} ${pool?.currency.symbol}`, status: 'success' });
-			})
 		} catch (err) {
 			console.dir(err);
 			loadingEnd();
@@ -291,15 +293,17 @@ const Pools: FC = () => {
 				isYocCheck(pool.currency.id) ? YOCPool.abi : YOCPool.TokenABI,
 				signer
 			)
-			await stakeContract.withdraw(convertEthToWei(String(unstakeAmount), Number(selectPool?.currency.decimals)));
-			await stakeContract.on("Withdraw", (user, amount, share) => {
-				setStakePools(stakePools.map(item => item.address == pool?.address ? { ...item, amount: Number(item.amount) - Number(convertWeiToEth(amount, pool?.currency.decimals)), balance: Number(item.balance) + unstakeAmount } : item));
-				setUnstakeModalShow(false);
-				loadingEnd();
+			stakeContract.on("Withdraw", (user, amount, share) => {
+				if (user == account) {
+					setStakePools(stakePools.map(item => item.address == pool?.address ? { ...item, amount: Number(item.amount) - Number(convertWeiToEth(amount, pool?.currency.decimals)), balance: Number(item.balance) + unstakeAmount } : item));
+					setUnstakeModalShow(false);
+					loadingEnd();
 
-				console.log(user, amount, share);
-				alertShow({ content: `Withdraw Successfully`, text: `Amount: ${convertWeiToEth(amount, pool.currency.decimals)} ${pool.currency.symbol}`, status: 'success' });
+					console.log(user, amount, share);
+					alertShow({ content: `Withdraw Successfully`, text: `Amount: ${convertWeiToEth(amount, pool.currency.decimals)} ${pool.currency.symbol}`, status: 'success' });
+				}
 			})
+			await stakeContract.withdraw(convertEthToWei(String(unstakeAmount), Number(selectPool?.currency.decimals)));
 		} catch (err) {
 			loadingEnd();
 		}
@@ -313,13 +317,15 @@ const Pools: FC = () => {
 				YOCPool.abi,
 				signer
 			)
-			const tx = await stakeContract.withdraw(0);
-			await stakeContract.on("Harvest", (user, amount) => {
-				setStakePools(stakePools.map(item => item.address == pair?.address ? { ...item, earned: 0, balance: Number(item.balance) + Number(item.earned) } : item));
-				loadingEnd();
-				console.log(user, amount, pair);
-				alertShow({ content: `Harvest Successfully`, text: `Amount: ${convertWeiToEth(amount, YOC.decimals)} ${YOC.symbol}`, status: 'success' });
+			stakeContract.on("Harvest", (user, amount) => {
+				if (user == account) {
+					setStakePools(stakePools.map(item => item.address == pair?.address ? { ...item, earned: 0, balance: Number(item.balance) + Number(item.earned) } : item));
+					loadingEnd();
+					console.log(user, amount, pair);
+					alertShow({ content: `Harvest Successfully`, text: `Amount: ${convertWeiToEth(amount, YOC.decimals)} ${YOC.symbol}`, status: 'success' });
+				}
 			})
+			await stakeContract.withdraw(0);
 		} catch (err) {
 			loadingEnd();
 		}

@@ -158,7 +158,7 @@ export const walletConnect = () => async (dispatch: any) => {
         options: {
           rpc: {
             1: NETWORK.mainnet.RPC_URL,
-            5: NETWORK.testnet.RPC_URL
+            11155111: NETWORK.testnet.RPC_URL
           }
         }
       },

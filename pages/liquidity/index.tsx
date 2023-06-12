@@ -141,6 +141,7 @@ const Liquidity: FC = () => {
             loadingEnd();
             setRemoveLiquidityModel(false);
         } catch (error) {
+            console.log(error);
             loadingEnd();
         }
     }

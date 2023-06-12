@@ -32,7 +32,10 @@ const TotalLockedBubbleChartSection = () => {
     })
 
     const [series, setSeries] = useState([{
-        data: []
+        data: [{
+            x: Date.now(), 
+            y: [0, 0, 0, 0]
+        }]
     }]);
 
     useEffect(() => {

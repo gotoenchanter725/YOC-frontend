@@ -177,7 +177,7 @@ const Farm: FC = () => {
 				signer
 			)
 			await PairContract.approve(YOCFarm.address, MaxUint256);
-			await PairContract.on("Approval", async (args) => {
+			PairContract.on("Approval", async (args) => {
 				setFarmPools(farmPools.map((item: any) => item.liquidity.pairAddress == pair.liquidity.pairAddress ? { ...item, approve: true } : item));
 				setEnableModalShow(false);
 				loadingEnd();
@@ -228,15 +228,17 @@ const Farm: FC = () => {
 				signer
 			)
 			console.log(stakeLpAmount);
-			await PairContract.deposit(pair.poolId, convertEthToWei(String(stakeLpAmount), Number(selectFarmPool?.liquidity.pairDecimals)));
-			await PairContract.on('Deposit', (user, pid, amount) => {
-				setFarmPools(farmPools.map(item => item.liquidity.pairAddress == pair.liquidity.pairAddress ? { ...item, lpAmount: Number(item.lpAmount) + stakeLpAmount, balance: Number(item.balance) - stakeLpAmount } : item));
-				setStakeLpModalShow(false);
-				loadingEnd();
+			PairContract.on('Deposit', (user, pid, amount) => {
+				if (user == account) {
+					setFarmPools(farmPools.map(item => item.liquidity.pairAddress == pair.liquidity.pairAddress ? { ...item, lpAmount: Number(item.lpAmount) + stakeLpAmount, balance: Number(item.balance) - stakeLpAmount } : item));
+					setStakeLpModalShow(false);
+					loadingEnd();
 
-				console.log(user, pid, amount);
-				alertShow({ content: `Deposit Successfully`, text: `Amount: ${convertWeiToEth(amount, pair.liquidity.pairDecimals)} ${pair.liquidity.pairSymbol}`, status: 'success' });
+					console.log(user, pid, amount);
+					alertShow({ content: `Deposit Successfully`, text: `Amount: ${convertWeiToEth(amount, pair.liquidity.pairDecimals)} ${pair.liquidity.pairSymbol}`, status: 'success' });
+				}
 			})
+			await PairContract.deposit(pair.poolId, convertEthToWei(String(stakeLpAmount), Number(selectFarmPool?.liquidity.pairDecimals)));
 		} catch (err) {
 			console.log(err);
 			loadingEnd();
@@ -256,16 +258,18 @@ const Farm: FC = () => {
 				signer
 			)
 			console.log(unstakeLpAmount);
-			await PairContract.withdraw(pair.poolId, convertEthToWei(String(unstakeLpAmount), Number(selectFarmPool?.liquidity.pairDecimals)));
-			await PairContract.on("Withdraw", (user, pid, amount, yocAmount) => {
-				setFarmPools([...farmPools.map(item => item.liquidity.pairAddress == pair.liquidity.pairAddress ? { ...item, lpAmount: Number(item.lpAmount) - unstakeLpAmount, balance: Number(item.balance) + unstakeLpAmount } : item)]);
-				setUnstakeLpModalShow(false);
-				updateWalletBalance();
-				loadingEnd();
-
-				console.log(user, pid, amount, yocAmount);
-				alertShow({ content: `Withdraw Successfully`, text: `Amount: ${convertWeiToEth(amount, 18)} ${pair.liquidity.pairSymbol}, Yoc: ${convertWeiToEth(yocAmount, YOC.decimals)}`, status: 'success' });
+			PairContract.on("Withdraw", (user, pid, amount, yocAmount) => {
+				if (user == account) {
+					setFarmPools([...farmPools.map(item => item.liquidity.pairAddress == pair.liquidity.pairAddress ? { ...item, lpAmount: Number(item.lpAmount) - unstakeLpAmount, balance: Number(item.balance) + unstakeLpAmount } : item)]);
+					setUnstakeLpModalShow(false);
+					updateWalletBalance();
+					loadingEnd();
+	
+					console.log(user, pid, amount, yocAmount);
+					alertShow({ content: `Withdraw Successfully`, text: `Amount: ${convertWeiToEth(amount, 18)} ${pair.liquidity.pairSymbol}, Yoc: ${convertWeiToEth(yocAmount, YOC.decimals)}`, status: 'success' });
+				}
 			})
+			await PairContract.withdraw(pair.poolId, convertEthToWei(String(unstakeLpAmount), Number(selectFarmPool?.liquidity.pairDecimals)));
 		} catch (err) {
 			console.log(err);
 			loadingEnd();
@@ -281,7 +285,7 @@ const Farm: FC = () => {
 				signer
 			)
 			await PairContract.withdraw(pair.poolId, 0);
-			await PairContract.on("Withdraw", (user, pid, amount, yocAmount) => {
+			PairContract.on("Withdraw", (user, pid, amount, yocAmount) => {
 				setFarmPools([...farmPools.map(item => item.liquidity.pairAddress == pair.liquidity.pairAddress ? { ...item, earned: 0, balance: Number(item.balance) + Number(item.earned) } : item)]);
 				loadingEnd();
 				updateWalletBalance();

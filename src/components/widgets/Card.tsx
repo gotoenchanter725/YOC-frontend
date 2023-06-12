@@ -286,7 +286,7 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
     };
 
     const refundHandler: React.MouseEventHandler<HTMLDivElement> = () => {
-        refundAction(item.poolAddress, item.tokenPrice, item.shareToken, item.investDecimal, item.shareDecimal, item.investAllowance)
+        refundAction(item.poolAddress, item.tokenPrice, item.shareToken, item.investDecimal, item.shareDecimal, item.shareTokenAllowance);
     }
 
     const claimHandler: React.MouseEventHandler<HTMLDivElement> = () => {
@@ -484,7 +484,7 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
                     </div>
                 </div>
                 <div className="w-full flex justify-end">
-                    <Button text="Buy Token" onClick={() => { buyAction(usdAmount, item.tokenPrice, item.poolAddress, item.investToken, item.investDecimal, item.shareDecimal, item.stakeAllowance); setShowBuyTokenModal(false); }} />
+                    <Button text="Buy Token" onClick={() => { buyAction(usdAmount, item.tokenPrice, item.poolAddress, item.investToken, item.investDecimal, item.shareDecimal, item.investTokenAllowance); setShowBuyTokenModal(false); }} />
                     <Button className="!bg-dark-primary ml-2" text="Cancel" onClick={() => { setShowBuyTokenModal(false); }} />
                 </div>
             </div>

@@ -146,7 +146,7 @@ const HomePage: FC = () => {
               <div className="w-full flex justify-between mb-4">
                 <p className="text-2xl font-light">Trading Volume</p>
               </div>
-              {/* <YocPriceLineChart /> */}
+              <YocPriceLineChart />
             </div>
             <p className="hidden lg:block lg:w-[25%] text-lg font-extralight leading-8">
               YOC token is at the core of this

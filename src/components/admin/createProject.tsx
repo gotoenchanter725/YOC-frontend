@@ -128,7 +128,8 @@ const CreateProjectContent: FC<Props> = ({ handleClose }) => {
 
             setCreatingProject(false);
 
-            await ProjectManagerContract.on('DeployedNewProject', async (owner: any, contractAddr: any, tokenAddr: any) => {
+            loadingStart();
+            ProjectManagerContract.on('DeployedNewProject', async (owner: any, contractAddr: any, tokenAddr: any) => {
                 console.log("DeployedNewProject", owner, account, contractAddr, tokenAddr);
                 if (owner == account) {
                     let data = {
@@ -143,10 +144,12 @@ const CreateProjectContent: FC<Props> = ({ handleClose }) => {
                         content: 'Project Create Success!'
                     })
                     dispatch(addNewProject(projects, contractAddr, account) as any);
+                    loadingEnd();
                 }
             })
 
         } catch (ex) {
+            loadingEnd();
             console.log("create project error: ", ex)
         }
     };
@@ -263,10 +266,10 @@ const CreateProjectContent: FC<Props> = ({ handleClose }) => {
                     <label htmlFor="">Ongoing Percentage</label>
                     <input className="text-white rounded border border-[#FFFFFF22] bg-transparent bg-primary-pattern px-4 py-2 outline-none" type="number" min={0} max={100} placeholder='70%' value={ongoingPercent} onChange={(e) => setOngoingPercent(e.target.value)} />
                 </div>
-                <div className="input_control address">
+                {/* <div className="input_control address">
                     <label htmlFor="">Token Address</label>
                     <input className="text-white rounded border border-[#FFFFFF22] bg-transparent bg-primary-pattern px-4 py-2 outline-none" type="text" value={tokenAddr} onChange={(e) => setTokenAddr(e.target.value)} />
-                </div>
+                </div> */}
                 <div className="input_control wallet">
                     <label htmlFor="">Invest Token Address</label>
                     <input className="text-white rounded border border-[#FFFFFF22] bg-transparent bg-primary-pattern px-4 py-2 outline-none" type="text" value={tokenWallet} onChange={(e) => setTokenWallet(e.target.value)} />

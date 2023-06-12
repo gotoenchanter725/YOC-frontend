@@ -79,12 +79,6 @@
           "internalType": "uint256",
           "name": "amount1",
           "type": "uint256"
-        },
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "to",
-          "type": "address"
         }
       ],
       "name": "Mint",

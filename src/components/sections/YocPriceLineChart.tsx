@@ -56,7 +56,10 @@ const LineChart = () => {
 
     const [series, setSeries] = useState([{
         name: "Price",
-        data: []
+        data: [{
+            x: Date.now(), 
+            y: [0, 0, 0, 0]
+        }]
     }]);
 
     useEffect(() => {

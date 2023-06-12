@@ -215,7 +215,7 @@ const Liquidity: FC = () => {
                         // MaxUint256, 
                         {
                             value: convertEthToWei(String(Number(+amountIn).toFixed(typeIn.decimals)), typeIn.decimals),
-                            gasLimit: 850000
+                            gasLimit: 3347370
                         }
                     );
                 } else if (typeOut.address == WETH) {
@@ -229,7 +229,7 @@ const Liquidity: FC = () => {
                         // MaxUint256, 
                         {
                             value: convertEthToWei(String(Number(+amountOut).toFixed(typeOut.decimals)), typeOut.decimals),
-                            gasLimit: 850000
+                            gasLimit: 3347370
                         }
                     );
                 } else {
@@ -244,7 +244,7 @@ const Liquidity: FC = () => {
                         MaxUint256,
                         // MaxUint256, 
                         {
-                            gasLimit: 1850000
+                            gasLimit: 3347370
                         }
                     );
                 }
