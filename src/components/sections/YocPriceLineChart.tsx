@@ -64,7 +64,7 @@ const LineChart = () => {
 
     useEffect(() => {
         (async () => {
-            let res = await axios.get(process.env.API_ADDRESS + '/chart/get');
+            let res = await axios.get(process.env.API_ADDRESS + '/chart/get?period=' + 1000 * 60 * 60 * 24);
             if (res && res.data && res.data.prices) {
                 let dataArr = res.data.prices.map((item: any) => {
                     return {
