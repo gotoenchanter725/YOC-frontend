@@ -32,7 +32,10 @@ const TotalLockedBubbleChartSection = () => {
     })
 
     const [series, setSeries] = useState([{
-        data: []
+        data: [{
+            x: Date.now(), 
+            y: [0, 0, 0, 0]
+        }]
     }]);
 
     useEffect(() => {
@@ -62,7 +65,7 @@ const TotalLockedBubbleChartSection = () => {
                     time = 1000 * 60 * 60 * 24 * 30 * 12 * 2000;
                     break;
             }
-            let res = await axios.get(process.env.API_ADDRESS + '/chart/get?period=' + time);
+            let res = await axios.get(process.env.API_ADDRESS + '/chart/tvl-get?period=' + time);
             if (res && res.data && res.data.prices) {
                 const tmp = res.data.prices[res.data.prices.length - 1];
                 if (tmp) setLatestPrice(tmp.price);

@@ -12,7 +12,7 @@ import {
     Project
 } from '../../src/constants/contracts';
 
-import { useAdmin, useAccount, useAlert } from '@hooks/index';
+import { useAdmin, useAccount, useAlert, useLoading } from '@hooks/index';
 import { convertWeiToEth } from "utils/unit";
 
 const AdminPage: NextPage = () => {
@@ -20,6 +20,7 @@ const AdminPage: NextPage = () => {
     const [showModal, setShowModal] = useState(false);
     const admin = useAdmin();
     const { account } = useAccount();
+    const { loadingStart, loadingEnd } = useLoading();
     const { alertShow } = useAlert();
 
     const { projects, acc, signer } = useSelector((state: any) => state.data);
@@ -41,6 +42,7 @@ const AdminPage: NextPage = () => {
                 })
                 return;
             }
+            loadingStart();
             const ProjectContractInstance = new Contract(poolAddress, Project.abi, signer);
             const investTokenInstance = new Contract(investAddress, USDCToken.abi, signer);
 
@@ -48,20 +50,20 @@ const AdminPage: NextPage = () => {
             let approve_investToken = await investTokenInstance.approve(poolAddress, investAmount);
             await approve_investToken.wait();
 
-            let participate = await ProjectContractInstance.makeDepositProfit(investAmount);
-            await participate.wait();
-
-            await ProjectContractInstance.on("ProfitDeposited", (projectAddress, amount, userAddress) => {
+            ProjectContractInstance.on("ProfitDeposited", (projectAddress, amount, userAddress) => {
                 let realAmount = convertWeiToEth(amount, USDCToken.decimals);
                 if (projectAddress == poolAddress) {
                     alertShow({
                         status: 'success',
                         content: `Deposit ${realAmount} USDC Success!`
                     })
+                    loadingEnd();
                 }
             });
+            await ProjectContractInstance.makeDepositProfit(investAmount);
         } catch (ex) {
             console.log("make depost error: ", ex)
+            loadingEnd();
         }
     }
 

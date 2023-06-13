@@ -5,7 +5,7 @@ import FooterIon1 from "../../../public/images/footer1.png";
 import FooterIon2 from "../../../public/images/footer2.png";
 import FooterIon4 from "../../../public/images/footer4.png";
 import FooterIon5 from "../../../public/images/footer5.png";
-import useNetwork from '../../hooks/useNetwork';
+import useNetwork from '@hooks/useNetwork';
 
 const socialDisplayData = [
     {

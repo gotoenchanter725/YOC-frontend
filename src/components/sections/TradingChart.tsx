@@ -34,7 +34,10 @@ const TradingChart: FC<Props> = ({ period }) => {
     })
 
     const [series, setSeries] = useState([{
-        data: []
+        data: [{
+            x: new Date(), 
+            y: 0
+        }]
     }]);
 
     useEffect(() => {
