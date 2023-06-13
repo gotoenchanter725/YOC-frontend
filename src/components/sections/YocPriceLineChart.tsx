@@ -69,7 +69,7 @@ const LineChart = () => {
                 let dataArr = res.data.prices.map((item: any) => {
                     return {
                         x: item.datetime,
-                        y: [item.from, item.high, item.low, item.to]
+                        y: [item.price, item.from, item.high, item.low, item.to]
                     }
                 });
 
@@ -88,7 +88,7 @@ const LineChart = () => {
                 <Chart
                     options={options}
                     series={series}
-                    type={"candlestick"}
+                    type={"line"}
                     height={window.innerWidth / 4}
                 />
             }

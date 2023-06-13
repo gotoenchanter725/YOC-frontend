@@ -158,7 +158,7 @@ const HomePage: FC = () => {
       </div>
     </div>
 
-    {/* <TotalLockedBubbleChartSection /> */}
+    <TotalLockedBubbleChartSection />
 
     <div className="w-full mb-8">
       <div className="container mx-auto">
@@ -169,7 +169,7 @@ const HomePage: FC = () => {
                 <p className="text-2xl font-light">Trading Volume</p>
                 <Period value={period} setValue={(v) => setPeriod(v)} />
               </div>
-              {/* <TradingChart period={period} /> */}
+              <TradingChart period={period} />
             </div>
             <div className="hidden lg:block w-[25%]">
               <p className="text-2xl font-light mb-6">Description</p>
