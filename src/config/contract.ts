@@ -29,21 +29,21 @@ const BNB_NETWORK = {
         CHAIN_ID: 56
     },
     testnet: {
-        RPC_URL: "https://data-seed-prebsc-2-s1.binance.org:8545/",
+        RPC_URL: "https://data-seed-prebsc-1-s1.binance.org:8545/",
         CHAIN_ID: 97
     }
 }
 
 const BNB_CONTRACT_ADDRESS = {
     AdminWalletAddress: "0x5141383723037FBd3818dAEcb7d4C5DF1Dc8c6B1",
-    ProjectManagerAddress: "0xf2bbF00c3e914c496364B759517Ac97D40b47242",
-    ProjectDetailAddress: "0x45D78a311E3AE92e5e6e1624DA59d1D5936fF292",
+    ProjectManagerAddress: "0x289B167f4Eb1d9C5c6017Eb9c1D87B8Db999904C",
+    ProjectDetailAddress: "0x1A89837504DA72f08594aC9C568beC5AE865a982",
     WETH: "0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd",
-    YOCAddress: "0x792c6d34993256273bBd180B386671e6690AEE86",
-    USDCAddress: "0x44DDa416F8C40435443AfCbf355FAb280084CC9A",
-    YOCSwapFactoryAddress: "0xBd96dfDEc3f65C3c43157438B83726c1d1ecb266",
-    YOCSwapRouterAddress: "0xB9A3ec6867640CbA430F1349eA1ec7C1d72450C4",
-    YOCFarmAddress: "0x6302AFf32e4C90c55e31c2DDc716025a234198f9",
+    YOCAddress: "0x447663e0D3624d052dcC182e4ee984eBB98f1AEC",
+    USDCAddress: "0x0C686357C798FF5af7D41e1A4A4A2DC99c1Deafb",
+    YOCSwapFactoryAddress: "0x6B5E8B5b0E326206532aee505d6952E09e079fFa",
+    YOCSwapRouterAddress: "0x0191F3Fd92279Ac483eE5F68fDa10bCe7Be74cE4",
+    YOCFarmAddress: "0xE0F39Db1FA778e89301165aB198e744738b085d3",
 }
 
 const NETWORK = process.env.NET_WORK === "ETH" ? ETH_NETWORK : BNB_NETWORK;
