@@ -25,7 +25,7 @@ export const showBigNumber = (v: any) => {
     const formattedNumber = number.toFormat(3, BigNumber.ROUND_DOWN, {
         decimalSeparator: '.',
         groupSeparator: ',',
-    }).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+    }).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,');
 
     return formattedNumber;
 }
