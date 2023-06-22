@@ -86,7 +86,7 @@ const VotingHistory: FC<Props> = ({ votingResponse, votingResult, votingQueryDet
                     </div>
                     <div className="flex justify-around">
                         <span className="w-full text-left">Start Time: {convertStringIntoDate(String(votingQueryDetail.startDate))}</span>
-                        <span className="w-full text-left">End Time: {convertStringIntoDate(String(votingQueryDetail.startDate))}</span>
+                        <span className="w-full text-left">End Time: {convertStringIntoDate(String(votingQueryDetail.endDate))}</span>
                     </div>
                 </div>
             </div>
