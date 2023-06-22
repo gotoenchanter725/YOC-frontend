@@ -57,28 +57,6 @@ const Liquidity: FC = () => {
         }
     }
 
-    const approveHandle = async () => {
-        if (selectPool) {
-            try {
-                loadingStart();
-                const pairContract = new Contract(selectPool.item.liquidity.pairAddress, YOCPair.abi, signer);
-                let tx = await pairContract.approve(YOCSwapRouter.address, MaxUint256);
-                const MaxAllowanceAmount = convertWeiToEth(MaxUint256, 18);
-                let tmpPool = selectPool;
-                tmpPool.allowance = MaxAllowanceAmount;
-                setSelectPool(tmpPool);
-                await tx.wait();
-                loadingEnd();
-                alertShow({
-                    status: "success",
-                    content: "Approve Successfully!"
-                })
-            } catch (err) {
-                loadingEnd();
-            }
-        }
-    }
-
     const removeLiquidityHandle = async () => {
         try {
             loadingStart();
@@ -255,13 +233,7 @@ const Liquidity: FC = () => {
                     <a className="text-secondary mb-6" href={`${explorer}/address/${selectPool?.item.liquidity.pairAddress}`}>Get LP</a>
 
                     <div className="flex justify-between">
-                        {
-                            selectPool && +selectPool.allowance ? (
-                                <button className="w-full font-semibold rounded text-primary bg-btn-primary shadow-btn-primary px-4 py-2 mr-2" onClick={() => removeLiquidityHandle()}>Confirm</button>
-                            ) : (
-                                <button className="w-full font-semibold rounded text-primary bg-btn-primary shadow-btn-primary px-4 py-2 mr-2" onClick={() => approveHandle()}>Approve</button>
-                            )
-                        }
+                        <button className="w-full font-semibold rounded text-primary bg-btn-primary shadow-btn-primary px-4 py-2 mr-2" onClick={() => removeLiquidityHandle()}>Confirm</button>
                         <button className="w-full font-semibold rounded text-primary bg-primary-pattern border-[0.5px] border-solid border-[#FFFFFF22] px-4 py-2" onClick={() => setRemoveLiquidityModel(false)}>Reject</button>
                     </div>
                 </div>
