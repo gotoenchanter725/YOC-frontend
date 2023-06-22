@@ -324,11 +324,11 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
         dispatch(loading_start() as any)
         await axios.get(process.env.API_ADDRESS + `/voting/queryId/${votingQuery.id}`).then(async (res) => {
             let userAddressArr = res.data.votingResult.map((item: VotingResultInterface) => item.userAddress);
+            setCurrentUserIsBet(false);
             if (userAddressArr.length && detailProject) {
                 const detailContract = new Contract(ProjectDetail.address || '', ProjectDetail.abi, rpc_provider);
                 let shareTokenAddress = detailProject.shareToken;
                 let balanceInfo = await detailContract.getTokenInfo(shareTokenAddress, userAddressArr);
-                setCurrentUserIsBet(false);
                 setCurrentUserAnswer(-1);
                 let temp = userAddressArr.map((item: string) => {
                     let result = {
