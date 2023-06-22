@@ -3,7 +3,7 @@ import React, { FC, useRef, useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import Button from "../widgets/Button";
-
+import useAlert from "@hooks/useAlert";
 
 type Props = {
     handleClose: () => void;
@@ -13,6 +13,7 @@ type Props = {
 
 const AdminVotingContent: FC<Props> = ({ handleClose, projectTitle, votingQueryDetail }) => {
     const { projects, account, signer } = useSelector((state: any) => state.data);
+    const { alertShow } = useAlert();
 
     const [queryTitle, setQueryTitle] = useState<string>("Color Question");
     const [queryContent, setQueryContent] = useState<string>("What is your favorite Color?");
@@ -40,12 +41,20 @@ const AdminVotingContent: FC<Props> = ({ handleClose, projectTitle, votingQueryD
 
     const saveVotingQuestion = () => {
         handleClose();
-        let data = {
-            projectTitle, queryTitle, queryContent, amountAnswer, answerStr: answerArr.join(','), startDate: new Date(+startDate), endDate: new Date(+endDate)
+        if (new Date(endDate).getTime() < Date.now()) {
+            alertShow({
+                content: `EndDate cannot be set in the past`,
+                status: 'failed'
+            });
+            return;
+        } else {
+            let data = {
+                projectTitle, queryTitle, queryContent, amountAnswer, answerStr: answerArr.join(','), startDate: new Date(+startDate), endDate: new Date(+endDate)
+            }
+            axios.post(process.env.API_ADDRESS + '/voting/create', data).then(res => {
+                console.log(res);
+            });
         }
-        axios.post(process.env.API_ADDRESS + '/voting/create', data).then(res => {
-            console.log(res);
-        });
     }
     const cancelVoting = () => {
         handleClose();
