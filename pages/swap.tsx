@@ -16,6 +16,7 @@ import { alert_show, loading_end, loading_start, walletConnect } from "../store/
 import { rpc_provider_basic } from '../utils/rpc_provider';
 import { convertEthToWei, convertWeiToEth } from "../utils/unit";
 import { debounceHook } from '../utils/hook';
+import axios from 'axios';
 
 const tempMaxValue = 99999999999;
 const ethAddress = WETH;
@@ -44,6 +45,7 @@ const Swap: FC = () => {
         rpc_provider_basic
     ));
     const [swapStep, setSwapStep] = useState('swap');
+    const [priceImpact, setPriceImpact] = useState(0);
 
     useEffect(() => {
         if (provider && account) {
@@ -65,6 +67,7 @@ const Swap: FC = () => {
         dispatch(loading_start() as any);
         setRate(0);
         try {
+            let tmpRate = 0;
             if (direct) {
                 let res = await swapContract.getAmountsOut(
                     convertEthToWei(Number(amount).toFixed(in_.decimals), in_.decimals),
@@ -76,7 +79,20 @@ const Swap: FC = () => {
                 const res0 = convertWeiToEth(res[0], in_.decimals);
                 const res1 = convertWeiToEth(res[1], out_.decimals);
                 setRate(+res0 / +res1);
+                tmpRate = +res0 / +res1;
                 setAmountOut(+res1);
+
+                let priceimpactResponse = await axios.get(process.env.API_ADDRESS + `/liquidity/priceimpact`, {
+                    params: {
+                        token0: in_.address,
+                        token1: out_.address,
+                        amountIn: amount, 
+                        amountOut: +res1
+                    }
+                });
+                if (priceimpactResponse.data) {
+                    setPriceImpact(priceimpactResponse.data.priceImpact);
+                }
             } else {
                 let res = await swapContract.getAmountsIn(
                     convertEthToWei(Number(amount).toFixed(out_.decimals), out_.decimals),
@@ -89,7 +105,20 @@ const Swap: FC = () => {
                 const res1 = convertWeiToEth(res[1], out_.decimals);
                 console.log(res0, res1);
                 setRate(+res1 / +res0);
+                tmpRate = +res1 / +res0;
                 setAmountIn(+res0);
+                
+                let priceimpactResponse = await axios.get(process.env.API_ADDRESS + `/liquidity/priceimpact`, {
+                    params: {
+                        token0: in_.address,
+                        token1: out_.address,
+                        amountIn: +res0, 
+                        amountOut: amount
+                    }
+                });
+                if (priceimpactResponse.data) {
+                    setPriceImpact(priceimpactResponse.data.priceImpact);
+                }
             }
             dispatch(loading_end() as any);
         } catch (err) {
@@ -486,18 +515,18 @@ const Swap: FC = () => {
                                                         <span className='text-white'>Price</span>
                                                         <span className='text-white'>{rate} {typeIn?.symbol}/{typeOut?.symbol}</span>
                                                     </div>
-                                                    <div className='flex items-center justify-between mb-4'>
+                                                    {/* <div className='flex items-center justify-between mb-4'>
                                                         <span className='text-white'>Minumum Received</span>
                                                         <span className='text-white'>2.237 {typeOut?.symbol}</span>
-                                                    </div>
+                                                    </div> */}
                                                     <div className='flex items-center justify-between mb-4'>
                                                         <span className='text-white'>Price Impact</span>
-                                                        <span className='text-secondary'>{"0.10"} %</span>
+                                                        <span className='text-secondary'>{Number(priceImpact * 100).toFixed(2)} %</span>
                                                     </div>
-                                                    <div className='flex items-center justify-between mb-4'>
+                                                    {/* <div className='flex items-center justify-between mb-4'>
                                                         <span className='text-white'>Liquidity Provide fee</span>
                                                         <span className='text-white'>0.01 {typeIn?.symbol}</span>
-                                                    </div>
+                                                    </div> */}
                                                 </div>
                                                 {
                                                     pendingSwap ?
