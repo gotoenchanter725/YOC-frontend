@@ -108,8 +108,8 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
                     dispatch(updateProjectInfo(projects, address, account) as any);
 
                     if (user == account) {
-                        let realShareAmount = convertWeiToEth(amount1, shareContract ? shareContract.decimals : 16)
-                        let realInvestAmount = convertWeiToEth(amount2, investContract ? investContract.decimals : 16)
+                        let realInvestAmount = convertWeiToEth(amount1, investContract ? investContract.decimals : 16)
+                        let realShareAmount = convertWeiToEth(amount2, shareContract ? shareContract.decimals : 16)
                         alertShow({
                             content: `Participated ${realShareAmount} ${shareContract?.symbol}, ${realInvestAmount} ${investContract?.symbol} Successfully`,
                             status: 'success'
@@ -121,8 +121,8 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
                     dispatch(updateProjectInfo(projects, address, account) as any);
 
                     if (user == account) {
-                        let realShareAmount = convertWeiToEth(amount1, shareContract ? shareContract.decimals : 16)
-                        let realInvestAmount = convertWeiToEth(amount2, investContract ? investContract.decimals : 16)
+                        let realInvestAmount = convertWeiToEth(amount1, investContract ? investContract.decimals : 16)
+                        let realShareAmount = convertWeiToEth(amount2, shareContract ? shareContract.decimals : 16)
                         alertShow({
                             content: `Refund ${realShareAmount} ${shareContract?.symbol}, ${realInvestAmount} ${investContract?.symbol} Successfully`,
                             status: 'success'
