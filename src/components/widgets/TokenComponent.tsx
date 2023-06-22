@@ -33,7 +33,7 @@ const TokenComponent = (props: propsInterface) => {
 
     const showNumber = (v: any) => {
         if (isNaN(Number(v))) return 0;
-        else return Number(v);
+        else return v;
     }
 
     useEffect(() => {
