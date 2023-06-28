@@ -500,7 +500,7 @@ const Pools: FC = () => {
 												<div className={`flex justify-between overflow-hidden transition-all ${stakeUIToggle[index] == 1 ? 'pt-4 h-[124px]' : 'h-0'}`} >
 													<div className="w-[160px] text-secondary flex flex-col justify-center">
 														<a className="mb-2" href={`/swap`}>Get Staked Token</a>
-														<a className="mb-2" href={`${explorer}/address/${item.address}`} >Contract Details</a>
+														<a className="mb-2" target="_blank" href={`${explorer}/address/${item.address}`} >Contract Details</a>
 													</div>
 													{
 														!item.isYoc ? (

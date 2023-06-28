@@ -523,10 +523,10 @@ const Swap: FC = () => {
                                                         <span className='text-white'>Price Impact</span>
                                                         <span className='text-secondary'>{Number(priceImpact * 100).toFixed(2)} %</span>
                                                     </div>
-                                                    {/* <div className='flex items-center justify-between mb-4'>
+                                                    <div className='flex items-center justify-between mb-4'>
                                                         <span className='text-white'>Liquidity Provide fee</span>
-                                                        <span className='text-white'>0.01 {typeIn?.symbol}</span>
-                                                    </div> */}
+                                                        <span className='text-white'>0.19%</span>
+                                                    </div>
                                                 </div>
                                                 {
                                                     pendingSwap ?
