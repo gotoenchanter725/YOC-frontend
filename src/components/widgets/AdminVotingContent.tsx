@@ -9,9 +9,10 @@ type Props = {
     handleClose: () => void;
     projectTitle: string;
     votingQueryDetail: any;
+    projectDetail: any;
 }
 
-const AdminVotingContent: FC<Props> = ({ handleClose, projectTitle, votingQueryDetail }) => {
+const AdminVotingContent: FC<Props> = ({ handleClose, projectTitle, projectDetail }) => {
     const { projects, account, signer } = useSelector((state: any) => state.data);
     const { alertShow } = useAlert();
 
@@ -41,20 +42,27 @@ const AdminVotingContent: FC<Props> = ({ handleClose, projectTitle, votingQueryD
 
     const saveVotingQuestion = () => {
         handleClose();
-        if (new Date(endDate).getTime() < Date.now()) {
+        if (Number(endDate) < Date.now()) {
             alertShow({
                 content: `EndDate cannot be set in the past`,
                 status: 'failed'
             });
             return;
-        } else {
-            let data = {
-                projectTitle, queryTitle, queryContent, amountAnswer, answerStr: answerArr.join(','), startDate: new Date(+startDate), endDate: new Date(+endDate)
-            }
-            axios.post(process.env.API_ADDRESS + '/voting/create', data).then(res => {
-                console.log(res);
-            });
         }
+        // if (Number(endDate) > Number(projectDetail.endDate)) {
+        //     alertShow({
+        //         content: `EndDate must be set before the deadline date of the project.`,
+        //         status: 'failed'
+        //     });
+        //     return;
+        // }
+
+        let data = {
+            projectTitle, queryTitle, queryContent, amountAnswer, answerStr: answerArr.join(','), startDate: new Date(+startDate), endDate: new Date(+endDate)
+        }
+        axios.post(process.env.API_ADDRESS + '/voting/create', data).then(res => {
+            console.log(res);
+        });
     }
     const cancelVoting = () => {
         handleClose();

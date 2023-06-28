@@ -434,13 +434,13 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
                     <p>Category: {item.category}</p>
                     <p>End Date: {(new Date(item.endDate)).toLocaleDateString()}</p>
                     {
-                        status == 'ongoing' && !votingResponse.length && admin ? <Button className="mt-1" text="Create Voting" onClick={() => getVotingInfo()}></Button> : ''
+                        projectStatus == 'ongoing' && !votingResponse.length && admin ? <Button className="mt-1" text="Create Voting" onClick={() => getVotingInfo()}></Button> : ''
                     }
                     {
-                        (status == 'ongoing' && votingResponse && votingResponse.length) ? <Button className="mt-1" text={(new Date(String(votingResponse[0].endDate)).getTime() < new Date().getTime()) && admin ? "Create Voting" : "Voting Poll"} disabled={(new Date(String(votingResponse[0].endDate)).getTime() < new Date().getTime()) && !admin} onClick={() => getVotingInfo()}></Button> : ''
+                        (projectStatus == 'ongoing' && votingResponse && votingResponse.length) ? <Button className="mt-1" text={(new Date(String(votingResponse[0].endDate)).getTime() < new Date().getTime()) && admin ? "Create Voting" : "Voting Poll"} disabled={(new Date(String(votingResponse[0].endDate)).getTime() < new Date().getTime()) && !admin} onClick={() => getVotingInfo()}></Button> : ''
                     }
                     {
-                        (status == 'ongoing' && votingResponse && votingResponse.length) ?
+                        (projectStatus == 'ongoing' && votingResponse && votingResponse.length) ?
                             <Button className="mt-1" text="Voting History" onClick={() => votingHistoryModalHandle()}></Button>
                             : ""
                     }
@@ -520,7 +520,7 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
                 </div>
                 {
                     admin ?
-                        <AdminVotingContent handleClose={() => setShowVotingModal(false)} projectTitle={item.name} votingQueryDetail={votingQueryDetail} />
+                        <AdminVotingContent handleClose={() => setShowVotingModal(false)} projectTitle={item.name} votingQueryDetail={votingQueryDetail} projectDetail={item} />
                         :
                         <UserVotingContent handleClose={() => setShowVotingModal(false)} votingQueryDetail={votingQueryDetail} userVotingDetail={userVotingDetail} currentUserBalance={currentUserBalance} />
                 }

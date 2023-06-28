@@ -454,7 +454,7 @@ const Farm: FC = () => {
 												<div className={`flex overflow-hidden transition-all ${farmUIToggle[index] == 1 ? 'pt-4 h-[124px]' : 'h-0'}`} >
 													<div className="w-[160px] text-secondary flex flex-col justify-center">
 														<a className="mb-2" href={`/liquidity`}>Get LP</a>
-														<a className="mb-2" href={`${explorer}/address/${YOCFarm.address}`} >Contract Details</a>
+														<a className="mb-2" target="_blank" href={`${explorer}/address/${YOCFarm.address}`} >Contract Details</a>
 														<a href={`${explorer}/address/${item.address}`}>Pair Info</a>
 													</div>
 													<div className="h-[110px] px-4 py-4 ml-2 bg-normal-pattern w-[calc(50%_-_60px)] flex flex-col justify-between">
