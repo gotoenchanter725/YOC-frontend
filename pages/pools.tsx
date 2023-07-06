@@ -499,7 +499,7 @@ const Pools: FC = () => {
 											item.loading == false ?
 												<div className={`flex justify-between overflow-hidden transition-all ${stakeUIToggle[index] == 1 ? 'pt-4 h-[124px]' : 'h-0'}`} >
 													<div className="w-[160px] text-secondary flex flex-col justify-center">
-														<a className="mb-2" href={`/swap`}>Get Staked Token</a>
+														<a className="mb-2" target="_blank" href={`/swap`}>Get Staked Token</a>
 														<a className="mb-2" target="_blank" href={`${explorer}/address/${item.address}`} >Contract Details</a>
 													</div>
 													{
@@ -620,7 +620,7 @@ const Pools: FC = () => {
 						<button className="text-primary bg-btn-secondary shadow-btn-secondary px-4 py-1 rounded" onClick={() => setMaxStakeAmountHandle()}>MAX</button>
 					</div>
 				</div>
-				<a className="text-secondary mb-6" href={`/swap`}>Get {selectPool?.currency.symbol}</a>
+				<a className="text-secondary mb-6" target="_blank" href={`/swap`}>Get {selectPool?.currency.symbol}</a>
 
 				<div className="flex justify-between">
 					<button className="w-full font-semibold rounded text-primary bg-btn-primary shadow-btn-primary px-4 py-2 mr-2" onClick={() => stakeHandle(selectPool as any)}>Confirm</button>
