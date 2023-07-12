@@ -135,14 +135,9 @@ const Pools: FC = () => {
 									}
 								}
 
-								// if (amount) {
-								// 	const pending = await stakingContract.pendingReward(account);
-								// 	if (pending) {
-								// 		earned = Number(convertWeiToEth(pending, YOC.decimals));
-								// 		if (!currencyDetail) return item;
-								// 		usdcAmount = earned * currencyDetail.price;
-								// 	}
-								// }
+								if (earned && yocDetail) {
+									usdcAmount = earned * yocDetail.price;
+								}
 
 								balance = convertWeiToEth(await tokenContract.balanceOf(account), Number(item.currency.decimals));
 							}
