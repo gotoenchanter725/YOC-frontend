@@ -99,8 +99,8 @@ const Pools: FC = () => {
 							};
 							setStakePools([...data]);
 							let yocUSDAmountForCurrentPool = yocAmountForCurrentPool * yocDetail.price;
-							let totalAmount = Number(item.totalShare);
-							totalLiquidity = totalAmount;
+							let totalAmount = Number(item.totalAmount);
+							totalLiquidity = item.totalAmount;
 							console.log(totalAmount, Number(item.currency.price))
 							let tokenUSDAmount = totalAmount * Number(item.currency.price);
 
@@ -117,13 +117,16 @@ const Pools: FC = () => {
 								if (userDetailResponse && userDetailResponse.data) stakeUserDetail = userDetailResponse.data.stakeData;
 								if (stakeUserDetail) {
 									allowance = stakeUserDetail.allowance ? stakeUserDetail.allowance : 0;
-									amount = + stakeUserDetail.amount;
+									amount = + stakeUserDetail.amount; // share amount
 								}
 								// allowance = Number(convertWeiToEth(await tokenContract.allowance(account, item.address), item.currency.decimals));
 
 								if (item.currency.address == YOC.address) {
-									const totalReward = convertWeiToEth(await stakingContract.calculateTotalPendingYOCRewards(), YOC.decimals);
-									if (item.totalShare) earned = Number(amount) / Number(item.totalShare) * Number(totalReward);
+									const totalReward = convertWeiToEth(await stakingContract.balanceOf(), YOC.decimals);
+									if (item.totalShare) {
+										amount = Number(amount) / Number(item.totalShare) * Number(totalReward);
+										earned = amount;
+									}
 								} else {
 									console.log("amount", amount);
 									if (amount) {
@@ -303,7 +306,7 @@ const Pools: FC = () => {
 					alertShow({ content: `Withdraw Successfully`, text: `Amount: ${convertWeiToEth(amount, pool.currency.decimals)} ${pool.currency.symbol}`, status: 'success' });
 				}
 			})
-			await stakeContract.withdraw(convertEthToWei(String(unstakeAmount), Number(selectPool?.currency.decimals)));
+			await stakeContract.withdrawByAmount(convertEthToWei(String(unstakeAmount), Number(selectPool?.currency.decimals)));
 		} catch (err) {
 			loadingEnd();
 		}
@@ -465,8 +468,8 @@ const Pools: FC = () => {
 																<p className="w-[50px] h-[10px] text-xs bg-gray-200 rounded-full"></p>
 															</div> :
 															<>
-																<p className="text-dark-primary text-sm">{item.earned ? item.earned : '0'}</p>
-																<span className="text-dark-primary text-xs">{item.usdcAmount ? item.usdcAmount : ""} USD</span>
+																<p className="text-dark-primary text-sm">{item.earned ? Number(item.earned).toFixed(2) : '0'}</p>
+																<span className="text-dark-primary text-xs">{item.usdcAmount ? Number(item.usdcAmount).toFixed(2) : "0"} USD</span>
 															</>
 													}
 												</div>
@@ -476,7 +479,7 @@ const Pools: FC = () => {
 														item.loading ? <div role="status" className="max-w-sm animate-pulse h-[24px] flex items-center">
 															<p className="h-3 bg-gray-200 rounded-full w-12"></p>
 														</div> :
-															<p className="text-[#C7C7C7]">{item.totalLiquidity ? Number(item.totalLiquidity) : 0} {item.isYoc ? "YOC" : item.currency.symbol}</p>
+															<p className="text-[#C7C7C7]">{item.totalLiquidity ? Number(item.totalLiquidity).toFixed(2) : 0} {item.isYoc ? "YOC" : item.currency.symbol}</p>
 													}
 												</div>
 												<div className="w-[25%] mr-4">

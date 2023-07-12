@@ -116,7 +116,7 @@ const Navbar = () => {
                     <div className="flex justify-between items-center">
                         <Link href={'/'}>
                             <div className="cursor-pointer min-w-[120px]">
-                                <img className="w-[142px] h-[64px] relative -top-2" src={'/images/logo-menu.png'} alt="App Logo" />
+                                <img className="w-[160px] h-[68px] relative -top-2" src={'/images/logo-menu.png'} alt="App Logo" />
                             </div>
                         </Link>
 
