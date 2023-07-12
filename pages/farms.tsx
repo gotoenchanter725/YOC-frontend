@@ -453,9 +453,9 @@ const Farm: FC = () => {
 											item.loading == false ? (
 												<div className={`flex overflow-hidden transition-all ${farmUIToggle[index] == 1 ? 'pt-4 h-[124px]' : 'h-0'}`} >
 													<div className="w-[160px] text-secondary flex flex-col justify-center">
-														<a className="mb-2" href={`/liquidity`}>Get LP</a>
+														<a className="mb-2" target="_blank" href={`/liquidity`}>Get LP</a>
 														<a className="mb-2" target="_blank" href={`${explorer}/address/${YOCFarm.address}`} >Contract Details</a>
-														<a href={`${explorer}/address/${item.address}`}>Pair Info</a>
+														<a target="_blank" href={`${explorer}/address/${item.address}`}>Pair Info</a>
 													</div>
 													<div className="h-[110px] px-4 py-4 ml-2 bg-normal-pattern w-[calc(50%_-_60px)] flex flex-col justify-between">
 														<div>
@@ -572,7 +572,7 @@ const Farm: FC = () => {
 					</div>
 				</div>
 				<p className="mb-4">{`${selectFarmPool?.liquidity.currency0.symbol} & ${selectFarmPool?.liquidity.currency1.symbol}`}</p>
-				<a className="text-secondary mb-6" href={`${explorer}/address/${selectFarmPool?.liquidity.pairAddress}`}>Get LP</a>
+				<a className="text-secondary mb-6" target="_blank" href={`${explorer}/address/${selectFarmPool?.liquidity.pairAddress}`}>Get LP</a>
 
 				<div className="flex justify-between">
 					<button className="w-full font-semibold rounded text-primary bg-btn-primary shadow-btn-primary px-4 py-2 mr-2" onClick={() => stakeLPHandle(selectFarmPool as PoolInterface)}>Confirm</button>
@@ -595,7 +595,7 @@ const Farm: FC = () => {
 					</div>
 				</div>
 				<p className="mb-4">{`${selectFarmPool?.liquidity.currency0.symbol} & ${selectFarmPool?.liquidity.currency1.symbol}`}</p>
-				<a className="text-secondary mb-6" href={`${explorer}/address/${selectFarmPool?.liquidity.pairAddress}`}>Get LP</a>
+				<a className="text-secondary mb-6" target="_blank" href={`${explorer}/address/${selectFarmPool?.liquidity.pairAddress}`}>Get LP</a>
 
 				<div className="flex justify-between">
 					<button className="w-full font-semibold rounded text-primary bg-btn-primary shadow-btn-primary px-4 py-2 mr-2" onClick={() => unstakeLPHandle(selectFarmPool as PoolInterface)}>Confirm</button>
