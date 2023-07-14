@@ -22,6 +22,7 @@ const useWallet = () => {
     const disconnectWallet = useCallback(() => {
         if (account) {
             dispatch(walletDisconnect() as any);
+            location.reload();
         }
     }, [account])
 

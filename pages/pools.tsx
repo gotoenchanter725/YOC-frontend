@@ -301,9 +301,14 @@ const Pools: FC = () => {
 					alertShow({ content: `Withdraw Successfully`, text: `Amount: ${convertWeiToEth(amount, pool.currency.decimals)} ${pool.currency.symbol}`, status: 'success' });
 				}
 			})
-			await stakeContract.withdrawByAmount(convertEthToWei(String(unstakeAmount), Number(selectPool?.currency.decimals)));
+			if (selectPool.currency.address == YOC.address) {
+				await stakeContract.withdrawByAmount(convertEthToWei(String(unstakeAmount), Number(selectPool?.currency.decimals)));
+			} else {
+				await stakeContract.withdraw(convertEthToWei(String(unstakeAmount), Number(selectPool?.currency.decimals)));
+			}
 		} catch (err) {
 			loadingEnd();
+			console.log(err);
 		}
 	}
 
