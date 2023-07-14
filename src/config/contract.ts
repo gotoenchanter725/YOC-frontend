@@ -29,7 +29,7 @@ const BNB_NETWORK = {
         CHAIN_ID: 56
     },
     testnet: {
-        RPC_URL: "https://data-seed-prebsc-1-s1.binance.org:8545/",
+        RPC_URL: "https://data-seed-prebsc-1-s3.binance.org:8545/",
         CHAIN_ID: 97
     }
 }
