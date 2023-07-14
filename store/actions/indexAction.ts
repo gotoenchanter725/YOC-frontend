@@ -267,6 +267,7 @@ export const walletDisconnect = () => async (dispatch: any) => {
       type: WALLET_DISCONNECT,
       payload: {
         account: undefined,
+        balance: 0,
         provider: undefined,
         chainId: undefined,
         signer: undefined,

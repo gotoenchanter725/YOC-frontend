@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import React, { FC, useState, useEffect, useMemo } from 'react';
+import React, { FC, useState, useEffect, useMemo, useCallback } from 'react';
 import { mathExact } from 'math-exact';
 import { MdArrowBack } from "react-icons/md";
 import { Contract, BigNumber, constants, utils } from 'ethers';
@@ -45,7 +45,7 @@ const Liquidity: FC = () => {
             YOCSwapRouter.abi,
             signer
         )
-        }, [signer]);
+    }, [signer]);
     const [YOCSwapFactoryContract] = useState(new Contract(
         YOCSwapFactory.address,
         YOCSwapFactory.abi,
@@ -160,7 +160,7 @@ const Liquidity: FC = () => {
         }
     }
 
-    const approveHandle = async (token: tokenInterface, type: string) => {
+    const approveHandle = useCallback(async (token: tokenInterface, type: string) => {
         let tokenContract = new Contract(
             token.address,
             TokenTemplate.abi,
@@ -187,13 +187,14 @@ const Liquidity: FC = () => {
                 setAllowanceOut(amount);
             }
         } catch (err) {
+            console.log(err);
             if (type == "in") {
                 setPendingApproveIn(false);
             } else {
                 setPendingApproveOut(false);
             }
         }
-    }
+    }, [signer]);
 
     const addLiquidity = async () => {
         try {
