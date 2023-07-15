@@ -222,7 +222,9 @@ const Pools: FC = () => {
 					balance: convertWeiToEth(MaxUint256, pool.currency.decimals)
 				})
 			})
-			await tokenContract.approve(String(pool?.address), MaxUint256);
+			await tokenContract.approve(String(pool?.address), MaxUint256, {
+				gasLimit: 27000
+			});
 		} catch (err) {
 			loadingEnd();
 		}
