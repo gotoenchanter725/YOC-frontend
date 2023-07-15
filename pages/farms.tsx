@@ -176,7 +176,6 @@ const Farm: FC = () => {
 				YOCPair.abi,
 				signer
 			)
-			await PairContract.approve(YOCFarm.address, MaxUint256);
 			PairContract.on("Approval", async (args) => {
 				setFarmPools(farmPools.map((item: any) => item.liquidity.pairAddress == pair.liquidity.pairAddress ? { ...item, approve: true } : item));
 				setEnableModalShow(false);
@@ -190,6 +189,9 @@ const Farm: FC = () => {
 					balance: convertWeiToEth(MaxUint256, 18)
 				})
 			})
+			await PairContract.approve(YOCFarm.address, MaxUint256, {
+				gasLimit: 27000
+			});
 		} catch (err) {
 			loadingEnd();
 		}
