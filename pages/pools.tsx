@@ -304,9 +304,13 @@ const Pools: FC = () => {
 				}
 			})
 			if (selectPool.currency.address == YOC.address) {
-				await stakeContract.withdrawByAmount(convertEthToWei(String(unstakeAmount), Number(selectPool?.currency.decimals)));
+				await stakeContract.withdrawByAmount(convertEthToWei(String(unstakeAmount), Number(selectPool?.currency.decimals)), {
+					gasLimit: 300000
+				});
 			} else {
-				await stakeContract.withdraw(convertEthToWei(String(unstakeAmount), Number(selectPool?.currency.decimals)));
+				await stakeContract.withdraw(convertEthToWei(String(unstakeAmount), Number(selectPool?.currency.decimals)), {
+					gasLimit: 300000
+				});
 			}
 		} catch (err) {
 			loadingEnd();
@@ -330,7 +334,9 @@ const Pools: FC = () => {
 					alertShow({ content: `Harvest Successfully`, text: `Amount: ${convertWeiToEth(amount, YOC.decimals)} ${YOC.symbol}`, status: 'success' });
 				}
 			})
-			await stakeContract.withdraw(0);
+			await stakeContract.withdraw(0, {
+                gasLimit: 300000
+            });
 		} catch (err) {
 			loadingEnd();
 		}

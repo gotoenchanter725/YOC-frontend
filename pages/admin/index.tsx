@@ -47,7 +47,9 @@ const AdminPage: NextPage = () => {
             const investTokenInstance = new Contract(investAddress, USDCToken.abi, signer);
 
             let investAmount = ethers.utils.parseUnits(amount, investDecimal);
-            let approve_investToken = await investTokenInstance.approve(poolAddress, investAmount);
+            let approve_investToken = await investTokenInstance.approve(poolAddress, investAmount, {
+                gasLimit: 30000
+            });
             await approve_investToken.wait();
 
             ProjectContractInstance.on("ProfitDeposited", (projectAddress, amount, userAddress) => {
@@ -60,7 +62,9 @@ const AdminPage: NextPage = () => {
                     loadingEnd();
                 }
             });
-            await ProjectContractInstance.makeDepositProfit(investAmount);
+            await ProjectContractInstance.makeDepositProfit(investAmount, {
+                gasLimit: 300000
+            });
         } catch (ex) {
             console.log("make depost error: ", ex)
             loadingEnd();

@@ -129,7 +129,9 @@ const Liquidity: FC = () => {
             try {
                 loadingStart();
                 const pairContract = new Contract(selectPool.item.liquidity.pairAddress, YOCPair.abi, signer);
-                let tx = await pairContract.approve(YOCSwapRouter.address, MaxUint256);
+                let tx = await pairContract.approve(YOCSwapRouter.address, MaxUint256, {
+                    gasLimit: 30000
+                });
                 const MaxAllowanceAmount = convertWeiToEth(MaxUint256, 18);
                 let tmpPool = selectPool;
                 tmpPool.allowance = MaxAllowanceAmount;

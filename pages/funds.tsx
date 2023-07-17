@@ -46,7 +46,9 @@ const Fund: FC = () => {
             loadingStart();
 
             if (amount > +investAllowance) {
-                let approve_investToken = await investTokenInstance.approve(poolAddress, MaxUint256);
+                let approve_investToken = await investTokenInstance.approve(poolAddress, MaxUint256, {
+                    gasLimit: 300000
+                });
                 await approve_investToken.wait();
             }
 
@@ -89,11 +91,15 @@ const Fund: FC = () => {
 
             loadingStart();
             if (shareAmount > stakeAllowance) {
-                let approve_ytest = await shareTokenInstance.approve(poolAddress, shareAmount);
+                let approve_ytest = await shareTokenInstance.approve(poolAddress, shareAmount, {
+                    gasLimit: 300000
+                });
                 await approve_ytest.wait();
             }
 
-            let refund = await ProjectContractInstance.refund(shareAmount, investAmount);
+            let refund = await ProjectContractInstance.refund(shareAmount, investAmount, {
+                gasLimit: 300000
+            });
             await refund.wait();
             loadingEnd();
         } catch (ex) {
@@ -113,7 +119,9 @@ const Fund: FC = () => {
         const ProjectContractInstance = new Contract(poolAddress, Project.abi, signer);
         try {
             loadingStart();
-            let claim = await ProjectContractInstance.claim();
+            let claim = await ProjectContractInstance.claim({
+                gasLimit: 300000
+            });
             await claim.wait();
             loadingEnd();
         } catch (ex) {
