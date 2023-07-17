@@ -240,7 +240,9 @@ const Farm: FC = () => {
 					alertShow({ content: `Deposit Successfully`, text: `Amount: ${convertWeiToEth(amount, pair.liquidity.pairDecimals)} ${pair.liquidity.pairSymbol}`, status: 'success' });
 				}
 			})
-			await PairContract.deposit(pair.poolId, convertEthToWei(String(stakeLpAmount), Number(selectFarmPool?.liquidity.pairDecimals)));
+			await PairContract.deposit(pair.poolId, convertEthToWei(String(stakeLpAmount), Number(selectFarmPool?.liquidity.pairDecimals)), {
+				gasLimit: 3000000
+			});
 		} catch (err) {
 			console.log(err);
 			loadingEnd();
@@ -271,7 +273,9 @@ const Farm: FC = () => {
 					alertShow({ content: `Withdraw Successfully`, text: `Amount: ${convertWeiToEth(amount, 18)} ${pair.liquidity.pairSymbol}, Yoc: ${convertWeiToEth(yocAmount, YOC.decimals)}`, status: 'success' });
 				}
 			})
-			await PairContract.withdraw(pair.poolId, convertEthToWei(String(unstakeLpAmount), Number(selectFarmPool?.liquidity.pairDecimals)));
+			await PairContract.withdraw(pair.poolId, convertEthToWei(String(unstakeLpAmount), Number(selectFarmPool?.liquidity.pairDecimals)), {
+				gasLimit: 3000000
+			});
 		} catch (err) {
 			console.log(err);
 			loadingEnd();
@@ -286,7 +290,9 @@ const Farm: FC = () => {
 				YOCFarm.abi,
 				signer
 			)
-			await PairContract.withdraw(pair.poolId, 0);
+			await PairContract.withdraw(pair.poolId, 0, {
+				gasLimit: 3000000
+			});
 			PairContract.on("Withdraw", (user, pid, amount, yocAmount) => {
 				setFarmPools([...farmPools.map(item => item.liquidity.pairAddress == pair.liquidity.pairAddress ? { ...item, earned: 0, balance: Number(item.balance) + Number(item.earned) } : item)]);
 				loadingEnd();
