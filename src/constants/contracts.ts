@@ -61,6 +61,7 @@ const YOCSwapRouter = {
 
 const YOCPair = {
     ...YOCPairABI,
+    decimals: 18,
 }
 
 const YOCFarm = {

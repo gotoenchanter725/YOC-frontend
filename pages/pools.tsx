@@ -241,12 +241,20 @@ const Pools: FC = () => {
 	}
 
 	const setMaxStakeAmountHandle = () => {
-		setStakeAmount((selectPool && Boolean(selectPool.balance)) ? Number(selectPool.balance) : 0);
+		if (selectPool && Boolean(selectPool.balance)) {
+			stakeAmountChangleHandle(Number(selectPool.balance) * 1);
+		} else {
+			stakeAmountChangleHandle(0);
+		}
 		setStakeMax(true);
 	}
 
 	const setMaxUnstakeAmountHandle = () => {
-		setUnstakeAmount((selectPool && Boolean(selectPool.amount)) ? Number(selectPool.amount) : 0);
+		if (selectPool && Boolean(selectPool.amount)) {
+			unstakeAmountChangleHandle(Number(selectPool.amount) * 1);
+		} else {
+			unstakeAmountChangleHandle(0);
+		}
 		setUnstakeMax(true);
 	}
 
@@ -257,6 +265,17 @@ const Pools: FC = () => {
 		}
 		loadingStart();
 		try {
+			const pool = selectPool;
+			let tokenContract = new Contract(
+				pool?.currency.address + '',
+				TokenTemplate.abi,
+				signer
+			)
+			let approveTx = await tokenContract.approve(String(pool?.address), convertEthToWei(String(stakeAmount), Number(pool?.currency.decimals)), {
+				gasLimit: pool.currency.address == YOC.address ? 47000 : 27000
+			});
+			await approveTx.wait();
+
 			let stakeContract = new Contract(
 				String(pool.address),
 				isYocCheck(pool.currency.id) ? YOCPool.abi : YOCPool.TokenABI,
@@ -305,11 +324,11 @@ const Pools: FC = () => {
 			})
 			if (selectPool.currency.address == YOC.address) {
 				await stakeContract.withdrawByAmount(convertEthToWei(String(unstakeAmount), Number(selectPool?.currency.decimals)), {
-					gasLimit: 300000
+					gasLimit: 3000000
 				});
 			} else {
 				await stakeContract.withdraw(convertEthToWei(String(unstakeAmount), Number(selectPool?.currency.decimals)), {
-					gasLimit: 300000
+					gasLimit: 3000000
 				});
 			}
 		} catch (err) {
@@ -335,8 +354,8 @@ const Pools: FC = () => {
 				}
 			})
 			await stakeContract.withdraw(0, {
-                gasLimit: 300000
-            });
+				gasLimit: 300000
+			});
 		} catch (err) {
 			loadingEnd();
 		}
@@ -379,6 +398,20 @@ const Pools: FC = () => {
 				|| String(item.APR)?.indexOf(searchText) != -1) return true;
 		})
 	}, [searchText, sortBy, stakePools]);
+
+	const stakeAmountChangleHandle = (v: any) => {
+		if (!isNaN(Number(v))) {
+			setStakeAmount(v);
+		}
+		setStakeMax(false);
+	}
+
+	const unstakeAmountChangleHandle = (v: any) => {
+		if (!isNaN(Number(v))) {
+			setUnstakeAmount(v);
+		}
+		setUnstakeMax(false);
+	}
 
 	return <>
 		<div className="container mx-auto">
@@ -547,34 +580,34 @@ const Pools: FC = () => {
 															{
 																account ?
 																	(
-																		Number(item.approve) ?
-																			(
-																				item.amount ? (
-																					<div className="w-full h-full flex items-center justify-between">
-																						<span className="font-semibold">{item.amount ? Number(item.amount).toFixed(6) : 0}</span>
-																						<div className="flex items-center">
-																							<button className="border border-border-primary rounded-lg p-2.5 mr-2" onClick={() => unstakeModalHandle(item)}>
-																								<svg viewBox="0 0 24 24" color="primary" width="14px" xmlns="http://www.w3.org/2000/svg" className="text-border-primary"><path fill="currentColor" d="M18 13H6C5.45 13 5 12.55 5 12C5 11.45 5.45 11 6 11H18C18.55 11 19 11.45 19 12C19 12.55 18.55 13 18 13Z"></path></svg>
-																							</button>
-																							<button className="border border-border-primary rounded-lg p-2.5" onClick={() => stakeModalHandle(item)}>
-																								<svg viewBox="0 0 24 24" color="primary" width="14px" xmlns="http://www.w3.org/2000/svg" className="text-border-primary"><path fill="currentColor" d="M18 13H13V18C13 18.55 12.55 19 12 19C11.45 19 11 18.55 11 18V13H6C5.45 13 5 12.55 5 12C5 11.45 5.45 11 6 11H11V6C11 5.45 11.45 5 12 5C12.55 5 13 5.45 13 6V11H18C18.55 11 19 11.45 19 12C19 12.55 18.55 13 18 13Z"></path></svg>
-																							</button>
-																						</div>
-																					</div>
-																				) : (
-																					<button className="h-[36px] rounded text-sm w-[120px] bg-btn-primary shadow-btn-primary px-4 py-1.5 text-primary"
-																						onClick={() => stakeModalHandle(item)}
-																					>
-																						Stake LP
+																		// Number(item.approve) ?
+																		// 	(
+																		item.amount ? (
+																			<div className="w-full h-full flex items-center justify-between">
+																				<span className="font-semibold">{item.amount ? Number(item.amount).toFixed(6) : 0}</span>
+																				<div className="flex items-center">
+																					<button className="border border-border-primary rounded-lg p-2.5 mr-2" onClick={() => unstakeModalHandle(item)}>
+																						<svg viewBox="0 0 24 24" color="primary" width="14px" xmlns="http://www.w3.org/2000/svg" className="text-border-primary"><path fill="currentColor" d="M18 13H6C5.45 13 5 12.55 5 12C5 11.45 5.45 11 6 11H18C18.55 11 19 11.45 19 12C19 12.55 18.55 13 18 13Z"></path></svg>
 																					</button>
-																				)
-																			)
-																			:
+																					<button className="border border-border-primary rounded-lg p-2.5" onClick={() => stakeModalHandle(item)}>
+																						<svg viewBox="0 0 24 24" color="primary" width="14px" xmlns="http://www.w3.org/2000/svg" className="text-border-primary"><path fill="currentColor" d="M18 13H13V18C13 18.55 12.55 19 12 19C11.45 19 11 18.55 11 18V13H6C5.45 13 5 12.55 5 12C5 11.45 5.45 11 6 11H11V6C11 5.45 11.45 5 12 5C12.55 5 13 5.45 13 6V11H18C18.55 11 19 11.45 19 12C19 12.55 18.55 13 18 13Z"></path></svg>
+																					</button>
+																				</div>
+																			</div>
+																		) : (
 																			<button className="h-[36px] rounded text-sm w-[120px] bg-btn-primary shadow-btn-primary px-4 py-1.5 text-primary"
-																				onClick={() => enableModalHandle(item)}
+																				onClick={() => stakeModalHandle(item)}
 																			>
-																				Enable
+																				Stake LP
 																			</button>
+																		)
+																		// )
+																		// :
+																		// <button className="h-[36px] rounded text-sm w-[120px] bg-btn-primary shadow-btn-primary px-4 py-1.5 text-primary"
+																		// 	onClick={() => enableModalHandle(item)}
+																		// >
+																		// 	Enable
+																		// </button>
 																	)
 																	:
 																	<button className="h-[36px] rounded text-sm w-[160px] bg-btn-secondary shadow-btn-secondary px-4 py-1.5 text-primary"
@@ -624,10 +657,10 @@ const Pools: FC = () => {
 				<div className="flex items-stretch justify-between mb-4">
 					<div className="flex flex-col justify-between w-[calc(100%_-_180px)]">
 						<p className="mb-4">Stake</p>
-						<input className="w-full px-2 py-1 rounded border-[1px] border-solid border-secondary bg-transparent text-dark-primary" value={stakeAmount} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setStakeAmount(Number(e.target.value)); setStakeMax(false); }} />
+						<input className="w-full px-2 py-1 rounded border-[1px] border-solid border-secondary bg-transparent text-dark-primary" value={stakeAmount} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { stakeAmountChangleHandle(e.target.value)}} />
 					</div>
 					<div className="flex flex-col justify-between w-[160px]">
-						<p className="mb-4">Balance: {(selectPool && selectPool.balance) ? selectPool.balance : 0}</p>
+						<p className="mb-4">Balance: {(selectPool && selectPool.balance) ? Number(selectPool.balance).toFixed(selectPool.currency.decimals) : 0}</p>
 						<button className="text-primary bg-btn-secondary shadow-btn-secondary px-4 py-1 rounded" onClick={() => setMaxStakeAmountHandle()}>MAX</button>
 					</div>
 				</div>
@@ -646,10 +679,10 @@ const Pools: FC = () => {
 				<div className="flex items-stretch justify-between mb-4">
 					<div className="flex flex-col justify-between w-[calc(100%_-_180px)]">
 						<p className="mb-4">Unstake</p>
-						<input className="w-full px-2 py-1 rounded border-[1px] border-solid border-secondary bg-transparent text-dark-primary" value={unstakeAmount} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setUnstakeAmount(Number(e.target.value)); setUnstakeMax(false); }} />
+						<input className="w-full px-2 py-1 rounded border-[1px] border-solid border-secondary bg-transparent text-dark-primary" value={unstakeAmount} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { unstakeAmountChangleHandle(e.target.value) }} />
 					</div>
 					<div className="flex flex-col justify-between w-[160px]">
-						<p className="mb-4">Balance: {(selectPool && selectPool.amount) ? Number(selectPool.amount).toFixed(6) : 0}</p>
+						<p className="mb-4">Balance: {(selectPool && selectPool.amount) ? Number(selectPool.amount).toFixed(selectPool.currency.decimals) : 0}</p>
 						<button className="text-primary bg-btn-secondary shadow-btn-secondary px-4 py-1 rounded" onClick={() => setMaxUnstakeAmountHandle()}>MAX</button>
 					</div>
 				</div>

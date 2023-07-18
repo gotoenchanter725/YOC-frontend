@@ -208,29 +208,48 @@ const Farm: FC = () => {
 	}
 
 	const setMaxStakeLpAmountHandle = () => {
-		setStakeLpAmount((selectFarmPool && Boolean(selectFarmPool.balance)) ? Number(selectFarmPool.balance) : 0);
+		if (selectFarmPool && Boolean(selectFarmPool.balance)) {
+			stakeLpAmountChangleHandle(Number(selectFarmPool.balance) * 1);
+		} else {
+			stakeLpAmountChangleHandle(0);
+		}
 		setStakeLpMax(true);
 	}
 
 	const setMaxUnstakeAmountHandle = () => {
-		setUnstakeLpAmount((selectFarmPool && Boolean(selectFarmPool.lpAmount)) ? Number(selectFarmPool.lpAmount) : 0);
+		if ((selectFarmPool && Boolean(selectFarmPool.lpAmount))) {
+			unstakeLpAmountChangleHandle(Number(selectFarmPool.lpAmount) * 1);
+		} else {
+			unstakeLpAmountChangleHandle(0);
+		}
 		setUnstakeLpMax(true);
 	}
 
 	const stakeLPHandle = async (pair: any) => {
+		console.log(stakeLpAmount);
 		if (!stakeLpAmount) {
 			alertShow({ content: 'Please input the stakeLP amount exactly', status: 'error' });
 			return;
 		}
 		loadingStart();
 		try {
+			const pair: any = selectFarmPool;
 			let PairContract = new Contract(
+				pair.liquidity.pairAddress + '',
+				YOCPair.abi,
+				signer
+			)
+			let approveTx = await PairContract.approve(YOCFarm.address, convertEthToWei(String(stakeLpAmount), Number(selectFarmPool?.liquidity.pairDecimals)), {
+				gasLimit: 27000
+			});
+			await approveTx.wait();
+
+			let FarmContract = new Contract(
 				YOCFarm.address,
 				YOCFarm.abi,
 				signer
 			)
-			console.log(stakeLpAmount);
-			PairContract.on('Deposit', (user, pid, amount) => {
+			FarmContract.on('Deposit', (user, pid, amount) => {
 				if (user == account) {
 					setFarmPools(farmPools.map(item => item.liquidity.pairAddress == pair.liquidity.pairAddress ? { ...item, lpAmount: Number(item.lpAmount) + stakeLpAmount, balance: Number(item.balance) - stakeLpAmount } : item));
 					setStakeLpModalShow(false);
@@ -240,8 +259,8 @@ const Farm: FC = () => {
 					alertShow({ content: `Deposit Successfully`, text: `Amount: ${convertWeiToEth(amount, pair.liquidity.pairDecimals)} ${pair.liquidity.pairSymbol}`, status: 'success' });
 				}
 			})
-			await PairContract.deposit(pair.poolId, convertEthToWei(String(stakeLpAmount), Number(selectFarmPool?.liquidity.pairDecimals)), {
-				gasLimit: 3000000
+			await FarmContract.deposit(pair.poolId, convertEthToWei(String(stakeLpAmount), Number(selectFarmPool?.liquidity.pairDecimals)), {
+				gasLimit: 200000
 			});
 		} catch (err) {
 			console.log(err);
@@ -250,6 +269,7 @@ const Farm: FC = () => {
 	}
 
 	const unstakeLPHandle = async (pair: any) => {
+		console.log(unstakeLpAmount);
 		if (!unstakeLpAmount) {
 			alertShow({ content: 'Please input the unstakeLP amount exactly', status: 'error' });
 			return;
@@ -261,20 +281,19 @@ const Farm: FC = () => {
 				YOCFarm.abi,
 				signer
 			)
-			console.log(unstakeLpAmount);
 			PairContract.on("Withdraw", (user, pid, amount, yocAmount) => {
 				if (user == account) {
 					setFarmPools([...farmPools.map(item => item.liquidity.pairAddress == pair.liquidity.pairAddress ? { ...item, lpAmount: Number(item.lpAmount) - unstakeLpAmount, balance: Number(item.balance) + unstakeLpAmount } : item)]);
 					setUnstakeLpModalShow(false);
 					updateWalletBalance();
 					loadingEnd();
-	
+
 					console.log(user, pid, amount, yocAmount);
 					alertShow({ content: `Withdraw Successfully`, text: `Amount: ${convertWeiToEth(amount, 18)} ${pair.liquidity.pairSymbol}, Yoc: ${convertWeiToEth(yocAmount, YOC.decimals)}`, status: 'success' });
 				}
 			})
 			await PairContract.withdraw(pair.poolId, convertEthToWei(String(unstakeLpAmount), Number(selectFarmPool?.liquidity.pairDecimals)), {
-				gasLimit: 3000000
+				gasLimit: 200000
 			});
 		} catch (err) {
 			console.log(err);
@@ -291,7 +310,7 @@ const Farm: FC = () => {
 				signer
 			)
 			await PairContract.withdraw(pair.poolId, 0, {
-				gasLimit: 3000000
+				gasLimit: 200000
 			});
 			PairContract.on("Withdraw", (user, pid, amount, yocAmount) => {
 				setFarmPools([...farmPools.map(item => item.liquidity.pairAddress == pair.liquidity.pairAddress ? { ...item, earned: 0, balance: Number(item.balance) + Number(item.earned) } : item)]);
@@ -334,6 +353,22 @@ const Farm: FC = () => {
 				|| String(item.APR).indexOf(searchText) != -1) return true;
 		})
 	}, [searchText, sortBy, farmPools]);
+
+	const stakeLpAmountChangleHandle = (v: any) => {
+		console.log(v);
+		if (!isNaN(Number(v))) {
+			setStakeLpAmount(v);
+		}
+		setStakeLpMax(false);
+	}
+
+	const unstakeLpAmountChangleHandle = (v: any) => {
+		console.log(v);
+		if (!isNaN(Number(v))) {
+			setUnstakeLpAmount(v);
+		}
+		setUnstakeLpMax(false);
+	}
 
 	return <>
 		<div className="container mx-auto">
@@ -494,11 +529,11 @@ const Farm: FC = () => {
 															{
 																account ?
 																	(
-																		item.approve ?
-																			(
+																		// item.approve ?
+																		// 	(
 																				item.lpAmount ? (
 																					<div className="w-full h-full flex items-center justify-between">
-																						<span className="font-semibold">{item.lpAmount ? item.lpAmount : 0}</span>
+																						<span className="font-semibold">{item.lpAmount ? Number(item.lpAmount).toFixed(YOCPair.decimals) : 0}</span>
 																						<div className="flex items-center">
 																							<button className="border border-border-primary rounded-lg p-2.5 mr-2" onClick={() => unstakeModalHandle(item)}>
 																								<svg viewBox="0 0 24 24" color="primary" width="14px" xmlns="http://www.w3.org/2000/svg" className="text-border-primary"><path fill="currentColor" d="M18 13H6C5.45 13 5 12.55 5 12C5 11.45 5.45 11 6 11H18C18.55 11 19 11.45 19 12C19 12.55 18.55 13 18 13Z"></path></svg>
@@ -515,13 +550,13 @@ const Farm: FC = () => {
 																						Stake LP
 																					</button>
 																				)
-																			)
-																			:
-																			<button className="h-[36px] rounded text-sm w-[120px] bg-btn-primary shadow-btn-primary px-4 py-1.5 text-primary"
-																				onClick={() => enableModalHandle(item)}
-																			>
-																				Enable
-																			</button>
+																			// )
+																			// :
+																			// <button className="h-[36px] rounded text-sm w-[120px] bg-btn-primary shadow-btn-primary px-4 py-1.5 text-primary"
+																			// 	onClick={() => enableModalHandle(item)}
+																			// >
+																			// 	Enable
+																			// </button>
 																	)
 																	:
 																	<button className="h-[36px] rounded text-sm w-[160px] bg-btn-secondary shadow-btn-secondary px-4 py-1.5 text-primary"
@@ -572,10 +607,10 @@ const Farm: FC = () => {
 				<div className="flex flex-col justify-between mb-4">
 					<div className="flex justify-between item-center mb-4">
 						<p className="">Stake</p>
-						<p className="">Balance: {(selectFarmPool && selectFarmPool.balance) ? Number(selectFarmPool.balance).toFixed(6) : 0}</p>
+						<p className="">Balance: {(selectFarmPool && selectFarmPool.balance) ? Number(selectFarmPool.balance).toFixed(YOCPair.decimals) : 0}</p>
 					</div>
 					<div className="flex justify-between item-center">
-						<input className="w-full mr-4 px-2 py-1 rounded border-[1px] border-solid border-secondary bg-transparent text-dark-primary" value={stakeLpAmount} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setStakeLpAmount(Number(e.target.value)); setStakeLpMax(false); }} />
+						<input className="w-full mr-4 px-2 py-1 rounded border-[1px] border-solid border-secondary bg-transparent text-dark-primary" value={stakeLpAmount} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { stakeLpAmountChangleHandle(e.target.value) }} />
 						<button className="text-primary bg-btn-secondary shadow-btn-secondary px-4 py-1 rounded" onClick={() => setMaxStakeLpAmountHandle()}>MAX</button>
 					</div>
 				</div>
@@ -595,10 +630,10 @@ const Farm: FC = () => {
 				<div className="flex flex-col justify-between mb-4">
 					<div className="flex justify-between item-center mb-4">
 						<p className="">Unstake</p>
-						<p className="">Balance: {(selectFarmPool && selectFarmPool.lpAmount) ? selectFarmPool.lpAmount.toFixed(6) : 0}</p>
+						<p className="">Balance: {(selectFarmPool && selectFarmPool.lpAmount) ? selectFarmPool.lpAmount.toFixed(YOCPair.decimals) : 0}</p>
 					</div>
 					<div className="flex justify-between item-center">
-						<input className="w-full mr-4 px-2 py-1 rounded border-[1px] border-solid border-secondary bg-transparent text-dark-primary" value={unstakeLpAmount} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setUnstakeLpAmount(Number(e.target.value)); setUnstakeLpMax(false); }} />
+						<input className="w-full mr-4 px-2 py-1 rounded border-[1px] border-solid border-secondary bg-transparent text-dark-primary" value={unstakeLpAmount} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { unstakeLpAmountChangleHandle(e.target.value) }} />
 						<button className="text-primary bg-btn-secondary shadow-btn-secondary px-4 py-1 rounded" onClick={() => setMaxUnstakeAmountHandle()}>MAX</button>
 					</div>
 				</div>
