@@ -7,11 +7,11 @@ const useNetwork = () => {
         var rpc = "";
         if (process.env.env == 'development') {
             // if (process.env.NET_WORK == 'ETH') return "https://goerli.etherscan.io/";
-            if (process.env.NET_WORK == 'ETH') return "https://sepolia.etherscan.io/";
-            else return "https://testnet.bscscan.com/"
+            if (process.env.NET_WORK == 'ETH') return "https://sepolia.etherscan.io";
+            else return "https://testnet.bscscan.com"
         } else {
-            if (process.env.NET_WORK == 'ETH') return "https://etherscan.io/";
-            else return "https://bscscan.com/"
+            if (process.env.NET_WORK == 'ETH') return "https://etherscan.io";
+            else return "https://bscscan.com"
         }
     }, [network])
 
