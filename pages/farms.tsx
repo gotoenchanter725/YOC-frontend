@@ -310,7 +310,7 @@ const Farm: FC = () => {
 				signer
 			)
 			await PairContract.withdraw(pair.poolId, 0, {
-				gasLimit: 200000
+				gasLimit: 300000
 			});
 			PairContract.on("Withdraw", (user, pid, amount, yocAmount) => {
 				setFarmPools([...farmPools.map(item => item.liquidity.pairAddress == pair.liquidity.pairAddress ? { ...item, earned: 0, balance: Number(item.balance) + Number(item.earned) } : item)]);
@@ -506,7 +506,7 @@ const Farm: FC = () => {
 															<p className="leading-4">{item.earned ? item.earned : 0}</p>
 														</div>
 														<div className="flex justify-end">
-															<button className="flex h-[36px] items-center rounded-full border-[1px] border-solid border-secondary bg-btn-primary px-3 py-1 text-primary disabled:bg-btn-disable disabled:border-[#0f5856]" disabled={!account || !item.approve || !item.earned}
+															<button className="flex h-[36px] items-center rounded-full border-[1px] border-solid border-secondary bg-btn-primary px-3 py-1 text-primary disabled:bg-btn-disable disabled:border-[#0f5856]" disabled={!account || !item.earned}
 																onClick={() => harvestHandle(item)}
 															>
 																Harvest
