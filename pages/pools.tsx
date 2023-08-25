@@ -122,9 +122,9 @@ const Pools: FC = () => {
 								// allowance = Number(convertWeiToEth(await tokenContract.allowance(account, item.address), item.currency.decimals));
 
 								if (item.currency.address == YOC.address) {
-									const totalReward = convertWeiToEth(await stakingContract.balanceOf(), YOC.decimals);
+									const YocPerShare = convertWeiToEth(await stakingContract.getPricePerFullShare(), YOC.decimals);
 									if (item.totalShare) {
-										amount = Number(amount) / Number(item.totalShare) * Number(totalReward);
+										amount = Number(item.totalShare) * Number(YocPerShare);
 										earned = amount;
 									}
 								} else {
