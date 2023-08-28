@@ -100,7 +100,13 @@ const Pools: FC = () => {
 							setStakePools([...data]);
 							let yocUSDAmountForCurrentPool = yocAmountForCurrentPool * yocDetail.price;
 							let totalAmount = Number(item.totalAmount);
-							totalLiquidity = item.totalAmount;
+							var YocPerShare;
+							if (item.currency.address == YOC.address) {
+								YocPerShare = convertWeiToEth(await stakingContract.getPricePerFullShare(), YOC.decimals);
+								totalLiquidity = Number(item.totalShare) * Number(YocPerShare);
+							} else {
+								totalLiquidity = item.totalAmount;
+							}
 							console.log(totalAmount, Number(item.currency.price))
 							let tokenUSDAmount = totalAmount * Number(item.currency.price);
 
@@ -122,9 +128,9 @@ const Pools: FC = () => {
 								// allowance = Number(convertWeiToEth(await tokenContract.allowance(account, item.address), item.currency.decimals));
 
 								if (item.currency.address == YOC.address) {
-									const YocPerShare = convertWeiToEth(await stakingContract.getPricePerFullShare(), YOC.decimals);
 									if (item.totalShare) {
-										amount = Number(item.totalShare) * Number(YocPerShare);
+										let userShare = stakeUserDetail ? stakeUserDetail.amount : 0;
+										amount = Number(userShare) * Number(YocPerShare);
 										earned = amount;
 									}
 								} else {
