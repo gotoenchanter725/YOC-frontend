@@ -28,6 +28,10 @@ const menuData = [
         includes: ['/swap', '/liquidity', '/charts'],
         children: [
             {
+                name: "YUSD",
+                route: '/yusd'
+            },
+            {
                 name: "Swap",
                 route: '/swap'
             },

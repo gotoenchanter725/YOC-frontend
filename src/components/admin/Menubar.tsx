@@ -18,9 +18,9 @@ const adminMenus = [
         router: '/admin/currency',
     },
     {
-        title: "Survey",
+        title: "YUSD",
         logo: "",
-        router: '/admin/survey',
+        router: '/admin/yusd',
     },
     {
         title: "Liquidity Pool",

@@ -92,13 +92,13 @@ const Pools: FC = () => {
 							let yocDetail = getCurrencyDetail(YOC.address);
 							let currencyDetail = getCurrencyDetail(item.currency.address);
 
-							if (!yocDetail) return item;
+							// if (!yocDetail) return item;
 							data[i] = {
 								...item,
 								loading: true,
 							};
 							setStakePools([...data]);
-							let yocUSDAmountForCurrentPool = yocAmountForCurrentPool * yocDetail.price;
+							let yocUSDAmountForCurrentPool = yocAmountForCurrentPool * (yocDetail ? yocDetail.price : 0);
 							let totalAmount = Number(item.totalAmount);
 							var YocPerShare;
 							if (item.currency.address == YOC.address) {

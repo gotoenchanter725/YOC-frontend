@@ -3,6 +3,9 @@ import { useMemo } from 'react';
 const useNetwork = () => {
     const network = process.env.NET_WORK;
 
+    const YOC = network == "BSC" ? "YOCb" : "YOCe";
+    const native = network == "BSC" ? "BNB" : "ETH";
+
     const explorer = useMemo(() => {
         var rpc = "";
         if (process.env.env == 'development') {
@@ -26,7 +29,7 @@ const useNetwork = () => {
         }
     }, [network])
 
-    return { network, explorer, rpcUrl };
+    return { network, explorer, rpcUrl, YOC, native };
 }
 
 export default useNetwork;
