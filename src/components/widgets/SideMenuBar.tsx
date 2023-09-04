@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { walletDisconnect } from "../../../store/actions";
+import useWallet from "@hooks/useWallet";
+import useAccount from "@hooks/useAccount";
 
 const SideMenuBar = () => {
-    const { account } = useSelector((state: any) => state.data);
-    const dispatch = useDispatch();
+    const { account } = useAccount();
+    const { disconnectWallet } = useWallet();
     const [btnMenuBarToggle, setBtnMenuBarToggle] = useState(true);
 
     return (
@@ -25,10 +25,10 @@ const SideMenuBar = () => {
                     <img src='/images/drop-down.png' alt='drop-down' />
                 }
             </div>
-            <div className={`flex flex-col overflow-hidden transition-all ${btnMenuBarToggle ? `${account?'h-[185px]':'h-[65px]'}` : "h-0"}`}>
+            <div className={`flex flex-col overflow-hidden transition-all ${btnMenuBarToggle ? `${account ? 'h-[185px]' : 'h-[65px]'}` : "h-0"}`}>
                 {
                     account ?
-                        <div className='bg-primary-pattern px-4 py-5 text-xl mb-[50px] cursor-pointer' onClick={() => account && dispatch(walletDisconnect() as any)}>
+                        <div className='bg-primary-pattern px-4 py-5 text-xl mb-[50px] cursor-pointer' onClick={() => disconnectWallet()}>
                             Disconnect
                         </div>
                         : ""

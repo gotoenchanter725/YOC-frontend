@@ -9,7 +9,7 @@ import Modal from "@components/widgets/Modalv2";
 import { YOCFarm, YOCSwapRouter, TokenTemplate, YOC, YOCPool, USDCToken } from "../src/constants/contracts";
 import { TOKENS } from "../src/constants/tokens";
 import { PairOpenInterface, StakeInterface } from "../src/interfaces/pools";
-import { alert_show, walletConnect } from "../store/actions";
+import { alert_show } from "../store/actions";
 import { convertEthToWei, convertRate, convertWeiToEth } from "../utils/unit";
 import useAccount from "@hooks/useAccount";
 import useAlert from "@hooks/useAlert";
@@ -24,7 +24,7 @@ const Pools: FC = () => {
 	const { provider, signer, account, rpc_provider } = useAccount();
 	const { loadingStart, loadingEnd } = useLoading();
 	const { alertShow } = useAlert();
-	const { connectWallet, updateWalletBalance } = useWallet();
+	const { connectWallet, disconnectWallet, updateWalletBalance } = useWallet();
 	const { explorer, network } = useNetwork();
 	const [after1second, setAfter1second] = useState(false);  // flag that checks if the 1 second is passed from when the page is loaded.
 	const dispatch = useDispatch();
@@ -618,7 +618,7 @@ const Pools: FC = () => {
 																	:
 																	<button className="h-[36px] rounded text-sm w-[160px] bg-btn-secondary shadow-btn-secondary px-4 py-1.5 text-primary"
 																		onClick={() => {
-																			dispatch(walletConnect() as any);
+																			disconnectWallet()
 																		}}
 																	>
 																		Connect Wallet

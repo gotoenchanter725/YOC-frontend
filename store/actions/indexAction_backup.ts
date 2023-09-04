@@ -1,7 +1,6 @@
 import { GET_PROJECT_INFO, LOADING_END, LOADING_START, WALLET_CONNECT, WALLET_DISCONNECT } from "../types";
-import { WagmiConfig, createConfig, configureChains, mainnet } from 'wagmi'
-import { MetaMaskConnector } from 'wagmi/connectors/metaMask'
-import { publicProvider } from 'wagmi/providers/public'
+import Web3Modal from "web3modal";
+import WalletConnectProvider from "@walletconnect/web3-provider";
 import { Contract, ethers } from "ethers";
 import { rpc_provider_basic } from "../../utils/rpc_provider";
 import {
@@ -141,6 +140,145 @@ export const updateProjectInfo = (projectList: any, projectAddress: any, account
     console.log("update project info error: ", ex);
   }
 };
+
+export const walletConnect = () => async (dispatch: any) => {
+  try {
+    const providerOptions = {
+      injected: {
+        display: {
+          name: "Metamask",
+        },
+        package: WalletConnectProvider,
+      },
+      walletconnect: {
+        display: {
+          name: "WalletConnect",
+        },
+        package: WalletConnectProvider,
+        options: {
+          rpc: {
+            1: NETWORK.mainnet.RPC_URL,
+            11155111: NETWORK.testnet.RPC_URL
+          }
+        }
+      },
+      // 'custom-walletlink': {
+      //   display: {
+      //     logo: 'https://play-lh.googleusercontent.com/PjoJoG27miSglVBXoXrxBSLveV6e3EeBPpNY55aiUUBM9Q1RCETKCOqdOkX2ZydqVf0',
+      //     name: 'Coinbase',
+      //     description: 'Connect to Coinbase Wallet (not Coinbase App)',
+      //   },
+      //   options: {
+      //     appName: 'Coinbase', // Your app name
+      //     networkUrl: `https://mainnet.infura.io/v3/${INFURA_ID}`,
+      //     chainId: 1,
+      //   },
+      //   package: WalletLink,
+      //   connector: async (_, options) => {
+      //     const { appName, networkUrl, chainId } = options
+      //     const walletLink = new WalletLink({
+      //       appName,
+      //     })
+      //     const provider = walletLink.makeWeb3Provider(networkUrl, chainId)
+      //     await provider.enable()
+      //     return provider
+      //   },
+      // },
+    };
+
+    web3Modal = new Web3Modal({
+      cacheProvider: true,
+      providerOptions,
+      disableInjectedProvider: false,
+      theme: {
+        background: "#081e1a",
+        main: "rgb(199, 199, 199)",
+        secondary: "rgb(136, 136, 136)",
+        border: "rgba(195, 195, 195, 0.14)",
+        hover: "#0b4e42b3",
+      },
+    });
+
+    const instance = await web3Modal.connect();
+
+    if (Number(instance.chainId) !== Number(process.env.env === "development" ? NETWORK.testnet.CHAIN_ID : NETWORK.mainnet.CHAIN_ID)) {
+      try {
+        await window.web3.currentProvider.request({
+          method: "wallet_switchEthereumChain",
+          params: [{ chainId: `0x${Number(process.env.env === "development" ? NETWORK.testnet.CHAIN_ID : NETWORK.mainnet.CHAIN_ID).toString(16)}` }]
+        });
+      } catch (error: any) {
+        alert(error.message);
+      }
+      return;
+    }
+
+    const provider = new ethers.providers.Web3Provider(instance);
+    const signer = provider.getSigner();
+    const account = await signer.getAddress();
+
+    let YOCContract = new Contract(
+      YOC.address,
+      TokenTemplate.abi,
+      rpc_provider_basic
+    )
+    let balance = Number(convertWeiToEth(await YOCContract.balanceOf(account), YOC.decimals));
+
+    provider.on("disconnect", () => {
+      dispatch(walletDisconnect())
+    });
+
+    provider.on("accountsChanged", (accounts) => {
+      dispatch(walletConnect())
+    });
+
+    // Subscribe to chainId change
+    provider.on("chainChanged", (chainId) => {
+      dispatch(walletConnect())
+      console.log(chainId);
+    });
+
+    localStorage.setItem('account', account);
+
+    dispatch({
+      type: WALLET_CONNECT,
+      payload: {
+        account: account,
+        balance: balance,
+        provider: provider,
+        chainId: instance.chainId,
+        signer: signer,
+        rpc_provider: rpc_provider_basic
+      }
+    })
+
+    dispatch(projectInfos(account));
+
+  } catch (error) {
+    console.log("Wallet Connect error: ", error)
+  }
+}
+
+export const walletDisconnect = () => async (dispatch: any) => {
+  try {
+    await web3Modal.clearCachedProvider();
+    localStorage.setItem('account', '');
+    dispatch({
+      type: WALLET_DISCONNECT,
+      payload: {
+        account: undefined,
+        balance: 0,
+        provider: undefined,
+        chainId: undefined,
+        signer: undefined,
+        rpc_provider: undefined
+      }
+    })
+    dispatch(projectInfos(undefined));
+  } catch (error) {
+    console.log("Wallet Disconnect error: ", error)
+  }
+}
 
 export const getShareTokenBalance = (address: any, account: any) => async (dispatch: any) => {
   try {

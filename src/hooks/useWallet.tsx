@@ -1,30 +1,32 @@
 import { useCallback, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useAccount as useWagmiAccount, useConnect, useDisconnect } from 'wagmi'
 
 import useAccount from "./useAccount";
-import { walletConnect, walletDisconnect } from "../../store/actions";
 import { WALLET_UPDATE } from "../../store/types";
-import { Contract } from "ethers";
+import ethers, { Contract } from "ethers";
 import { TokenTemplate, YOC } from "../constants/contracts";
 import { rpc_provider_basic } from "../../utils/rpc_provider";
 import { convertWeiToEth } from "../../utils/unit";
 
 const useWallet = () => {
     const dispatch = useDispatch();
+    const { address, connector, isConnected } = useWagmiAccount()
+    const { disconnect } = useDisconnect()
     const { account } = useAccount();
+    const { connect, connectors, error, isLoading, pendingConnector } = useConnect();
 
-    const connectWallet = useCallback(() => {
-        if (!account) {
-            dispatch(walletConnect() as any);
+    const connectWallet = useCallback(async () => {
+        if (!isConnected && connectors.length) {
+            connect({ connector: connectors[0] });
         }
-    }, [account])
+    }, [isConnected, connect, connectors, error, isLoading, pendingConnector])
 
     const disconnectWallet = useCallback(() => {
-        if (account) {
-            dispatch(walletDisconnect() as any);
-            location.reload();
+        if (isConnected) {
+            disconnect();
         }
-    }, [account])
+    }, [isConnected])
 
     const updateWalletBalance = useCallback(async () => {
         try {

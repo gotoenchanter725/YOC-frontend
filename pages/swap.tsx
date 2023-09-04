@@ -12,11 +12,13 @@ import TokenComponent from '@components/widgets/TokenComponent';
 
 import { TOKENS, tokenInterface } from '../src/constants/tokens';
 import { TokenTemplate, YOCSwapRouter, WETH } from "../src/constants/contracts";
-import { alert_show, loading_end, loading_start, walletConnect } from "../store/actions";
+import { alert_show, loading_end, loading_start } from "../store/actions";
 import { rpc_provider_basic } from '../utils/rpc_provider';
 import { convertEthToWei, convertWeiToEth } from "../utils/unit";
 import { debounceHook } from '../utils/hook';
 import axios from 'axios';
+import useWallet from '@hooks/useWallet';
+import useAccount from '@hooks/useAccount';
 
 const tempMaxValue = 99999999999;
 const ethAddress = WETH;
@@ -25,7 +27,8 @@ const txRunLimitTime = 1000 * 60 * 5; // 5 min
 const Swap: FC = () => {
 
     const dispatch = useDispatch();
-    const { provider, signer, account, rpc_provider } = useSelector((state: any) => state.data);
+    const { provider, signer, account, rpc_provider } = useAccount();
+    const { disconnectWallet } = useWallet();
     const [typeIn, setTypeIn] = useState<tokenInterface>(TOKENS[0] as tokenInterface);
     const [typeOut, setTypeOut] = useState<tokenInterface>();
     const [amountIn, setAmountIn] = useState(0);
@@ -86,7 +89,7 @@ const Swap: FC = () => {
                     params: {
                         token0: in_.address,
                         token1: out_.address,
-                        amountIn: amount, 
+                        amountIn: amount,
                         amountOut: +res1
                     }
                 });
@@ -107,12 +110,12 @@ const Swap: FC = () => {
                 setRate(+res1 / +res0);
                 tmpRate = +res1 / +res0;
                 setAmountIn(+res0);
-                
+
                 let priceimpactResponse = await axios.get(process.env.API_ADDRESS + `/liquidity/priceimpact`, {
                     params: {
                         token0: in_.address,
                         token1: out_.address,
-                        amountIn: +res0, 
+                        amountIn: +res0,
                         amountOut: amount
                     }
                 });
@@ -475,7 +478,7 @@ const Swap: FC = () => {
                                                     account ?
                                                         <button className='bg-btn-primary w-full py-5 my-10 text-3xl rounded-lg shadow-btn-primary disabled:bg-btn-disable' disabled={(!+allowanceIn || !+amountIn || amountIn > myBalanceIn || !amountOut || !rate) as boolean} onClick={() => confirmSwapHandle()}>Swap</button>
                                                         :
-                                                        <button className='bg-btn-primary w-full py-5 my-10 text-3xl rounded-lg shadow-btn-primary' onClick={() => dispatch(walletConnect() as any)}>Connect Wallet</button>
+                                                        <button className='bg-btn-primary w-full py-5 my-10 text-3xl rounded-lg shadow-btn-primary' onClick={() => disconnectWallet()}>Connect Wallet</button>
                                                 )
                                             }
                                         </div>

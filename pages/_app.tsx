@@ -5,6 +5,7 @@ import { Provider } from "react-redux";
 import "regenerator-runtime/runtime";
 
 import { wrapper, store } from "../store/store";
+import WalletWagmiProvider from '@components/common/WagmiProvider';
 
 import "../src/scss/index.scss";
 import LoadingComponent from '@components/widgets/LoadingComponent';
@@ -22,11 +23,13 @@ function MyApp({ Component, pageProps }: AppProps) {
 
   return (
     <Provider store={store}>
-      <Layout>
-        <Component {...pageProps} />
-      </Layout>
-      <AlertModal />
-      <LoadingComponent />
+      <WalletWagmiProvider>
+        <Layout>
+          <Component {...pageProps} />
+        </Layout>
+        <AlertModal />
+        <LoadingComponent />
+      </WalletWagmiProvider>
     </Provider>
   )
 }

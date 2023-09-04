@@ -22,7 +22,7 @@ const BurnSection = () => {
 
         <div className="yusd-selector rounded-lg border border-border-primary mb-4">
             <div className="w-full flex justify-between items-center bg-primary-pattern border-b border-border-primary px-3">
-                <input className='bg-transparent text-white py-2' placeholder="Enter YUSD amout to burn" value={10} />
+                <input className='bg-transparent text-white py-2' placeholder="Enter YUSD amout to burn" defaultValue={0} />
                 <span className='font-semibold'>YUSD</span>
             </div>
             <div className="yusd-details text-sm px-3 py-2 flex items-end justify-between">
