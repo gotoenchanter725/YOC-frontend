@@ -67,7 +67,7 @@ const Navbar = () => {
     const router = useRouter();
     const [navbarBgActive, setNavbarBgActive] = useState(false);
     const { account, balance } = useAccount();
-    const { connectWallet, disconnectWallet } = useWallet();
+    const { connectWallet, showWalletModal, disconnectWallet } = useWallet();
     const { network } = useNetwork();
     const isAdmin = useAdmin();
     const currentPath = useMemo(() => {
@@ -77,7 +77,7 @@ const Navbar = () => {
     const [isOpenMobile, setIsOpenMobile] = useState(false);
 
     useEffect(() => {
-        connectWallet();
+        showWalletModal();
 
         let body = window.document.querySelector('body');
         if (body) {
@@ -178,7 +178,7 @@ const Navbar = () => {
                             </div>
                         </div>
                         <div className="flex cursor-pointer border-[1px] border-border-primary items-center ml-1">
-                            <div className="px-4" onClick={() => { account ? disconnectWallet() : connectWallet() }}>{account ? `${account.slice(0, 6)}...${account.slice(38, 42)}` : 'Connect to wallet'}</div>
+                            <div className="px-4" onClick={() => { account ? disconnectWallet() : showWalletModal() }}>{account ? `${account.slice(0, 6)}...${account.slice(38, 42)}` : 'Connect to wallet'}</div>
                             <div className="px-2 pt-2 border-l-[1px] border-border-primary">
                                 <div className="min-w-[20px]">
                                     <Image src={'/images/wallet.png'} alt='wallet' width={20} height={20} />
@@ -209,7 +209,7 @@ const Navbar = () => {
                     </div>
                     <div className="flex items-center ml-2">
                         <div className="h-[36px] flex items-center cursor-pointer rounded-lg border-[2px] border-border-primary ml-1">
-                            <div className="px-2.5" onClick={() => { account ? disconnectWallet() : connectWallet() }}>{account ? `${account.slice(0, 4)}...${account.slice(40, 42)}` : 'Connect to wallet'}</div>
+                            <div className="px-2.5" onClick={() => { account ? disconnectWallet() : showWalletModal() }}>{account ? `${account.slice(0, 4)}...${account.slice(40, 42)}` : 'Connect to wallet'}</div>
                             <div className="h-full flex items-center justify-center px-2 border-l-[2px] border-border-primary">
                                 <div className="flex items-center justify-center min-w-[20px]">
                                     <Image src={'/images/wallet.png'} alt='wallet' width={18} height={18} />

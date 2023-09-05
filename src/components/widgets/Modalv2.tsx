@@ -26,7 +26,7 @@ const Modal: FC<Props> = (props) => {
 
     return (
         <>
-            <div className={`transition-all overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 p-6 w-full md:inset-0 min-h-full flex justify-around items-center bg-body-secondary ${props.show ? "z-[200] visible opacity-90" : "-z-1 invisible opacity-0"}`}
+            <div className={`transition-all overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 p-6 w-full md:inset-0 min-h-full flex justify-around items-center bg-body-secondary ${props.show ? "z-[50] visible opacity-90" : "-z-1 invisible opacity-0"}`}
                 onClick={(e) => closeHandle(e.target)}
                 ref={modalWrapContainer}
             >

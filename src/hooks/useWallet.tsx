@@ -28,6 +28,24 @@ const useWallet = () => {
         }
     }, [isConnected])
 
+    const showWalletModal = () => {
+        dispatch({
+            type: "WALLET_MODAL_SHOW",
+            payload: {
+                showWalletModal: true
+            }
+        })
+    }
+
+    const hideWalletModal = () => {
+        dispatch({
+            type: "WALLET_MODAL_HIDE",
+            payload: {
+                showWalletModal: false
+            }
+        })
+    }
+
     const updateWalletBalance = useCallback(async () => {
         try {
             console.log(YOC.address, YOC.abi)
@@ -48,7 +66,7 @@ const useWallet = () => {
         }
     }, [YOC, account]);
 
-    return { connectWallet, disconnectWallet, updateWalletBalance };
+    return { connectWallet, disconnectWallet, updateWalletBalance, showWalletModal, hideWalletModal };
 }
 
 export default useWallet;
