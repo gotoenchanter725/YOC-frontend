@@ -10,7 +10,8 @@ import { YOC } from 'src/constants/contracts';
 const useAccount = () => {
     // const { account, balance, provider, signer } = useSelector((state: any) => state.data);
     const { address, connector, isConnected } = useWagmiAccount();
-    const [balance, setBalance] = useState("");
+    const [balance, setBalance] = useState(""); // YOC
+    const [amount, setAmount] = useState(0); // ETH
     const [provider, setProvider] = useState();
     const [signer, setSigner] = useState();
     const account = address;
@@ -29,17 +30,31 @@ const useAccount = () => {
                     address: address as `0x${string}`,
                     token: YOC.address as `0x${string}`
                 });
-                console.log(rst);
                 setBalance(convertWeiToEth(rst.value, YOC.decimals));
+            }
+            if (address) {
+                let val = await getAmount()
+                setAmount(Number(val));
             }
         })();
     }, [YOC, address])
 
     useEffect(() => {
-        if (!isConnected) setBalance("0");
+        if (!isConnected) {
+            setAmount(0);
+            setBalance("0");
+        }
     }, [isConnected])
 
-    return { account, balance, provider, signer, rpc_provider: rpc_provider_basic };
+    const getAmount = async () => {
+        let rst = await fetchBalance({
+            address: address as `0x${string}`,
+            formatUnits: 'ether'
+        });
+        return Number(rst.formatted);
+    }
+
+    return { account, balance, amount, getAmount, provider, signer, rpc_provider: rpc_provider_basic };
 }
 
 export default useAccount;

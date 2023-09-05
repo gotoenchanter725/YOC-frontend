@@ -13,6 +13,7 @@
     "@kekalma/language-selector": "^1.0.1",
     "@reduxjs/toolkit": "^1.8.5",
     "@types/lodash": "^4.14.191",
+    "@types/ms": "^0.7.31",
     "@walletconnect/web3-provider": "^1.8.0",
     "apexcharts": "^3.37.1",
     "axios": "^1.1.3",

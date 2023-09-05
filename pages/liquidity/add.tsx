@@ -22,7 +22,7 @@ const tempMaxValue = 99999999999;
 const txRunLimitTime = 1000 * 60 * 5; // 5 min
 
 const Liquidity: FC = () => {
-    const { account, provider, signer, rpc_provider } = useAccount();
+    const { account, provider, getAmount, signer, rpc_provider } = useAccount();
     const { loadingStart, loadingEnd } = useLoading();
     const { alertShow } = useAlert();
     const { connectWallet } = useWallet();
@@ -83,7 +83,7 @@ const Liquidity: FC = () => {
         let tokenContract = new Contract(
             token.address,
             TokenTemplate.abi,
-            rpc_provider_basic
+            provider
         );
         let approveAmount = convertWeiToEth((await tokenContract.allowance(account, YOCSwapRouter.address)), token.decimals);
         // let approveAmount = await tokenContract.allowance(account, YOCSwapRouter.address);
@@ -109,8 +109,8 @@ const Liquidity: FC = () => {
             let r = await calculateRate(v, typeOut as tokenInterface);
             if (r) setAmountIn(mathExact('Divide', +amountOut, +r));
             if (v.address == WETH) {
-                let balance = await provider.getBalance(account);
-                setMyBalanceIn(+convertWeiToEth(balance, v.decimals));
+                let val = await getAmount();
+                setMyBalanceIn(val);
             } else {
                 const contract = new Contract(
                     v.address,
@@ -139,8 +139,8 @@ const Liquidity: FC = () => {
             let r = await calculateRate(typeIn, v);
             if (r) setAmountOut(mathExact('Multiply', +amountIn, +r));
             if (v.address == WETH) {
-                let balance = await provider.getBalance(account);
-                setMyBalanceOut(+convertWeiToEth(balance, v.decimals));
+                let val = await getAmount();
+                setMyBalanceOut(val);
             } else {
                 const contract = new Contract(
                     v.address,

@@ -1,24 +1,26 @@
 import { type WalletClient, getWalletClient, type PublicClient, getPublicClient } from '@wagmi/core'
 import { providers } from 'ethers'
+import { NETWORK } from 'src/config/contract'
 import { type HttpTransport } from 'viem'
 
 export function walletClientToSigner(walletClient: WalletClient) {
-    const { account, chain, transport } = walletClient
-    const network = {
-        chainId: chain.id,
-        name: chain.name,
-        ensAddress: chain.contracts?.ensRegistry?.address,
-    }
-    const provider = new providers.Web3Provider(transport, network)
-    const signer = provider.getSigner(account.address)
-    return signer
+  const { account, chain, transport } = walletClient
+  const network = {
+    chainId: chain.id,
+    name: chain.name,
+    ensAddress: chain.contracts?.ensRegistry?.address,
+  }
+  const provider = new providers.Web3Provider(transport, network)
+  const signer = provider.getSigner(account.address)
+  return signer
 }
 
 /** Action to convert a viem Wallet Client to an ethers.js Signer. */
-export async function getEthersSigner({ chainId }: { chainId?: number } = {}) {
-    const walletClient = await getWalletClient({ chainId })
-    if (!walletClient) return undefined
-    return walletClientToSigner(walletClient)
+export async function getEthersSigner() {
+  const chainId = process.env.env == 'development' ? NETWORK.testnet.CHAIN_ID : NETWORK.mainnet.CHAIN_ID;
+  const walletClient = await getWalletClient({ chainId })
+  if (!walletClient) return undefined
+  return walletClientToSigner(walletClient)
 }
 
 export function publicClientToProvider(publicClient: PublicClient) {
@@ -36,9 +38,10 @@ export function publicClientToProvider(publicClient: PublicClient) {
     )
   return new providers.JsonRpcProvider(transport.url, network)
 }
- 
+
 /** Action to convert a viem Public Client to an ethers.js Provider. */
-export function getEthersProvider({ chainId }: { chainId?: number } = {}) {
+export function getEthersProvider() {
+  const chainId = process.env.env == 'development' ? NETWORK.testnet.CHAIN_ID : NETWORK.mainnet.CHAIN_ID;
   const publicClient = getPublicClient({ chainId })
   return publicClientToProvider(publicClient)
 }

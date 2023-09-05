@@ -13,7 +13,6 @@ import TokenComponent from '@components/widgets/TokenComponent';
 import { TOKENS, tokenInterface } from '../src/constants/tokens';
 import { TokenTemplate, YOCSwapRouter, WETH } from "../src/constants/contracts";
 import { alert_show, loading_end, loading_start } from "../store/actions";
-import { rpc_provider_basic } from '../utils/rpc_provider';
 import { convertEthToWei, convertWeiToEth } from "../utils/unit";
 import { debounceHook } from '../utils/hook';
 import axios from 'axios';
@@ -27,7 +26,7 @@ const txRunLimitTime = 1000 * 60 * 5; // 5 min
 const Swap: FC = () => {
 
     const dispatch = useDispatch();
-    const { provider, signer, account, rpc_provider } = useAccount();
+    const { provider, signer, account, amount, rpc_provider } = useAccount();
     const { disconnectWallet } = useWallet();
     const [typeIn, setTypeIn] = useState<tokenInterface>(TOKENS[0] as tokenInterface);
     const [typeOut, setTypeOut] = useState<tokenInterface>();
@@ -45,7 +44,7 @@ const Swap: FC = () => {
     const [swapContract] = useState(new Contract(
         YOCSwapRouter.address,
         YOCSwapRouter.abi,
-        rpc_provider_basic
+        provider
     ));
     const [swapStep, setSwapStep] = useState('swap');
     const [priceImpact, setPriceImpact] = useState(0);
@@ -136,7 +135,7 @@ const Swap: FC = () => {
         let tokenContract = new Contract(
             token.address,
             TokenTemplate.abi,
-            rpc_provider_basic
+            provider
         );
         let approveAmount = convertWeiToEth((await tokenContract.allowance(account, YOCSwapRouter.address)), token.decimals);
         return approveAmount;
@@ -167,8 +166,7 @@ const Swap: FC = () => {
             setTypeIn(v);
             await calculateRate(v, typeOut as tokenInterface, amountIn, true);
             if (v.address == WETH) {
-                let balance = await provider.getBalance(account);
-                setMyBalanceIn(+convertWeiToEth(balance, v.decimals));
+                setMyBalanceIn(amount);
             } else {
                 const contract = new Contract(
                     v.address,
@@ -194,13 +192,12 @@ const Swap: FC = () => {
             setTypeOut(v);
             await calculateRate(typeIn, v, amountOut, false);
             if (v.address == WETH) {
-                let balance = await provider.getBalance(account);
-                setMyBalanceOut(+convertWeiToEth(balance, v.decimals));
+                setMyBalanceOut(amount);
             } else {
                 const contract = new Contract(
                     v.address,
                     TokenTemplate.abi,
-                    rpc_provider
+                    provider
                 );
                 let balance = await contract.balanceOf(account);
                 setMyBalanceOut(+convertWeiToEth(balance, v.decimals));
