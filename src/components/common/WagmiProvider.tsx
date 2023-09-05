@@ -14,8 +14,8 @@ import WalletModal from './WalletModal'
 // Two popular providers are Alchemy (alchemy.com) and Infura (infura.io)
 const { chains, publicClient, webSocketPublicClient } = configureChains(
     [process.env.NET_WORK == "ETH" ? sepolia : bscTestnet],
-    // [alchemyProvider({ apiKey: 'yourAlchemyApiKey' }), publicProvider()],
-    [publicProvider()],
+    [alchemyProvider({ apiKey: process.env.ALCHEMY_KEY + "" }), publicProvider()],
+    // [publicProvider()],
 )
 
 // Set up wagmi config
