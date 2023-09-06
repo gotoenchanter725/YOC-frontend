@@ -22,7 +22,7 @@ const tempMaxValue = 99999999999;
 const txRunLimitTime = 1000 * 60 * 5; // 5 min
 
 const Liquidity: FC = () => {
-    const { account, provider, getAmount, signer, rpc_provider } = useAccount();
+    const { account, provider, getETHBalance, signer, rpc_provider } = useAccount();
     const { loadingStart, loadingEnd } = useLoading();
     const { alertShow } = useAlert();
     const { connectWallet } = useWallet();
@@ -109,7 +109,7 @@ const Liquidity: FC = () => {
             let r = await calculateRate(v, typeOut as tokenInterface);
             if (r) setAmountIn(mathExact('Divide', +amountOut, +r));
             if (v.address == WETH) {
-                let val = await getAmount();
+                let val = await getETHBalance();
                 setMyBalanceIn(val);
             } else {
                 const contract = new Contract(
@@ -139,7 +139,7 @@ const Liquidity: FC = () => {
             let r = await calculateRate(typeIn, v);
             if (r) setAmountOut(mathExact('Multiply', +amountIn, +r));
             if (v.address == WETH) {
-                let val = await getAmount();
+                let val = await getETHBalance();
                 setMyBalanceOut(val);
             } else {
                 const contract = new Contract(

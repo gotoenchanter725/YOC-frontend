@@ -4,6 +4,7 @@ import ProjectDetailABI from "../../contracts/ProjectDetail.sol/ProjectDetail.js
 import TokenTemplateABI from "../../contracts/TokenTemplate.sol/TokenTemplate.json";
 import USDCTokenABI from "../../contracts/USDC.sol/USDC.json";
 import YOCABI from "../../contracts/YOC.sol/YOC.json";
+import YUSDABI from "../../contracts/YUSD.sol/YUSD.json";
 import YOCSwapRouterAPI from "../../contracts/YocswapRouter.sol/YocswapRouter.json";
 import YOCSwapFactoryABI from "../../contracts/YocswapFactory.sol/YocswapFactory.json";
 import YOCPairABI from "../../contracts/YocswapFactory.sol/YocswapPair.json";
@@ -39,6 +40,14 @@ const YOC = {
     symbol: "YOC",
     name: "YOC-FoundersCoin",
     ...YOCABI
+}
+
+const YUSD = {
+    address: CONTRACT_ADDRESS.YUSDAddress + "",
+    decimals: 18,
+    symbol: "YUSD",
+    name: "YUSD",
+    ...YUSDABI
 }
 
 const USDCToken = {
@@ -83,6 +92,7 @@ export {
     WETH,
     USDCToken,
     YOC,
+    YUSD,
     YOCSwapRouter,
     YOCSwapFactory,
     YOCFarm,

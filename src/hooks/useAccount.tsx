@@ -5,13 +5,14 @@ import { rpc_provider_basic } from '../../utils/rpc_provider';
 import { getEthersProvider, getEthersSigner } from "utils/ethers";
 import { useEffect, useState } from "react";
 import { convertWeiToEth } from "../../utils/unit";
-import { YOC } from 'src/constants/contracts';
+import { YOC, YUSD } from 'src/constants/contracts';
 
 const useAccount = () => {
     // const { account, balance, provider, signer } = useSelector((state: any) => state.data);
     const { address, connector, isConnected } = useWagmiAccount();
-    const [balance, setBalance] = useState(""); // YOC
-    const [amount, setAmount] = useState(0); // ETH
+    const [YOCBalance, setYOCBalance] = useState(0); // YOC
+    const [ETHBalance, setETHBalance] = useState(0); // ETH
+    const [YUSDBalance, setYUSDBalance] = useState(0); // YUSD
     const [provider, setProvider] = useState();
     const [signer, setSigner] = useState();
     const account = address;
@@ -25,36 +26,45 @@ const useAccount = () => {
     }, [address])
     useEffect(() => {
         (async () => {
-            if (YOC && address) {
-                let rst = await fetchBalance({
-                    address: address as `0x${string}`,
-                    token: YOC.address as `0x${string}`
-                });
-                setBalance(convertWeiToEth(rst.value, YOC.decimals));
-            }
             if (address) {
-                let val = await getAmount()
-                setAmount(Number(val));
+                setYOCBalance(await getYOCBalance());
+                setETHBalance(await getETHBalance());
+                // setYUSDBalance(await getYUSDBalance());
             }
         })();
-    }, [YOC, address])
+    }, [address])
 
     useEffect(() => {
         if (!isConnected) {
-            setAmount(0);
-            setBalance("0");
+            setETHBalance(0);
+            setYOCBalance(0);
+            // setYUSDBalance(0);
         }
     }, [isConnected])
 
-    const getAmount = async () => {
+    const getETHBalance = async () => {
         let rst = await fetchBalance({
             address: address as `0x${string}`,
             formatUnits: 'ether'
         });
         return Number(rst.formatted);
     }
+    const getYOCBalance = async () => {
+        let rst = await fetchBalance({
+            address: address as `0x${string}`,
+            token: YOC.address as `0x${string}`
+        });
+        return Number(convertWeiToEth(rst.value, YOC.decimals));
+    }
+    // const getYUSDBalance = async () => {
+    //     let rst = await fetchBalance({
+    //         address: address as `0x${string}`,
+    //         token: YUSD.address as `0x${string}`
+    //     });
+    //     return Number(convertWeiToEth(rst.value, YUSD.decimals));
+    // }
 
-    return { account, balance, amount, getAmount, provider, signer, rpc_provider: rpc_provider_basic };
+    return { account, YOCBalance, YUSDBalance, ETHBalance, getETHBalance, provider, signer, rpc_provider: rpc_provider_basic };
 }
 
 export default useAccount;

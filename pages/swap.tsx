@@ -26,7 +26,7 @@ const txRunLimitTime = 1000 * 60 * 5; // 5 min
 const Swap: FC = () => {
 
     const dispatch = useDispatch();
-    const { provider, signer, account, amount, rpc_provider } = useAccount();
+    const { provider, signer, account, ETHBalance, rpc_provider } = useAccount();
     const { disconnectWallet } = useWallet();
     const [typeIn, setTypeIn] = useState<tokenInterface>();
     const [typeOut, setTypeOut] = useState<tokenInterface>();
@@ -167,7 +167,7 @@ const Swap: FC = () => {
             setTypeIn(v);
             await calculateRate(v, typeOut as tokenInterface, amountIn, true);
             if (v.address == WETH) {
-                setMyBalanceIn(amount);
+                setMyBalanceIn(ETHBalance);
             } else {
                 const contract = new Contract(
                     v.address,
@@ -193,7 +193,7 @@ const Swap: FC = () => {
             setTypeOut(v);
             await calculateRate(typeIn as tokenInterface, v, amountOut, false);
             if (v.address == WETH) {
-                setMyBalanceOut(amount);
+                setMyBalanceOut(ETHBalance);
             } else {
                 const contract = new Contract(
                     v.address,

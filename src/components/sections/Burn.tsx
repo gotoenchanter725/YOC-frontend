@@ -40,7 +40,7 @@ const BurnSection = () => {
 
         <div>Approx: <span className='text-dark-secondary'>{47.1698} {network}</span></div>
         <div>Account balance: <span className='text-dark-secondary'>{0} YUSD</span></div>
-        <div className='w-full flex justify-between mb-4'>
+        <div className='w-full flex justify-between items-center mb-4'>
             <p>Account balance: <span>{91.01} {native}</span></p>
             <button className='text-white p-2 leading-none bg-btn-primary rounded shadow-btn-primary'>Max</button>
         </div>

@@ -66,7 +66,7 @@ const menuData = [
 const Navbar = () => {
     const router = useRouter();
     const [navbarBgActive, setNavbarBgActive] = useState(false);
-    const { account, balance } = useAccount();
+    const { account, YOCBalance } = useAccount();
     const { connectWallet, showWalletModal, disconnectWallet } = useWallet();
     const { network } = useNetwork();
     const isAdmin = useAdmin();
@@ -170,7 +170,7 @@ const Navbar = () => {
                     </div>
                     <div className="flex items-center">
                         <div className="flex border-[1px] border-border-primary items-center ml-1">
-                            <div className="flex px-2"><span className="mr-2">YOC{network === "ETH" ? 'e' : 'b'}</span><span title={balance} className="inline-block overflow-hidden text-ellipsis max-w-[60px]">{balance}</span></div>
+                            <div className="flex px-2"><span className="mr-2">YOC{network === "ETH" ? 'e' : 'b'}</span><span title={YOCBalance + ""} className="inline-block overflow-hidden text-ellipsis max-w-[60px]">{YOCBalance}</span></div>
                             <div className="cursor-pointer px-2 pt-2 border-l-[1px] border-border-primary" onClick={() => addGlobalYOCTokenHandle()}>
                                 <div className="min-w-[20px]">
                                     <Image src={network === 'ETH' ? YOCe : YOCb} alt='wallet' width={20} height={20} />
@@ -199,7 +199,7 @@ const Navbar = () => {
                         </Link>
 
                         <div className="h-[36px] flex rounded-full border-[2px] border-[#666] items-center ml-2">
-                            <div className="px-2 flex"><span className="mr-2">YOC{network === "ETH" ? 'e' : 'b'}</span><span className="max-w-[60px] text-ellipsis overflow-hidden" title={balance}>{balance}</span></div>
+                            <div className="px-2 flex"><span className="mr-2">YOC{network === "ETH" ? 'e' : 'b'}</span><span className="max-w-[60px] text-ellipsis overflow-hidden" title={YOCBalance + ""}>{YOCBalance}</span></div>
                             <div className="h-full flex items-center justify-center cursor-pointer px-2 border-l-[2px] border-[#666]" onClick={() => addGlobalYOCTokenHandle()}>
                                 <div className="flex items-center justify-center min-w-[20px]">
                                     <Image src={'/images/YOC.svg'} alt='wallet' width={20} height={20} />
