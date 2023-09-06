@@ -264,7 +264,7 @@ const Pools: FC = () => {
 		setUnstakeMax(true);
 	}
 
-	const stakeHandle = async (pool: any) => {
+	const stakeHandle = useCallback(async (pool: any) => {
 		if (!stakeAmount) {
 			dispatch(alert_show({ content: 'Please input the stake amount exactly', status: 'error' }) as any)
 			return;
@@ -304,9 +304,9 @@ const Pools: FC = () => {
 			console.dir(err);
 			loadingEnd();
 		}
-	}
+	}, [signer, stakeAmount, selectPool]);
 
-	const unstakeHandle = async (pool: any) => {
+	const unstakeHandle = useCallback(async (pool: any) => {
 		if (!unstakeAmount) {
 			dispatch(alert_show({ content: 'Please input the unstake amount exactly', status: 'error' }) as any)
 			return;
@@ -341,7 +341,7 @@ const Pools: FC = () => {
 			loadingEnd();
 			console.log(err);
 		}
-	}
+	}, [signer, unstakeAmount, selectPool]);
 
 	const harvestHandle = async (pair: any) => {
 		loadingStart();

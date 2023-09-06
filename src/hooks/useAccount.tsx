@@ -19,10 +19,10 @@ const useAccount = () => {
         (async () => {
             let t_signer = await getEthersSigner();
             setSigner(t_signer as any);
-            let t_provider = await getEthersProvider();
+            let t_provider = getEthersProvider();
             setProvider(t_provider as any);
         })();
-    }, [])
+    }, [address])
     useEffect(() => {
         (async () => {
             if (YOC && address) {

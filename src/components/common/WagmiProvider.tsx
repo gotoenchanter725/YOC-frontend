@@ -2,7 +2,7 @@ import React, { ReactNode } from 'react'
 import { WagmiConfig, createConfig, configureChains } from 'wagmi'
 import { mainnet, sepolia, bsc, bscTestnet } from "wagmi/chains"
 import { alchemyProvider } from 'wagmi/providers/alchemy'
-import { publicProvider } from 'wagmi/providers/public'
+// import { publicProvider } from 'wagmi/providers/public'
 
 import { CoinbaseWalletConnector } from 'wagmi/connectors/coinbaseWallet'
 import { InjectedConnector } from 'wagmi/connectors/injected'
@@ -14,7 +14,7 @@ import WalletModal from './WalletModal'
 // Two popular providers are Alchemy (alchemy.com) and Infura (infura.io)
 const { chains, publicClient, webSocketPublicClient } = configureChains(
     [process.env.NET_WORK == "ETH" ? sepolia : bscTestnet],
-    [alchemyProvider({ apiKey: process.env.ALCHEMY_KEY + "" }), publicProvider()],
+    [alchemyProvider({ apiKey: process.env.ALCHEMY_KEY + "" })],
     // [publicProvider()],
 )
 

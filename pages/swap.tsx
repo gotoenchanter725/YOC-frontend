@@ -1,4 +1,4 @@
-import React, { FC, useState, useEffect } from 'react';
+import React, { FC, useState, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { mathExact } from 'math-exact';
 import { Contract, constants } from 'ethers';
@@ -28,7 +28,7 @@ const Swap: FC = () => {
     const dispatch = useDispatch();
     const { provider, signer, account, amount, rpc_provider } = useAccount();
     const { disconnectWallet } = useWallet();
-    const [typeIn, setTypeIn] = useState<tokenInterface>(TOKENS[0] as tokenInterface);
+    const [typeIn, setTypeIn] = useState<tokenInterface>();
     const [typeOut, setTypeOut] = useState<tokenInterface>();
     const [amountIn, setAmountIn] = useState(0);
     const [amountOut, setAmountOut] = useState(0);
@@ -41,17 +41,18 @@ const Swap: FC = () => {
     const [pendingApproveOut, setPendingApproveOut] = useState(false);
     const [rate, setRate] = useState(0);
     const [lastTarget, setLastTarget] = useState('in');
-    const [swapContract] = useState(new Contract(
+    const swapContract = useMemo(() => {
+        return new Contract(
         YOCSwapRouter.address,
         YOCSwapRouter.abi,
         provider
-    ));
+    )}, [provider]);
     const [swapStep, setSwapStep] = useState('swap');
     const [priceImpact, setPriceImpact] = useState(0);
 
     useEffect(() => {
         if (provider && account) {
-            setTypeInHandle(TOKENS[0])
+            // setTypeInHandle(TOKENS[0])
         }
     }, [provider, account])
 
@@ -146,7 +147,7 @@ const Swap: FC = () => {
         setLastTarget('in');
 
         debounceHook(() => {
-            calculateRate(typeIn, typeOut as tokenInterface, v, true);
+            calculateRate(typeIn as tokenInterface, typeOut as tokenInterface, v, true);
         })
     }
 
@@ -155,7 +156,7 @@ const Swap: FC = () => {
         setLastTarget('out');
 
         debounceHook(() => {
-            calculateRate(typeIn, typeOut as tokenInterface, v, false);
+            calculateRate(typeIn as tokenInterface, typeOut as tokenInterface, v, false);
         })
     }
 
@@ -190,7 +191,7 @@ const Swap: FC = () => {
             setLastTarget('out');
             setAllowanceOut(tempMaxValue);
             setTypeOut(v);
-            await calculateRate(typeIn, v, amountOut, false);
+            await calculateRate(typeIn as tokenInterface, v, amountOut, false);
             if (v.address == WETH) {
                 setMyBalanceOut(amount);
             } else {
@@ -364,7 +365,7 @@ const Swap: FC = () => {
         const tempPendingApprove = pendingApproveIn;
         setPendingApproveOut(tempPendingApprove);
 
-        await calculateRate(typeOut as tokenInterface, typeIn, amountOut, true);
+        await calculateRate(typeOut as tokenInterface, typeIn as tokenInterface, amountOut, true);
         setAmountIn(amountOut);
 
         setLastTarget(lastTarget == 'in' ? 'out' : "in");
@@ -438,7 +439,7 @@ const Swap: FC = () => {
                                                             <SimpleLoading className="w-[20px]" />
                                                             : (
                                                                 ((!allowanceIn && (typeIn && typeIn.address != WETH)) || allowanceIn < amountIn) ?
-                                                                    <button className='bg-btn-primary px- w-full px-2 text-sm rounded shadow-btn-primary' onClick={() => approveHandle(typeIn, 'in')}>approve</button>
+                                                                    <button className='bg-btn-primary px- w-full px-2 text-sm rounded shadow-btn-primary' onClick={() => approveHandle(typeIn as tokenInterface, 'in')}>approve</button>
                                                                     : ""
                                                             )
                                                     }

@@ -1,4 +1,4 @@
-import React, { FC, useState, useEffect, useMemo } from 'react';
+import React, { FC, useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import { Contract, BigNumber, constants, utils } from 'ethers';
 const { MaxUint256, AddressZero, Zero } = constants;
@@ -57,9 +57,14 @@ const Liquidity: FC = () => {
         }
     }
 
-    const removeLiquidityHandle = async () => {
+    const removeLiquidityHandle = useCallback(async () => {
         try {
             loadingStart();
+            const pairContract = new Contract(selectPool.item.liquidity.pairAddress, YOCPair.abi, signer);
+            let allowTx = await pairContract.approve(YOCSwapRouter.address, convertEthToWei(LpAmount, 18), {
+                gasLimit: 300000
+            });
+            await allowTx.wait();
             swapContract.on('RemoveLiquidity', (addresses, amounts) => {
                 // token0, token1, pair, userAddress
                 // amount0, amount1, lp
@@ -122,7 +127,7 @@ const Liquidity: FC = () => {
             console.log(error);
             loadingEnd();
         }
-    }
+    }, [signer, LpAmount, selectPool]);
 
     const approveHandle = async () => {
         if (selectPool) {
@@ -258,11 +263,11 @@ const Liquidity: FC = () => {
 
                     <div className="flex justify-between">
                         {
-                            selectPool && +selectPool.allowance ? (
+                            // selectPool && +selectPool.allowance ? (
                                 <button className="w-full font-semibold rounded text-primary bg-btn-primary shadow-btn-primary px-4 py-2 mr-2" onClick={() => removeLiquidityHandle()}>Confirm</button>
-                            ) : (
-                                <button className="w-full font-semibold rounded text-primary bg-btn-primary shadow-btn-primary px-4 py-2 mr-2" onClick={() => approveHandle()}>Approve</button>
-                            )
+                            // ) : (
+                            //     <button className="w-full font-semibold rounded text-primary bg-btn-primary shadow-btn-primary px-4 py-2 mr-2" onClick={() => approveHandle()}>Approve</button>
+                            // )
                         }
                         <button className="w-full font-semibold rounded text-primary bg-primary-pattern border-[0.5px] border-solid border-[#FFFFFF22] px-4 py-2" onClick={() => setRemoveLiquidityModel(false)}>Reject</button>
                     </div>

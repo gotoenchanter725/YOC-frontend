@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useAccount as useWagmiAccount, useConnect, useDisconnect } from 'wagmi'
 
@@ -25,10 +25,24 @@ const useWallet = () => {
     const disconnectWallet = useCallback(() => {
         if (isConnected) {
             disconnect();
+            localStorage.setItem("wagmi.wallet", "");
         }
     }, [isConnected])
 
+    useEffect(() => {
+        localStorage.setItem("account", address ? address + "" : "");
+    }, [isConnected, address])
+
     const showWalletModal = () => {
+        let walletType = localStorage.getItem("wagmi.wallet")?.replaceAll('"', "");
+        let detectedConnector = connectors.find(item => {
+            console.log(item.id, walletType, item.id == walletType)
+            return item.id == walletType
+        });
+        console.log(detectedConnector);
+        if (detectedConnector) {
+            connect({ connector: detectedConnector as any })
+        }
         dispatch({
             type: "WALLET_MODAL_SHOW",
             payload: {

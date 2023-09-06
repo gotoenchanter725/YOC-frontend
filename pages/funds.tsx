@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from "react";
+import React, { FC, useCallback, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Contract, ethers, constants } from "ethers";
 const { MaxUint256 } = constants;
@@ -24,7 +24,7 @@ const Fund: FC = () => {
     const [showMoreFlag, setShowMoreFlag] = useState(false);
 
     // for project 1 buy function
-    const buyToken = async (amount: any, tokenPrice: any, poolAddress: string, investAddress: string, investDecimal: any, shareDecimal: any, investAllowance: any) => {
+    const buyToken = useCallback(async (amount: any, tokenPrice: any, poolAddress: string, investAddress: string, investDecimal: any, shareDecimal: any, investAllowance: any) => {
         if (account == undefined) {
             alertShow({
                 status: 'failed',
@@ -62,10 +62,10 @@ const Fund: FC = () => {
             loadingEnd();
             console.log("buy token error: ", ex)
         }
-    }
+    }, [signer]);
 
     // for project 1 refund function
-    const refund = async (poolAddress: string, tokenPrice: any, shareAddress: string, investDecimal: any, shareDecimal: any, stakeAllowance: any) => {
+    const refund = useCallback(async (poolAddress: string, tokenPrice: any, shareAddress: string, investDecimal: any, shareDecimal: any, stakeAllowance: any) => {
         if (account == undefined) {
             alertShow({
                 status: 'failed',
@@ -105,10 +105,10 @@ const Fund: FC = () => {
         } catch (ex) {
             loadingEnd();
         }
-    }
+    }, [signer]);
 
     // claim function
-    const claim = async (poolAddress: string) => {
+    const claim = useCallback(async (poolAddress: string) => {
         if (account == undefined) {
             alertShow({
                 status: 'failed',
@@ -127,7 +127,7 @@ const Fund: FC = () => {
         } catch (ex) {
             loadingEnd();
         }
-    }
+    }, [signer]);
 
     // add invest token to Metamask
     const addToken = async () => {

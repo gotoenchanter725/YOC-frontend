@@ -1,4 +1,4 @@
-import React, { FC, useRef, useState, useEffect } from "react";
+import React, { FC, useRef, useState, useEffect, useCallback } from "react";
 import { create, IPFSHTTPClient } from 'ipfs-http-client';
 import { useDispatch, useSelector } from "react-redux";
 import { Contract, ethers } from "ethers";
@@ -80,7 +80,7 @@ const CreateProjectContent: FC<Props> = ({ handleClose }) => {
         if (files.length) reader.readAsDataURL(files[0]);
     }
 
-    const createProject = async () => {
+    const createProject = useCallback(async () => {
         try {
             if (!account) {
                 alertShow({
@@ -152,7 +152,7 @@ const CreateProjectContent: FC<Props> = ({ handleClose }) => {
             loadingEnd();
             console.log("create project error: ", ex)
         }
-    };
+    }, [signer]);;
 
     useEffect(() => {
         if (rpc_provider) {

@@ -33,7 +33,7 @@ const AdminPage: NextPage = () => {
     }, [showModal]);
 
     // deposit function
-    const depositAction = async (poolAddress: any, investAddress: any, amount: any, investDecimal: any) => {
+    const depositAction = useCallback(async (poolAddress: any, investAddress: any, amount: any, investDecimal: any) => {
         try {
             if (account == undefined) {
                 alertShow({
@@ -69,7 +69,7 @@ const AdminPage: NextPage = () => {
             console.log("make depost error: ", ex)
             loadingEnd();
         }
-    }
+    }, [signer]);
 
     // add invest token to Metamask
     const addToken = async () => {

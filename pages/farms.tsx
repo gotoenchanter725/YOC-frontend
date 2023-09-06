@@ -225,7 +225,7 @@ const Farm: FC = () => {
 		setUnstakeLpMax(true);
 	}
 
-	const stakeLPHandle = async (pair: any) => {
+	const stakeLPHandle = useCallback(async (pair: any) => {
 		console.log(stakeLpAmount);
 		if (!stakeLpAmount) {
 			alertShow({ content: 'Please input the stakeLP amount exactly', status: 'error' });
@@ -266,9 +266,9 @@ const Farm: FC = () => {
 			console.log(err);
 			loadingEnd();
 		}
-	}
+	}, [signer, stakeLpAmount, selectFarmPool]);
 
-	const unstakeLPHandle = async (pair: any) => {
+	const unstakeLPHandle = useCallback(async (pair: any) => {
 		console.log(unstakeLpAmount);
 		if (!unstakeLpAmount) {
 			alertShow({ content: 'Please input the unstakeLP amount exactly', status: 'error' });
@@ -299,9 +299,9 @@ const Farm: FC = () => {
 			console.log(err);
 			loadingEnd();
 		}
-	}
+	}, [signer, unstakeLpAmount, selectFarmPool]);
 
-	const harvestHandle = async (pair: any) => {
+	const harvestHandle = useCallback(async (pair: any) => {
 		loadingStart();
 		try {
 			let PairContract = new Contract(
@@ -323,7 +323,7 @@ const Farm: FC = () => {
 			console.log(err);
 			loadingEnd();
 		}
-	}
+	}, [signer]);
 
 	const getCurrencyDetail = useCallback((address: string) => {
 		return currencies.find((currency: any) => currency.address === address);
@@ -531,32 +531,32 @@ const Farm: FC = () => {
 																	(
 																		// item.approve ?
 																		// 	(
-																				item.lpAmount ? (
-																					<div className="w-full h-full flex items-center justify-between">
-																						<span className="font-semibold">{item.lpAmount ? Number(item.lpAmount).toFixed(YOCPair.decimals) : 0}</span>
-																						<div className="flex items-center">
-																							<button className="border border-border-primary rounded-lg p-2.5 mr-2" onClick={() => unstakeModalHandle(item)}>
-																								<svg viewBox="0 0 24 24" color="primary" width="14px" xmlns="http://www.w3.org/2000/svg" className="text-border-primary"><path fill="currentColor" d="M18 13H6C5.45 13 5 12.55 5 12C5 11.45 5.45 11 6 11H18C18.55 11 19 11.45 19 12C19 12.55 18.55 13 18 13Z"></path></svg>
-																							</button>
-																							<button className="border border-border-primary rounded-lg p-2.5" onClick={() => stakeLPModalHandle(item)}>
-																								<svg viewBox="0 0 24 24" color="primary" width="14px" xmlns="http://www.w3.org/2000/svg" className="text-border-primary"><path fill="currentColor" d="M18 13H13V18C13 18.55 12.55 19 12 19C11.45 19 11 18.55 11 18V13H6C5.45 13 5 12.55 5 12C5 11.45 5.45 11 6 11H11V6C11 5.45 11.45 5 12 5C12.55 5 13 5.45 13 6V11H18C18.55 11 19 11.45 19 12C19 12.55 18.55 13 18 13Z"></path></svg>
-																							</button>
-																						</div>
-																					</div>
-																				) : (
-																					<button className="h-[36px] rounded text-sm w-[120px] bg-btn-primary shadow-btn-primary px-4 py-1.5 text-primary"
-																						onClick={() => stakeLPModalHandle(item)}
-																					>
-																						Stake LP
+																		item.lpAmount ? (
+																			<div className="w-full h-full flex items-center justify-between">
+																				<span className="font-semibold">{item.lpAmount ? Number(item.lpAmount).toFixed(YOCPair.decimals) : 0}</span>
+																				<div className="flex items-center">
+																					<button className="border border-border-primary rounded-lg p-2.5 mr-2" onClick={() => unstakeModalHandle(item)}>
+																						<svg viewBox="0 0 24 24" color="primary" width="14px" xmlns="http://www.w3.org/2000/svg" className="text-border-primary"><path fill="currentColor" d="M18 13H6C5.45 13 5 12.55 5 12C5 11.45 5.45 11 6 11H18C18.55 11 19 11.45 19 12C19 12.55 18.55 13 18 13Z"></path></svg>
 																					</button>
-																				)
-																			// )
-																			// :
-																			// <button className="h-[36px] rounded text-sm w-[120px] bg-btn-primary shadow-btn-primary px-4 py-1.5 text-primary"
-																			// 	onClick={() => enableModalHandle(item)}
-																			// >
-																			// 	Enable
-																			// </button>
+																					<button className="border border-border-primary rounded-lg p-2.5" onClick={() => stakeLPModalHandle(item)}>
+																						<svg viewBox="0 0 24 24" color="primary" width="14px" xmlns="http://www.w3.org/2000/svg" className="text-border-primary"><path fill="currentColor" d="M18 13H13V18C13 18.55 12.55 19 12 19C11.45 19 11 18.55 11 18V13H6C5.45 13 5 12.55 5 12C5 11.45 5.45 11 6 11H11V6C11 5.45 11.45 5 12 5C12.55 5 13 5.45 13 6V11H18C18.55 11 19 11.45 19 12C19 12.55 18.55 13 18 13Z"></path></svg>
+																					</button>
+																				</div>
+																			</div>
+																		) : (
+																			<button className="h-[36px] rounded text-sm w-[120px] bg-btn-primary shadow-btn-primary px-4 py-1.5 text-primary"
+																				onClick={() => stakeLPModalHandle(item)}
+																			>
+																				Stake LP
+																			</button>
+																		)
+																		// )
+																		// :
+																		// <button className="h-[36px] rounded text-sm w-[120px] bg-btn-primary shadow-btn-primary px-4 py-1.5 text-primary"
+																		// 	onClick={() => enableModalHandle(item)}
+																		// >
+																		// 	Enable
+																		// </button>
 																	)
 																	:
 																	<button className="h-[36px] rounded text-sm w-[160px] bg-btn-secondary shadow-btn-secondary px-4 py-1.5 text-primary"
