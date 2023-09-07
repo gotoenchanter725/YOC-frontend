@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { AiOutlineSwap, AiFillControl } from 'react-icons/ai';
 import { ethers, Contract } from 'ethers';
+import { fetchBalance } from '@wagmi/core'
 import { NextPage } from "next";
 import useNetwork from '@hooks/useNetwork';
 import useAccount from '@hooks/useAccount';
@@ -61,8 +62,8 @@ const AdminYUSD: NextPage = () => {
                         convertEthToWei("1", YOCToken.decimals),
                         [YOCToken.address, WETH]
                     );
-                    let ETHBalanceOfPool = await provider.getBalance(YUSD.address);
-                    setETHAmountOFPool(Number(convertWeiToEth(ETHBalanceOfPool, 18)));
+                    let ETHBalanceOfPool = await fetchBalance({ address: YUSD.address as `0x${string}`});
+                    setETHAmountOFPool(Number(convertWeiToEth(ETHBalanceOfPool.value, 18)));
 
                     setYOCPriceByUSD(Number(convertWeiToEth(tempResult[1], 18)) * ETHPrice);
                     let YOCBalanceOfPool = await YOCContract.balanceOf(YUSD.address);
