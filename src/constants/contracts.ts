@@ -44,7 +44,7 @@ const YOC = {
 
 const YUSD = {
     address: CONTRACT_ADDRESS.YUSDAddress + "",
-    decimals: 18,
+    decimals: 6,
     symbol: "YUSD",
     name: "YUSD",
     ...YUSDABI

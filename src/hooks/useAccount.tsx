@@ -29,7 +29,7 @@ const useAccount = () => {
             if (address) {
                 setYOCBalance(await getYOCBalance());
                 setETHBalance(await getETHBalance());
-                // setYUSDBalance(await getYUSDBalance());
+                setYUSDBalance(await getYUSDBalance());
             }
         })();
     }, [address])
@@ -38,7 +38,7 @@ const useAccount = () => {
         if (!isConnected) {
             setETHBalance(0);
             setYOCBalance(0);
-            // setYUSDBalance(0);
+            setYUSDBalance(0);
         }
     }, [isConnected])
 
@@ -56,13 +56,13 @@ const useAccount = () => {
         });
         return Number(convertWeiToEth(rst.value, YOC.decimals));
     }
-    // const getYUSDBalance = async () => {
-    //     let rst = await fetchBalance({
-    //         address: address as `0x${string}`,
-    //         token: YUSD.address as `0x${string}`
-    //     });
-    //     return Number(convertWeiToEth(rst.value, YUSD.decimals));
-    // }
+    const getYUSDBalance = async () => {
+        let rst = await fetchBalance({
+            address: address as `0x${string}`,
+            token: YUSD.address as `0x${string}`
+        });
+        return Number(convertWeiToEth(rst.value, YUSD.decimals));
+    }
 
     return { account, YOCBalance, YUSDBalance, ETHBalance, getETHBalance, provider, signer, rpc_provider: rpc_provider_basic };
 }

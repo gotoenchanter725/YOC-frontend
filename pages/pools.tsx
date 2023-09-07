@@ -278,7 +278,7 @@ const Pools: FC = () => {
 				signer
 			)
 			let approveTx = await tokenContract.approve(String(pool?.address), convertEthToWei(String(stakeAmount), Number(pool?.currency.decimals)), {
-				gasLimit: pool.currency.address == YOC.address ? 47000 : 27000
+				gasLimit: 50000
 			});
 			await approveTx.wait();
 

@@ -177,7 +177,7 @@ const Liquidity: FC = () => {
                 amount = tempMaxValue;
             }
             let tx = await tokenContract.approve(YOCSwapRouter.address, MaxUint256, {
-				gasLimit: 27000
+				gasLimit: 50000
 			});
             const receipt = await tx.wait();
             console.log(receipt.events)
