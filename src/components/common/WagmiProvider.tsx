@@ -29,12 +29,12 @@ const config = createConfig({
                 appName: 'wagmi',
             },
         }),
-        new WalletConnectConnector({
-            chains,
-            options: {
-                projectId: '4213fdcfab447f99026c5ef69111d2e6',
-            },
-        }),
+        // new WalletConnectConnector({
+        //     chains,
+        //     options: {
+        //         projectId: '4213fdcfab447f99026c5ef69111d2e6',
+        //     },
+        // }),
         // new InjectedConnector({
         //     chains,
         //     options: {

@@ -11,6 +11,7 @@ import { convertEthToWei, convertWeiToEth } from 'utils/unit';
 import { debounceHook } from 'utils/hook';
 import { YOCSwapRouter, YUSD, YOC as YOCToken, WETH } from 'src/constants/contracts';
 import Modal from '@components/widgets/Modalv2';
+import SimpleLoading from '@components/widgets/SimpleLoading';
 
 const AdminYUSD: NextPage = () => {
     const { provider, signer } = useAccount();
@@ -18,13 +19,13 @@ const AdminYUSD: NextPage = () => {
     const { loadingStart, loadingEnd } = useLoading();
     const { alertShow } = useAlert();
     const [function1State, setFunction1State] = useState(false);
-    const [YUSDTotalSupply, setYUSDTotalSupply] = useState(0);
-    const [YUSDPriceByUSD, setYUSDPriceByUSD] = useState(0);
-    const [ETHPriceByUSD, setETHPriceByUSD] = useState(0);
-    const [ETHAmountOFPool, setETHAmountOFPool] = useState(0);
-    const [YOCPriceByUSD, setYOCPriceByUSD] = useState(0);
-    const [YOCAmountOFPool, setYOCAmountOFPool] = useState(0);
-    const [percent, setPercent] = useState(0);
+    const [YUSDTotalSupply, setYUSDTotalSupply] = useState(-1);
+    const [YUSDPriceByUSD, setYUSDPriceByUSD] = useState(-1);
+    const [ETHPriceByUSD, setETHPriceByUSD] = useState(-1);
+    const [ETHAmountOFPool, setETHAmountOFPool] = useState(-1);
+    const [YOCPriceByUSD, setYOCPriceByUSD] = useState(-1);
+    const [YOCAmountOFPool, setYOCAmountOFPool] = useState(-1);
+    const [percent, setPercent] = useState(-1);
     const [previewFunction2Modal, setPreviewFunction2Modal] = useState(false);
     const [detailsByFunction2, setDetailsByFunction2] = useState({
         isETHtoYOC: true,
@@ -62,7 +63,7 @@ const AdminYUSD: NextPage = () => {
                         convertEthToWei("1", YOCToken.decimals),
                         [YOCToken.address, WETH]
                     );
-                    let ETHBalanceOfPool = await fetchBalance({ address: YUSD.address as `0x${string}`});
+                    let ETHBalanceOfPool = await fetchBalance({ address: YUSD.address as `0x${string}` });
                     setETHAmountOFPool(Number(convertWeiToEth(ETHBalanceOfPool.value, 18)));
 
                     setYOCPriceByUSD(Number(convertWeiToEth(tempResult[1], 18)) * ETHPrice);
@@ -121,8 +122,9 @@ const AdminYUSD: NextPage = () => {
         loadingStart();
         try {
             YUSDContract.on("Function2", (isETHtoYOC, transferredAmount) => {
-                alertShow({ content: `Swap ${detailsByFunction2.transferredAmount} ${detailsByFunction2.isETHtoYOC ? native : YOC} to ${!detailsByFunction2.isETHtoYOC ? native : YOC} to keep the balance`, status: 'success' });
+                alertShow({ content: `Swap ${convertWeiToEth(transferredAmount, isETHtoYOC ? 18 : YOCToken.decimals)} ${isETHtoYOC ? native : YOC} to ${!isETHtoYOC ? native : YOC} to keep the balance`, status: 'success' });
                 loadingEnd();
+                setPreviewFunction2Modal(false);
             })
             await YUSDContract.function2({
                 gasLimit: 5000000
@@ -162,16 +164,28 @@ const AdminYUSD: NextPage = () => {
                 <p className="text-white text-lg">YUSD</p>
             </div>
             <div className="w-1/5 flex flex-col items-center justify-center">
-                <p className="text-sm">Total Supply</p>
-                <p className="text-lg">{YUSDTotalSupply}</p>
+                {
+                    YUSDTotalSupply == -1 ? <SimpleLoading className='w-[26px] h-[26px]' /> : <>
+                        <p className="text-sm">Total Supply</p>
+                        <p className="text-lg">{YUSDTotalSupply}</p>
+                    </>
+                }
             </div>
             <div className="w-1/5 flex flex-col items-center justify-center">
-                <p className="text-sm">Price</p>
-                <p>${YUSDPriceByUSD.toFixed(6)}</p>
+                {
+                    YUSDPriceByUSD == -1 ? <SimpleLoading className='w-[26px] h-[26px]' /> : <>
+                        <p className="text-sm">Price</p>
+                        <p>${YUSDPriceByUSD.toFixed(6)}</p>
+                    </>
+                }
             </div>
             <div className="w-1/5 flex flex-col items-center justify-center">
-                <p className="text-sm">Total Volume</p>
-                <p className="text-lg">${(YUSDPriceByUSD * YUSDTotalSupply).toFixed(6)}</p>
+                {
+                    (YUSDTotalSupply == -1 || YUSDPriceByUSD == -1) ? <SimpleLoading className='w-[26px] h-[26px]' /> : <>
+                        <p className="text-sm">Total Volume</p>
+                        <p className="text-lg">${(YUSDPriceByUSD * YUSDTotalSupply).toFixed(6)}</p>
+                    </>
+                }
             </div>
             <div className="w-1/5"></div>
         </div>
@@ -182,20 +196,36 @@ const AdminYUSD: NextPage = () => {
                 <p className="text-white text-lg">{native}</p>
             </div>
             <div className="w-1/5 flex flex-col items-center justify-center">
-                <p className="text-sm">Reserve</p>
-                <p className="text-lg">{ETHAmountOFPool.toFixed(6)}</p>
+                {
+                    ETHAmountOFPool == -1 ? <SimpleLoading className='w-[26px] h-[26px]' /> : <>
+                        <p className="text-sm">Reserve</p>
+                        <p className="text-lg">{ETHAmountOFPool.toFixed(6)}</p>
+                    </>
+                }
             </div>
             <div className="w-1/5 flex flex-col items-center justify-center">
-                <p className="text-sm">Price</p>
-                <p className="text-lg">${ETHPriceByUSD.toFixed(6)}</p>
+                {
+                    ETHPriceByUSD == -1 ? <SimpleLoading className='w-[26px] h-[26px]' /> : <>
+                        <p className="text-sm">Price</p>
+                        <p className="text-lg">${ETHPriceByUSD.toFixed(6)}</p>
+                    </>
+                }
             </div>
             <div className="w-1/5 flex flex-col items-center justify-center">
-                <p className="text-sm">Volume</p>
-                <p className="text-lg">${(ETHAmountOFPool * ETHPriceByUSD).toFixed(6)}</p>
+                {
+                    (ETHAmountOFPool == -1 || ETHPriceByUSD == -1) ? <SimpleLoading className='w-[26px] h-[26px]' /> : <>
+                        <p className="text-sm">Volume</p>
+                        <p className="text-lg">${(ETHAmountOFPool * ETHPriceByUSD).toFixed(6)}</p>
+                    </>
+                }
             </div>
             <div className="w-1/5 flex flex-col items-center justify-center">
-                <p className="text-sm">Percent</p>
-                <p className="text-lg">{percent * 100}%</p>
+                {
+                    percent == -1 ? <SimpleLoading className='w-[26px] h-[26px]' /> : <>
+                        <p className="text-sm">Percent</p>
+                        <p className="text-lg">{percent * 100}%</p>
+                    </>
+                }
             </div>
         </div>
         <div className="flex justify-between text-white px-4 py-3">
@@ -204,20 +234,36 @@ const AdminYUSD: NextPage = () => {
                 <p className="text-white text-lg">{YOC}</p>
             </div>
             <div className="w-1/5 flex flex-col items-center justify-center">
-                <p className="text-sm">Reserve</p>
-                <p className="text-lg">{YOCAmountOFPool.toFixed(6)}</p>
+                {
+                    YOCAmountOFPool == -1 ? <SimpleLoading className='w-[26px] h-[26px]' /> : <>
+                        <p className="text-sm">Reserve</p>
+                        <p className="text-lg">{YOCAmountOFPool.toFixed(6)}</p>
+                    </>
+                }
             </div>
             <div className="w-1/5 flex flex-col items-center justify-center">
-                <p className="text-sm">Price</p>
-                <p className="text-lg">${YOCPriceByUSD.toFixed(6)}</p>
+                {
+                    YOCPriceByUSD == -1 ? <SimpleLoading className='w-[26px] h-[26px]' /> : <>
+                        <p className="text-sm">Price</p>
+                        <p className="text-lg">${YOCPriceByUSD.toFixed(6)}</p>
+                    </>
+                }
             </div>
             <div className="w-1/5 flex flex-col items-center justify-center">
-                <p className="text-sm">Volume</p>
-                <p className="text-lg">${(YOCAmountOFPool * YOCPriceByUSD).toFixed(6)}</p>
+                {
+                    (YOCAmountOFPool == -1 || YOCPriceByUSD == -1) ? <SimpleLoading className='w-[26px] h-[26px]' /> : <>
+                        <p className="text-sm">Volume</p>
+                        <p className="text-lg">${(YOCAmountOFPool * YOCPriceByUSD).toFixed(6)}</p>
+                    </>
+                }
             </div>
             <div className="w-1/5 flex flex-col items-center justify-center">
-                <p className="text-sm">Percent</p>
-                <p className="text-lg">{100 - percent * 100}%</p>
+                {
+                    percent == -1 ? <SimpleLoading className='w-[26px] h-[26px]' /> : <>
+                        <p className="text-sm">Percent</p>
+                        <p className="text-lg">{100 - percent * 100}%</p>
+                    </>
+                }
             </div>
         </div>
 
