@@ -5,7 +5,7 @@ import { Provider } from "react-redux";
 import "regenerator-runtime/runtime";
 
 import { wrapper, store } from "../store/store";
-import WalletWagmiProvider from '@components/common/WagmiProvider';
+import WalletWagmiProvider from 'src/providers/WagmiProvider';
 
 import "../src/scss/index.scss";
 import LoadingComponent from '@components/widgets/LoadingComponent';

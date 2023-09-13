@@ -1,21 +1,31 @@
 import React, { ReactNode } from 'react'
 import { WagmiConfig, createConfig, configureChains } from 'wagmi'
+import { jsonRpcProvider } from 'wagmi/providers/jsonRpc'
 import { mainnet, sepolia, bsc, bscTestnet } from "wagmi/chains"
+import { providers } from 'ethers';
 import { alchemyProvider } from 'wagmi/providers/alchemy'
-// import { publicProvider } from 'wagmi/providers/public'
+import { publicProvider } from 'wagmi/providers/public'
 
+import { MetaMaskConnector } from 'wagmi/connectors/metaMask'
 import { CoinbaseWalletConnector } from 'wagmi/connectors/coinbaseWallet'
 import { InjectedConnector } from 'wagmi/connectors/injected'
-import { MetaMaskConnector } from 'wagmi/connectors/metaMask'
 import { WalletConnectConnector } from 'wagmi/connectors/walletConnect'
-import WalletModal from './WalletModal'
+import WalletModal from '../components/common/WalletModal'
+
+import { NETWORK } from 'src/config/contract';
 
 // Configure chains & providers with the Alchemy provider.
 // Two popular providers are Alchemy (alchemy.com) and Infura (infura.io)
 const { chains, publicClient, webSocketPublicClient } = configureChains(
     [process.env.NET_WORK == "ETH" ? sepolia : bscTestnet],
-    [alchemyProvider({ apiKey: process.env.ALCHEMY_KEY + "" })],
-    // [publicProvider()],
+    // [alchemyProvider({ apiKey: process.env.ALCHEMY_KEY + "" }),],
+    [publicProvider(), jsonRpcProvider({
+        rpc: (chain) => ({
+            http: NETWORK.RPC_URL,
+            webSocket: NETWORK.RPC_URL,
+        }),
+    })
+    ],
 )
 
 // Set up wagmi config
