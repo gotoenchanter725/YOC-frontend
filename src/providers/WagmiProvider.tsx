@@ -19,12 +19,13 @@ import { NETWORK } from 'src/config/contract';
 const { chains, publicClient, webSocketPublicClient } = configureChains(
     [process.env.NET_WORK == "ETH" ? sepolia : bscTestnet],
     // [alchemyProvider({ apiKey: process.env.ALCHEMY_KEY + "" }),],
-    [publicProvider(), jsonRpcProvider({
-        rpc: (chain) => ({
-            http: NETWORK.RPC_URL,
-            webSocket: NETWORK.RPC_URL,
-        }),
-    })
+    [
+        jsonRpcProvider({
+            rpc: (chain) => ({
+                http: NETWORK.RPC_URL,
+                webSocket: NETWORK.RPC_URL,
+            }),
+        })
     ],
 )
 
