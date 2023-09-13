@@ -51,7 +51,7 @@ const BNB_CONTRACT_ADDRESS = {
     YUSDAddress: "0x0e142A81A7e3496969F413bE5075Cbf11026fbfF",
 }
 
-const NETWORK = process.env.NET_WORK === "ETH" ? ETH_NETWORK : BNB_NETWORK;
+const NETWORK = process.env.NET_WORK === "ETH" ? (process.env.env == 'development' ? ETH_NETWORK.testnet : ETH_NETWORK.mainnet) : (process.env.env == 'development' ? BNB_NETWORK.testnet : BNB_NETWORK.mainnet);
 const CONTRACT_ADDRESS = process.env.NET_WORK === "ETH" ? ETH_CONTRACT_ADDRESS : BNB_CONTRACT_ADDRESS;
 const PRIVATE_KEY = process.env.PRIVATE_KEY;
 
