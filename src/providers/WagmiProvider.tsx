@@ -22,8 +22,8 @@ const { chains, publicClient, webSocketPublicClient } = configureChains(
     [
         jsonRpcProvider({
             rpc: (chain) => ({
-                http: NETWORK.RPC_URL,
-                webSocket: NETWORK.RPC_URL,
+                http: NETWORK.https,
+                webSocket: NETWORK.wss,
             }),
         })
     ],
