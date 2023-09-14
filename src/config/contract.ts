@@ -1,14 +1,20 @@
 const ETH_NETWORK = {
     mainnet: {
-        RPC_URL: "https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161",
+        // RPC_URL: "https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161",
+        // RPC_URL: "https://rpc.ankr.com/eth",
+        RPC_URL: "https://rpc.ankr.com/eth/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf",
+        https: "https://rpc.ankr.com/eth/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf",
+        wss: "wss://rpc.ankr.com/eth/ws/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf",
         CHAIN_ID: 1
     },
     testnet: {
-        // RPC_URL: "https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161",
-        // CHAIN_ID: 5
         // RPC_URL: "https://rpc.sepolia.org",
         // RPC_URL: "https://ethereum-sepolia.blockpi.network/v1/rpc/public",
-        RPC_URL: "https://rpc.ankr.com/eth_sepolia",
+        // RPC_URL: "https://sepolia.infura.io/v3/f00540d3d0c846d093e61d939dd3be59",
+        // RPC_URL: "https://rpc.ankr.com/eth_sepolia",
+        RPC_URL: "https://rpc.ankr.com/eth_sepolia/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf",
+        https: "https://rpc.ankr.com/eth_sepolia/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf",
+        wss: "wss://rpc.ankr.com/eth_sepolia/ws/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf",
         CHAIN_ID: 11155111
     }
 }
@@ -28,12 +34,19 @@ const ETH_CONTRACT_ADDRESS = {
 
 const BNB_NETWORK = {
     mainnet: {
-        RPC_URL: "https://bsc-dataseed1.binance.org/",
+        // RPC_URL: "https://bsc-dataseed1.binance.org/",
+        // RPC_URL: "https://rpc.ankr.com/bsc/",
+        RPC_URL: "https://rpc.ankr.com/bsc/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf",
+        https: "https://rpc.ankr.com/bsc/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf",
+        wss: "wss://rpc.ankr.com/bsc/ws/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf",
         CHAIN_ID: 56
     },
     testnet: {
         // RPC_URL: "https://data-seed-prebsc-1-s1.binance.org:8545/",
-        RPC_URL: "https://rpc.ankr.com/bsc_testnet_chapel",
+        // RPC_URL: "https://rpc.ankr.com/bsc_testnet_chapel",
+        RPC_URL: "https://rpc.ankr.com/bsc_testnet_chapel/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf",
+        https: "https://rpc.ankr.com/bsc_testnet_chapel/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf",
+        wss: "wss://rpc.ankr.com/bsc_testnet_chapel/ws/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf",
         CHAIN_ID: 97
     }
 }
