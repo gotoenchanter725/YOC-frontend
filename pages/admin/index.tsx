@@ -48,7 +48,7 @@ const AdminPage: NextPage = () => {
 
             let investAmount = ethers.utils.parseUnits(amount, investDecimal);
             let approve_investToken = await investTokenInstance.approve(poolAddress, investAmount, {
-                gasLimit: 30000
+                gasLimit: 300000
             });
             await approve_investToken.wait();
 

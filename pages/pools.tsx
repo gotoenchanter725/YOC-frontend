@@ -229,7 +229,7 @@ const Pools: FC = () => {
 				})
 			})
 			await tokenContract.approve(String(pool?.address), MaxUint256, {
-				gasLimit: 27000
+				gasLimit: 300000
 			});
 		} catch (err) {
 			loadingEnd();

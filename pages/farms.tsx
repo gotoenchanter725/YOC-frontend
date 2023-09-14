@@ -190,7 +190,7 @@ const Farm: FC = () => {
 				})
 			})
 			await PairContract.approve(YOCFarm.address, MaxUint256, {
-				gasLimit: 27000
+				gasLimit: 300000
 			});
 		} catch (err) {
 			loadingEnd();
@@ -240,7 +240,7 @@ const Farm: FC = () => {
 				signer
 			)
 			let approveTx = await PairContract.approve(YOCFarm.address, convertEthToWei(String(stakeLpAmount), Number(selectFarmPool?.liquidity.pairDecimals)), {
-				gasLimit: 27000
+				gasLimit: 300000
 			});
 			await approveTx.wait();
 

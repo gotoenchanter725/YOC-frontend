@@ -44,10 +44,10 @@ const AdminFarm: FC<Props> = (props) => {
             YOCFarm.abi,
             provider
         )
-    }, []);
+    }, [provider]);
 
     useEffect(() => {
-        if (!account || !isAdmin || !farmContract) return;
+        if (!account || !isAdmin || !farmContract || !provider) return;
 
         (async () => {
             let currencyResponse = await axios.get(process.env.API_ADDRESS + `/admin/currency/all?account=${account}`);
@@ -91,7 +91,7 @@ const AdminFarm: FC<Props> = (props) => {
             }
             setLoadData(false);
         })();
-    }, [account, farmContract, reload, isAdmin]);
+    }, [account, farmContract, reload, isAdmin, provider]);
 
     const availableFarmPools = useMemo(() => {
         if (!liquidityPools.length || !isAdmin) return [];
