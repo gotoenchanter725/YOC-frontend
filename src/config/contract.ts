@@ -29,7 +29,7 @@ const ETH_CONTRACT_ADDRESS = {
     YOCSwapFactoryAddress: "0x197B4684e6C6aE77Fb06389898Bd0ACFf1ac690B",
     YOCSwapRouterAddress: "0x1470E600ddE363186DC0c0C17c9860a27846b6C8",
     YOCFarmAddress: "0x391f8b0a4D316769C621C6D1686E6174e370c1B0",
-    YUSDAddress: "0xc71066065E8f26Cb473575a07737Ee43bC037FFb",
+    YUSDAddress: "0xf636530b14f52CCb2aD13e54Abf47378E00BDa08",
 }
 
 const BNB_NETWORK = {
@@ -61,7 +61,7 @@ const BNB_CONTRACT_ADDRESS = {
     YOCSwapFactoryAddress: "0xeC08F56A8F45d196c76bf0C3BDd04A14A7eD56E6",
     YOCSwapRouterAddress: "0xF837e5670C9Eb93eEfe4682199A9a96B48B33c65",
     YOCFarmAddress: "0x7f6B2C27B397F2E1b68C7A18e626edB275d07b2a",
-    YUSDAddress: "0x50b350cB8AD0328Dbcc5Bc03951500f5a992ECbA",
+    YUSDAddress: "0x01EDb3444A197E346Ba613B22EdBA4B00ff03cB4",
 }
 
 const NETWORK = process.env.NET_WORK === "ETH" ? (process.env.env == 'development' ? ETH_NETWORK.testnet : ETH_NETWORK.mainnet) : (process.env.env == 'development' ? BNB_NETWORK.testnet : BNB_NETWORK.mainnet);
