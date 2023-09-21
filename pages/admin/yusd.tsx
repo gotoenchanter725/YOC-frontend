@@ -57,18 +57,20 @@ const AdminYUSD: NextPage = () => {
         (async () => {
             if (YUSDContract && SwapRouterContract && provider) {
                 try {
-                    let ETHPrice = Number(convertWeiToEth(await YUSDContract.getETHPrice(), 6));
-                    setETHPriceByUSD(ETHPrice);
-                    let tempResult = await SwapRouterContract.getAmountsOut(
-                        convertEthToWei("1", YOCToken.decimals),
-                        [YOCToken.address, WETH]
-                    );
                     let ETHBalanceOfPool = await fetchBalance({ address: YUSD.address as `0x${string}` });
                     setETHAmountOFPool(Number(convertWeiToEth(ETHBalanceOfPool.value, 18)));
-
-                    setYOCPriceByUSD(Number(convertWeiToEth(tempResult[1], 18)) * ETHPrice);
                     let YOCBalanceOfPool = await YOCContract.balanceOf(YUSD.address);
                     setYOCAmountOFPool(Number(convertWeiToEth(YOCBalanceOfPool, YOCToken.decimals)));
+                    
+                    let ETHPrice = Number(convertWeiToEth(await YUSDContract.getETHPrice(), 6));
+                    setETHPriceByUSD(ETHPrice);
+
+                    let YOCBalanceByETH = await SwapRouterContract.getAmountsOut(
+                        YOCBalanceOfPool,
+                        [YOCToken.address, WETH]
+                    );
+
+                    setYOCPriceByUSD(Number(convertWeiToEth(YOCBalanceByETH[1], 18)) * ETHPrice / Number(convertWeiToEth(YOCBalanceOfPool, YOCToken.decimals)));
 
                     let YUSDPrice = Number(convertWeiToEth(await YUSDContract.price(), 6));
                     console.log(YUSDPrice);
