@@ -5,7 +5,7 @@ import { Contract, ethers } from "ethers";
 import axios from "axios";
 
 import Button from "../widgets/Button";
-import { ProjectManager } from "../../constants/contracts";
+import { ProjectManager, YUSD } from "../../constants/contracts";
 import { addNewProject } from "../../../store/actions";
 import useAccount from "@hooks/useAccount";
 import useLoading from "@hooks/useLoading";
@@ -49,7 +49,6 @@ const CreateProjectContent: FC<Props> = ({ handleClose }) => {
     const [sellAmount, setShowAmount] = useState<string>("");
     const [price, setPrice] = useState<string>("");
     const [tokenAddr, setTokenAddr] = useState<string>("");
-    const [tokenWallet, setTokenWallet] = useState<string>("");
     const [projectWebsite, setProjectWebsite] = useState<string>("");
 
     const [creatingProject, setCreatingProject] = useState(false);
@@ -90,7 +89,7 @@ const CreateProjectContent: FC<Props> = ({ handleClose }) => {
                 return;
             }
 
-            if (!title || !desc || !category || !decimals || !roi || !apr || !startDate || !endDate || !tokenIconImage || !tokenSymbolImage || !total || !sellPercent || !tokenWallet || +price < 0 || !ongoingPercent) {
+            if (!title || !desc || !category || !decimals || !roi || !apr || !startDate || !endDate || !tokenIconImage || !tokenSymbolImage || !total || !sellPercent || +price < 0 || !ongoingPercent) {
                 alertShow({
                     status: 'failed',
                     content: 'Please input correct data'
@@ -122,7 +121,7 @@ const CreateProjectContent: FC<Props> = ({ handleClose }) => {
                 ethers.utils.parseUnits(((Number(total) * Number(sellPercent)) / 100).toFixed(2), decimals),
                 [title, desc, category, projectWebsite, iconUrl, symbolUrl],
                 [ethers.utils.parseUnits(price, 3), ethers.utils.parseUnits(roi, 0), ethers.utils.parseUnits(apr, 0), ethers.utils.parseUnits(startDate, 0), ethers.utils.parseUnits(endDate, 0), ongoingPercent],
-                tokenWallet,
+                YUSD.address,
                 { gasLimit: 5000000 }
             );
 
@@ -133,7 +132,14 @@ const CreateProjectContent: FC<Props> = ({ handleClose }) => {
                 console.log("DeployedNewProject", owner, account, contractAddr, tokenAddr);
                 if (owner == account) {
                     let data = {
-                        projectTitle: title, iconUrl
+                        projectTitle: title, 
+                        iconUrl: iconUrl, 
+                        ptokenAddress: tokenAddr, 
+                        address: contractAddr,
+                        decimals, 
+                        totalSupply: total,
+                        sellAmount: ((Number(total) * Number(sellPercent)) / 100).toFixed(2),
+                        price: price
                     }
                     let respons = await axios.post(process.env.API_ADDRESS + '/project/create', data);
                     console.log(respons);
@@ -270,10 +276,6 @@ const CreateProjectContent: FC<Props> = ({ handleClose }) => {
                     <label htmlFor="">Token Address</label>
                     <input className="text-white rounded border border-[#FFFFFF22] bg-transparent bg-primary-pattern px-4 py-2 outline-none" type="text" value={tokenAddr} onChange={(e) => setTokenAddr(e.target.value)} />
                 </div> */}
-                <div className="input_control wallet">
-                    <label htmlFor="">Invest Token Address</label>
-                    <input className="text-white rounded border border-[#FFFFFF22] bg-transparent bg-primary-pattern px-4 py-2 outline-none" type="text" value={tokenWallet} onChange={(e) => setTokenWallet(e.target.value)} />
-                </div>
                 <div className="input_control website">
                     <label htmlFor="">Project website</label>
                     <input className="text-white rounded border border-[#FFFFFF22] bg-transparent bg-primary-pattern px-4 py-2 outline-none" type="text" value={projectWebsite} onChange={(e) => setProjectWebsite(e.target.value)} />

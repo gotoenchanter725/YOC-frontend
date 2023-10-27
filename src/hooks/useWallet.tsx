@@ -36,7 +36,7 @@ const useWallet = () => {
     const showWalletModal = () => {
         let walletType = localStorage.getItem("wagmi.wallet")?.replaceAll('"', "");
         let detectedConnector = connectors.find(item => item.id == walletType);
-        console.log(detectedConnector);
+        // console.log(detectedConnector);
         if (detectedConnector) {
             connect({ connector: detectedConnector as any })
         }

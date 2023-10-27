@@ -24,7 +24,7 @@ const menuData = [
     },
     {
         name: 'Trade',
-        route: '/trate',
+        route: '/yusd',
         includes: ['/swap', '/liquidity', '/charts'],
         children: [
             {
@@ -42,6 +42,10 @@ const menuData = [
             {
                 name: "Charts",
                 route: '/charts'
+            },
+            {
+                name: "Trade Project",
+                route: '/trade'
             },
         ]
     },

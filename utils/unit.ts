@@ -29,3 +29,24 @@ export const showBigNumber = (v: any) => {
 
     return formattedNumber;
 }
+
+export const isValidEthAddress = (address: string) => {
+    if (!address.startsWith('0x') || address.length !== 42) {
+        return false; // Address should start with '0x' and have a length of 42
+    }
+
+    const lowerCaseAddress = address.toLowerCase();
+
+    for (let i = 2; i < 42; i++) {
+        const charCode = lowerCaseAddress.charCodeAt(i);
+
+        if (
+            !(charCode >= 48 && charCode <= 57) && // 0-9
+            !(charCode >= 97 && charCode <= 102) // a-f
+        ) {
+            return false; // Address should contain only alphanumeric characters from range 0-9 and a-f
+        }
+    }
+
+    return true; // Address is valid
+}

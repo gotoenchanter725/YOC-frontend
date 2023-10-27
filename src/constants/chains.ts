@@ -45,8 +45,8 @@ const sepolia: Chain = {
         symbol: 'SEP',
     },
     rpcUrls: {
-        public: { http: ['https://rpc.ankr.com/eth_sepolia/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf'] },
-        default: { http: ['https://rpc.ankr.com/eth_sepolia/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf'] },
+        public: { http: ['https://rpc.ankr.com/eth_sepolia'] },
+        default: { http: ['https://rpc.ankr.com/eth_sepolia'] },
     },
     blockExplorers: {
         etherscan: {

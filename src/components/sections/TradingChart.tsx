@@ -2,6 +2,7 @@ import { useState, useEffect, FC } from 'react'
 
 import dynamic from 'next/dynamic';
 import axios from 'axios';
+import { convertPeriodToMiliSecond } from 'utils/features';
 const Chart = dynamic(() => import('react-apexcharts'), { ssr: false });
 
 type Props = {
@@ -43,30 +44,7 @@ const TradingChart: FC<Props> = ({ period }) => {
     useEffect(() => {
         (async () => {
             if (!period) return;
-            let time;
-            switch (period) {
-                case '1D':
-                    time = 1000 * 60 * 60 * 24;
-                    break;
-                case '1W':
-                    time = 1000 * 60 * 60 * 24 * 7;
-                    break;
-                case '1M':
-                    time = 1000 * 60 * 60 * 24 * 30;
-                    break;
-                case '1M':
-                    time = 1000 * 60 * 60 * 24 * 30 * 3;
-                    break;
-                case '1Y':
-                    time = 1000 * 60 * 60 * 24 * 30 * 12;
-                    break;
-                case '1Y':
-                    time = 1000 * 60 * 60 * 24 * 30 * 12 * 3;
-                    break;
-                default:
-                    time = 1000 * 60 * 60 * 24 * 30 * 12 * 2000;
-                    break;
-            }
+            let time = convertPeriodToMiliSecond(period);
             let res = await axios.get(process.env.API_ADDRESS + '/chart/get?period=' + time);
             if (res && res.data && res.data.prices) {
                 let dataArr = res.data.prices.map((item: any) => {

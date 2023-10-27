@@ -11,6 +11,7 @@ import YOCPairABI from "../../contracts/YocswapFactory.sol/YocswapPair.json";
 import YOCFarmABI from "../../contracts/YocFarming.sol/YOCMasterChef.json";
 import YOCStakingABI from "../../contracts/YocStaking.sol/YocStaking.json";
 import TokenStakingABI from "../../contracts/TokenStaking.sol/TokenStaking.json";
+import ProjectTradeABI from "../../contracts/ProjectTrade.sol/ProjectTrade.json";
 
 import { NETWORK, CONTRACT_ADDRESS } from "../config/contract";
 
@@ -82,6 +83,10 @@ const YOCPool = {
     ...YOCStakingABI,
     TokenABI: TokenStakingABI.abi,
 }
+const ProjectTrade = {
+    ...ProjectTradeABI,
+    address: CONTRACT_ADDRESS.ProjectTradeAddress,
+}
 
 export {
     AdminWalletAddress,
@@ -97,5 +102,6 @@ export {
     YOCSwapFactory,
     YOCFarm,
     YOCPool,
-    YOCPair
+    YOCPair,
+    ProjectTrade,
 }

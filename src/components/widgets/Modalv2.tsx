@@ -8,7 +8,8 @@ type Props = {
     onClose: () => void;
     size?: string,
     children?: React.ReactNode;
-    opacity?: string
+    opacity?: string,
+    layer?: number
 }
 
 const Modal: FC<Props> = (props) => {
@@ -24,13 +25,21 @@ const Modal: FC<Props> = (props) => {
         }
     }
 
+    const convertSizeToClass = (size?: string) => {
+        if (!size || size == 'small') return "max-w-[600px]";
+        else if (size == 'md') return "max-w-[1000px]"
+        else if (size == 'large') return "max-w-[1200px]"
+        else if (size == 'full') return "max-w-[calc(100vw_-_100px)]"
+    }
+
     return (
         <>
-            <div className={`transition-all overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 p-6 w-full md:inset-0 min-h-full flex justify-around items-center bg-body-secondary ${props.show ? "z-[50] visible opacity-90" : "-z-1 invisible opacity-0"}`}
+            <div className="z-[50] -z-1"></div>
+            <div className={`transition-all overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 p-6 w-full md:inset-0 min-h-full flex justify-around items-center ${props.show ? `z-[${props.layer ? props.layer : '50'}] visible bg-[#141130d0] ` : " -z-1 invisible bg-transparent "}`}
                 onClick={(e) => closeHandle(e.target)}
                 ref={modalWrapContainer}
             >
-                <div className={"p-4 w-full h-full md:h-auto z-100 " + ((!props.size || props.size == "small") ? "max-w-[600px]" : (props.size == 'md') ? "max-w-[1000px]" : (props.size == "large") ? "max-w-[1200px]" : "max-w-[800px]")}>
+                <div className={"w-full h-full md:h-auto z-100 bg-body-secondary " + convertSizeToClass(props.size)}>
                     <div className="relative bg-primary-pattern border-[0.5px] border-solid border-[#FFFFFF30] rounded-lg shadow ">
                         <button type="button" className="absolute right-3 top-3 bg-transparent hover:bg-gray-200 rounded-full p-1 ml-auto inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white" data-modal-toggle="defaultModal"
                             onClick={() => closeHandle('close')}

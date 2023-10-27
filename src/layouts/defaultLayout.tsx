@@ -10,7 +10,9 @@ interface LayoutProps {
 const defaultLayout = ({ children }: LayoutProps) => {
     return <div>
         <Navbar />
-        {children}
+        <div className="min-h-[calc(100vh_-_300px)]">
+            {children}
+        </div>
         <FooterV2 />
     </div>
 }

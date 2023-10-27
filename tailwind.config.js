@@ -44,9 +44,12 @@ module.exports = {
         'btn-disable': "#2a4142",
         // border
         'border-primary': '#97FBFF',
+        "border-secondary": "#3b3b3b",
         // bg color
         'body-primary': "#1E1E1E",
-        'body-secondary': "#141130"
+        'body-secondary': "#141130",
+        'status-plus': '#0ead56',
+        'status-minus': '#ef4444',
       },
       backgroundImage: {
         'primary-pattern': "linear-gradient(90.46deg, rgba(30, 30, 30, 0.12) -18.76%, rgba(173, 173, 173, 0.12) 72.39%)",

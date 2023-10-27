@@ -12,7 +12,7 @@
                 @apply pr-10;
                 .child-list {
                     @apply opacity-0 invisible transition-all text-primary;
-                    @apply w-[120px] rounded bg-[#0f120de8] px-1.5 py-1 absolute left-0 top-10 z-50 flex flex-col;
+                    @apply w-[160px] rounded bg-[#0f120de8] px-1.5 py-1 absolute left-0 top-10 z-50 flex flex-col;
 
                     & li {
                         @apply hover:bg-[#1e1e1e] rounded cursor-pointer px-1.5 py-1 my-1 flex justify-between items-center;
