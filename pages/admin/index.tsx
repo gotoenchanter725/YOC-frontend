@@ -1,6 +1,5 @@
 import React, { useState, useCallback, useEffect } from "react";
 import type { NextPage } from 'next';
-import { useSelector } from "react-redux";
 import { BsFillPlusSquareFill } from "react-icons/bs"
 import { Contract, ethers } from "ethers";
 
@@ -13,17 +12,17 @@ import {
 } from '../../src/constants/contracts';
 
 import { useAdmin, useAccount, useAlert, useLoading } from '@hooks/index';
+import useProject from "@hooks/useFund";
 import { convertWeiToEth } from "utils/unit";
 
 const AdminPage: NextPage = () => {
     const [step, setStep] = useState(0);
     const [showModal, setShowModal] = useState(false);
     const admin = useAdmin();
-    const { account } = useAccount();
+    const { account, signer, rpc_provider } = useAccount();
     const { loadingStart, loadingEnd } = useLoading();
     const { alertShow } = useAlert();
-
-    const { projects, acc, signer } = useSelector((state: any) => state.data);
+    const { projects } = useProject()
 
     const showCreatePage = () => {
         setShowModal(true);

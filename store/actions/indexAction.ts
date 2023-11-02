@@ -1,4 +1,10 @@
-import { GET_PROJECT_INFO, LOADING_END, LOADING_START, WALLET_CONNECT, WALLET_DISCONNECT } from "../types";
+import {
+  GET_PROJECT_INFO,
+  PROJECT_INFO_RETIREVEING,
+  PROJECT_INFO_UPDATE,
+  PROJECT_INFO_UPDATE_BY_PROJECT_ADDRESS,
+  PROJECT_INFO_ERROR
+} from "../types";
 import { WagmiConfig, createConfig, configureChains, mainnet } from 'wagmi'
 import { MetaMaskConnector } from 'wagmi/connectors/metaMask'
 import { publicProvider } from 'wagmi/providers/public'
@@ -168,4 +174,33 @@ export const getShareTokenBalance = (address: any, account: any) => async (dispa
   } catch (error) {
     console.log("project infos error: ", error);
   }
+}
+
+export const retireveingProject = () => (dispatch: any) => {
+  dispatch({
+    type: PROJECT_INFO_RETIREVEING
+  })
+}
+
+export const updateProjects = () => (dispatch: any) => {
+  dispatch({
+    type: PROJECT_INFO_UPDATE
+  })
+}
+
+export const updateProjectByProjectAddress = (address: string, data: any, loading: number) => (dispatch: any) => {
+  dispatch({
+    type: PROJECT_INFO_UPDATE_BY_PROJECT_ADDRESS,
+    payload: {
+      address: address,
+      data: data,
+      loading: loading
+    }
+  })
+}
+
+export const errorProject = () => (dispatch: any) => {
+  dispatch({
+    type: PROJECT_INFO_ERROR
+  })
 }

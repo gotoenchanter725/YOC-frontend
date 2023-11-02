@@ -8,8 +8,7 @@ import ModalV2 from "./Modalv2";
 import AdminVotingContent from "./AdminVotingContent";
 import UserVotingContent from "./UserVotingContent";
 import UserVotingResult from "./UserVotingResultModal";
-import { Project, ProjectDetail, TokenTemplate, USDCToken } from "../../constants/contracts";
-import { loading_end, loading_start, updateProjectInfo } from "../../../store/actions";
+import { Project, ProjectDetail, TokenTemplate, USDCToken, YUSD } from "../../constants/contracts";
 import { VotingQueryInterface, VotingResultInterface } from "../../interfaces/voting";
 import axios from "axios";
 import VotingHistory from "./VotingHistoryModalContent";
@@ -18,6 +17,8 @@ import useLoading from "@hooks/useLoading";
 import useAlert from "@hooks/useAlert";
 import useNetwork from "@hooks/useNetwork";
 import { convertWeiToEth } from "utils/unit";
+import useAccount from "@hooks/useAccount";
+import useProject from "@hooks/useFund";
 
 interface Props {
     item?: any;
@@ -38,17 +39,18 @@ interface detailProjectInterface {
 }
 
 interface detailTokenInterface {
-    contract: Contract,
+    contract?: Contract,
     symbol: string,
     decimals: number
 }
 
 const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAction, admin, status }) => {
-    const dispatch = useDispatch();
+    const { account, rpc_provider } = useAccount();
     const { loadingStart, loadingEnd } = useLoading();
+    const { updateProjectInfoByAddress } = useProject();
     const { alertShow } = useAlert();
     const { explorer } = useNetwork();
-    const { projects, account, rpc_provider } = useSelector((state: any) => state.data);
+
     const [showBuyTokenModal, setShowBuyTokenModal] = useState(false);
     const [showDepositModal, setShowDepositModal] = useState(false);
     const [showVotingModal, setShowVotingModal] = useState(false);
@@ -67,6 +69,7 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
     const [load, setLoad] = useState(false);
     const [investContract, setInvestContract] = useState<detailTokenInterface>();
     const [shareContract, setShareContract] = useState<detailTokenInterface>();
+    const [projectDetailContract, setProjectDetailContract] = useState<Contract>();
     const [projectStatus, setProjectStatus] = useState("");
 
     useEffect(() => {
@@ -79,33 +82,30 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
                 } else {
                     setProjectStatus(status);
                 }
-                const investToken = new Contract(item.investToken, USDCToken.abi, rpc_provider);
-                const investTokenSymbol = await investToken.symbol();
-                const investTokenDecimals = await investToken.decimals();
+                let detailContract = new Contract(
+                    ProjectDetail.address,
+                    ProjectDetail.abi,
+                    rpc_provider
+                )
+                setProjectDetailContract(detailContract);
                 setInvestContract({
-                    contract: investToken,
-                    symbol: investTokenSymbol,
-                    decimals: investTokenDecimals
+                    symbol: "YUSD",
+                    decimals: YUSD.decimals
                 })
-
-                const shareToken = new Contract(item.shareToken, TokenTemplate.abi, rpc_provider);
-                const shareTokenSymbol = await shareToken.symbol();
-                const shareTokenDecimals = await shareToken.decimals();
                 setShareContract({
-                    contract: shareToken,
-                    symbol: shareTokenSymbol,
-                    decimals: shareTokenDecimals
+                    symbol: item.shareSymbol,
+                    decimals: item.shareDecimal
                 })
             }
         })();
     }, [item, rpc_provider, account])
 
     useEffect(() => {
-        if (rpc_provider && account && investContract && shareContract) {
+        if (item && rpc_provider && account && investContract && shareContract) {
             try {
-                const projectDetail = new Contract(item.poolAddress, Project.abi, rpc_provider);
-                projectDetail.on('Participated', (address, amount1, amount2, user) => {
-                    dispatch(updateProjectInfo(projects, address, account) as any);
+                const projecContract = item.projectContract as Contract;
+                projecContract.on('Participated', (address, amount1, amount2, user) => {
+                    updateProjectInfoByAddress(address);
 
                     if (user == account) {
                         let realInvestAmount = convertWeiToEth(amount1, investContract ? investContract.decimals : 16)
@@ -117,8 +117,8 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
                     }
                 });
 
-                projectDetail.on('Refund', (address, amount1, amount2, user) => {
-                    dispatch(updateProjectInfo(projects, address, account) as any);
+                projecContract.on('Refund', (address, amount1, amount2, user) => {
+                    updateProjectInfoByAddress(address);
 
                     if (user == account) {
                         let realInvestAmount = convertWeiToEth(amount1, investContract ? investContract.decimals : 16)
@@ -130,29 +130,29 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
                     }
                 });
 
-                projectDetail.on('Claimed', (address, amount, user) => {
-                    dispatch(updateProjectInfo(projects, address, account) as any);
+                // projecContract.on('Claimed', (address, amount, user) => {
+                //     updateProjectInfoByAddress(address);
 
-                    if (user == account) {
-                        let realAmount = convertWeiToEth(amount, investContract ? investContract.decimals : 16)
-                        alertShow({
-                            content: `Dividend Claimed ${realAmount} ${investContract?.symbol} Successfully`,
-                            status: 'success'
-                        })
-                    }
-                })
+                //     if (user == account) {
+                //         let realAmount = convertWeiToEth(amount, investContract ? investContract.decimals : 16)
+                //         alertShow({
+                //             content: `Dividend Claimed ${realAmount} ${investContract?.symbol} Successfully`,
+                //             status: 'success'
+                //         })
+                //     }
+                // })
 
-                projectDetail.on('ProfitDeposited', (address, amount, user) => {
-                    dispatch(updateProjectInfo(projects, address, account) as any);
+                // projecContract.on('ProfitDeposited', (address, amount, user) => {
+                //     updateProjectInfoByAddress(address);
 
-                    if (user == account) {
-                        let realAmount = convertWeiToEth(amount, investContract ? investContract.decimals : 16)
-                        alertShow({
-                            content: `Deposit ${realAmount} ${investContract?.symbol} Successfully`,
-                            status: 'success'
-                        })
-                    }
-                });
+                //     if (user == account) {
+                //         let realAmount = convertWeiToEth(amount, investContract ? investContract.decimals : 16)
+                //         alertShow({
+                //             content: `Deposit ${realAmount} ${investContract?.symbol} Successfully`,
+                //             status: 'success'
+                //         })
+                //     }
+                // });
 
                 (async () => {
                     axios.get(process.env.API_ADDRESS + `/voting/projectTitle/${item.name}`).then(res => {
@@ -160,106 +160,100 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
                         rst = rst.sort((a: any, b: any) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime()).map((item: any) => new Date(item.endDate).getTime() > new Date().getTime() ? { ...item, ongoing: true } : { ...item, ongoing: false })
                         setVotingRsponse(rst);
                     });
-
-                    const detailContract = new Contract(ProjectDetail.address || '', ProjectDetail.abi, rpc_provider);
-                    if (account) setDetailProject(await detailContract.getProjectDetails(item.poolAddress, account))
                 })();
 
             } catch (ex) {
                 console.log("event listen error: ", ex);
             }
         }
-    }, [account, rpc_provider, investContract, shareContract]);
+    }, [item, account, rpc_provider, investContract, shareContract]);
 
     const getVotingInfo = useCallback(() => {
         loadingStart();
         let votingQuery = votingResponse.find((item: any) => ((new Date() >= new Date(item.startDate)) && (new Date() <= new Date(item.endDate))));
-        if (votingQuery) {
-            // There is an ongoing voting poll
-            setvotingQueryDetail(votingQuery);
-            if (admin) {
-                alertShow({
-                    content: "There is an ongoing Voting Poll.",
-                    status: 'failed'
-                })
-                loadingEnd()
-            } else {
-                if (account) {
-                    axios.get(process.env.API_ADDRESS + `/voting/projectTitle/${item.name}/accountAddress/${account}`).then(async (res) => {
-                        let data = res.data.userVotingStatus;
-                        if (data?.VotingDetails?.length) {
-                            // This user already voted
-                            setUserVotingDetail({ ...data.VotingDetails[0] });
-                        } else {
-                            setUserVotingDetail({});
-                            const detailContract = new Contract(ProjectDetail.address || '', ProjectDetail.abi, rpc_provider);
-                            let detailProject = await detailContract.getProjectDetails(item.poolAddress, account);
-                            let shareTokenAddress = detailProject.shareToken;
-                            const shareDecimal_temp = Number(ethers.utils.formatUnits(detailProject.shareTokenDecimals, 0));
-                            const totalYTEST_temp = Number(ethers.utils.formatUnits(detailProject.shareTokenSellAmount, shareDecimal_temp))
-                            let balanceInfo = await detailContract.getTokenInfo(shareTokenAddress, [account]);
-                            let balance = (Number(ethers.utils.formatUnits(balanceInfo[0].ownedBalance, detailProject.shareTokenDecimals)) / totalYTEST_temp * 100).toFixed(2)
-                            console.log(balanceInfo)
-                            setcurrentUserBalance(balance);
-                        }
-                        setShowVotingModal(true);
-                        loadingEnd()
-                    });
-                }
-            }
-        } else if (votingResponse && votingResponse.length && !admin) {
-            console.log(votingResponse);
-            let votingQuery = votingResponse[0];
-            setvotingQueryDetail(votingQuery);
-            // get voting result
-            axios.get(process.env.API_ADDRESS + `/voting/queryId/${votingQuery.id}`).then(async (res) => {
-                let userAddressArr = res.data.votingResult.map((item: any) => item.userAddress);
-                if (userAddressArr.length && detailProject) {
-
-                    const detailContract = new Contract(ProjectDetail.address || '', ProjectDetail.abi, rpc_provider);
-                    let shareTokenAddress = detailProject.shareToken;
-                    let balanceInfo = await detailContract.getTokenInfo(shareTokenAddress, userAddressArr);
-                    let temp = userAddressArr.map((item: string) => {
-                        let result = {
-                            userAddress: item,
-                            balance: Number(ethers.utils.formatUnits(balanceInfo.find((balanceItem: any) => balanceItem.owner === item).ownedBalance, detailProject.shareTokenDecimals)),
-                            state: res.data.votingResult.find((votingInfo: any) => votingInfo.userAddress === item).votingState
-                        }
-                        if (item == account) {
-                            setCurrentUserAnswer(result.state);
-                        }
-                        return result;
-                    });
-                    let result = res.data.votingResult[0].VotingQuery.answerStr.split(',').map((item: string, index: number) => {
-                        let sum = temp.filter((tempItem: any) => tempItem.state == index).reduce((prev: any, curr: any) => prev + curr.balance, 0);
-                        return { answer: item, sum: sum }
-                    });
-                    setVotingResult(result);
+        console.log('getVotingInfo')
+        if (item && projectDetailContract) {
+            if (votingQuery) {
+                // There is an ongoing voting poll
+                setvotingQueryDetail(votingQuery);
+                if (admin) {
+                    alertShow({
+                        content: "There is an ongoing Voting Poll.",
+                        status: 'failed'
+                    })
+                    loadingEnd()
                 } else {
-                    let result: any = String(votingQuery.answerStr).split(',').map((item: string, index: number) => {
-                        return { answer: item, sum: 0 }
-                    });
-                    setVotingResult(result)
+                    if (account) {
+                        axios.get(process.env.API_ADDRESS + `/voting/projectTitle/${item.name}/accountAddress/${account}`).then(async (res) => {
+                            let data = res.data.userVotingStatus;
+                            if (data?.VotingDetails?.length) {
+                                // This user already voted
+                                setUserVotingDetail({ ...data.VotingDetails[0] });
+                            } else {
+                                setUserVotingDetail({});
+                                let shareTokenAddress = item.shareToken;
+                                const totalYTEST_temp = Number(item.totalYTEST)
+                                let balanceInfo = await projectDetailContract.getTokenInfo(shareTokenAddress, [account]);
+                                let balance = (Number(ethers.utils.formatUnits(balanceInfo[0].ownedBalance, item.shareDecimal)) / totalYTEST_temp * 100).toFixed(2)
+                                setcurrentUserBalance(balance);
+                            }
+                            setShowVotingModal(true);
+                            loadingEnd()
+                        });
+                    }
                 }
-                setShowVotingResultModal(true);
-                loadingEnd()
-            });
-        } else {
-            setvotingQueryDetail({});
-            setUserVotingDetail({});
-            setVotingResult([])
-            if (admin) {
-                setShowVotingModal(true);
+            } else if (votingResponse && votingResponse.length && !admin) {
+                console.log(votingResponse);
+                let votingQuery = votingResponse[0];
+                setvotingQueryDetail(votingQuery);
+                // get voting result
+                axios.get(process.env.API_ADDRESS + `/voting/queryId/${votingQuery.id}`).then(async (res) => {
+                    let userAddressArr = res.data.votingResult.map((i: any) => i.userAddress);
+                    if (userAddressArr.length && item) {
+                        let shareTokenAddress = item.shareToken;
+                        let balanceInfo = await projectDetailContract.getTokenInfo(shareTokenAddress, userAddressArr);
+                        let temp = userAddressArr.map((elem: string) => {
+                            let result = {
+                                userAddress: elem,
+                                balance: Number(ethers.utils.formatUnits(balanceInfo.find((balanceItem: any) => balanceItem.owner === elem).ownedBalance, item.shareDecimal)),
+                                state: res.data.votingResult.find((votingInfo: any) => votingInfo.userAddress === elem).votingState
+                            }
+                            if (elem == account) {
+                                setCurrentUserAnswer(result.state);
+                            }
+                            return result;
+                        });
+                        let result = res.data.votingResult[0].VotingQuery.answerStr.split(',').map((item: string, index: number) => {
+                            let sum = temp.filter((tempItem: any) => tempItem.state == index).reduce((prev: any, curr: any) => prev + curr.balance, 0);
+                            return { answer: item, sum: sum }
+                        });
+                        setVotingResult(result);
+                    } else {
+                        let result: any = String(votingQuery.answerStr).split(',').map((item: string, index: number) => {
+                            return { answer: item, sum: 0 }
+                        });
+                        setVotingResult(result)
+                    }
+                    setShowVotingResultModal(true);
+                    loadingEnd()
+                });
             } else {
-                alertShow({
-                    content: "There is no any ongoing Voting Poll.",
-                    status: 'failed'
-                })
-                // getVotingInfo();
+                setvotingQueryDetail({});
+                setUserVotingDetail({});
+                setVotingResult([])
+                if (admin) {
+                    setShowVotingModal(true);
+                } else {
+                    alertShow({
+                        content: "There is no any ongoing Voting Poll.",
+                        status: 'failed'
+                    })
+                    // getVotingInfo();
+                }
+                loadingEnd()
             }
-            loadingEnd()
         }
-    }, [votingResponse, admin]);
+    }, [item, votingResponse, admin, projectDetailContract]);
 
     const inputTokenAmount: React.KeyboardEventHandler<HTMLInputElement> = (e) => {
         (e.target as HTMLInputElement).value;
@@ -316,51 +310,52 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
         selectHistoryItem(0)
     }
 
-    const selectHistoryItem = async (item: Number) => {
-        if (!votingResponse[Number(item)]) return;
-        let votingQuery = votingResponse[Number(item)];
+    const selectHistoryItem = useCallback(async (index: Number) => {
+        if (!votingResponse[Number(index)]) return;
+        let votingQuery = votingResponse[Number(index)];
         setvotingQueryDetail(votingQuery);
         setLoad(false)
-        dispatch(loading_start() as any)
-        await axios.get(process.env.API_ADDRESS + `/voting/queryId/${votingQuery.id}`).then(async (res) => {
-            let userAddressArr = res.data.votingResult.map((item: VotingResultInterface) => item.userAddress);
-            setCurrentUserIsBet(false);
-            if (userAddressArr.length && detailProject) {
-                const detailContract = new Contract(ProjectDetail.address || '', ProjectDetail.abi, rpc_provider);
-                let shareTokenAddress = detailProject.shareToken;
-                let balanceInfo = await detailContract.getTokenInfo(shareTokenAddress, userAddressArr);
-                setCurrentUserAnswer(-1);
-                let temp = userAddressArr.map((item: string) => {
-                    let result = {
-                        userAddress: item,
-                        balance: Number(ethers.utils.formatUnits(balanceInfo.find((balanceItem: any) => balanceItem.owner === item).ownedBalance, detailProject.shareTokenDecimals)),
-                        state: res.data.votingResult.find((votingInfo: any) => votingInfo.userAddress === item).votingState
-                    }
-                    if (item == account) {
-                        setCurrentUserAnswer(result.state);
-                        setCurrentUserIsBet(true);
-                    }
-                    return result;
-                });
-                let result = res.data.votingResult[0].VotingQuery.answerStr.split(',').map((item: string, index: number) => {
-                    let sum = temp.filter((tempItem: any) => tempItem.state == index).reduce((prev: any, curr: any) => prev + curr.balance, 0);
-                    return { answer: item, sum: sum }
-                });
-                setVotingResult(result)
-                setLoad(true)
-                dispatch(loading_end() as any)
-            } else {
-                let result: any = String(votingQuery.answerStr).split(',').map((item: string, index: number) => {
-                    return { answer: item, sum: 0 }
-                });
-                setVotingResult(result)
-                setLoad(true)
-                dispatch(loading_end() as any)
-            }
-        });
+        loadingStart();
+        if (item && projectDetailContract) {
+            await axios.get(process.env.API_ADDRESS + `/voting/queryId/${votingQuery.id}`).then(async (res) => {
+                let userAddressArr = res.data.votingResult.map((elem: VotingResultInterface) => elem.userAddress);
+                setCurrentUserIsBet(false);
+                if (userAddressArr.length && item) {
+                    let shareTokenAddress = item.shareToken;
+                    let balanceInfo = await projectDetailContract.getTokenInfo(shareTokenAddress, userAddressArr);
+                    setCurrentUserAnswer(-1);
+                    let temp = userAddressArr.map((elem: string) => {
+                        let result = {
+                            userAddress: elem,
+                            balance: Number(ethers.utils.formatUnits(balanceInfo.find((balanceItem: any) => balanceItem.owner === elem).ownedBalance, item.shareDecimal)),
+                            state: res.data.votingResult.find((votingInfo: any) => votingInfo.userAddress === elem).votingState
+                        }
+                        if (elem == account) {
+                            setCurrentUserAnswer(result.state);
+                            setCurrentUserIsBet(true);
+                        }
+                        return result;
+                    });
+                    let result = res.data.votingResult[0].VotingQuery.answerStr.split(',').map((item: string, index: number) => {
+                        let sum = temp.filter((tempItem: any) => tempItem.state == index).reduce((prev: any, curr: any) => prev + curr.balance, 0);
+                        return { answer: item, sum: sum }
+                    });
+                    setVotingResult(result)
+                    setLoad(true)
+                    loadingEnd();
+                } else {
+                    let result: any = String(votingQuery.answerStr).split(',').map((elem: string, index: number) => {
+                        return { answer: elem, sum: 0 }
+                    });
+                    setVotingResult(result)
+                    setLoad(true)
+                    loadingEnd();
+                }
+            });
 
-        setShowVotingHistoryModal(true)
-    }
+            setShowVotingHistoryModal(true)
+        }
+    }, [item, projectDetailContract]);
 
     // const deleteProjectHandle = async (item: any) => {
     //     console.log(item.poolAddress);
@@ -447,7 +442,7 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
                 </div>
                 <div>
                     <div className="right-info m-b-1">
-                        <p>USDC: {(Number(item.investTokenBalance) || 0).toFixed(2) || 0}</p>
+                        <p>YUSD: {(Number(item.investTokenBalance) || 0).toFixed(2) || 0}</p>
                         <p>{item.name}: {(Number(item.shareTokenBalance) || 0).toFixed(2) || 0}</p>
                     </div>
                     <div className="btn-group">

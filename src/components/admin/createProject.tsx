@@ -1,6 +1,5 @@
 import React, { FC, useRef, useState, useEffect, useCallback } from "react";
 import { create, IPFSHTTPClient } from 'ipfs-http-client';
-import { useDispatch, useSelector } from "react-redux";
 import { Contract, ethers } from "ethers";
 import axios from "axios";
 
@@ -10,6 +9,7 @@ import { addNewProject } from "../../../store/actions";
 import useAccount from "@hooks/useAccount";
 import useLoading from "@hooks/useLoading";
 import useAlert from "@hooks/useAlert";
+import useProject from "@hooks/useFund";
 let client: IPFSHTTPClient | undefined;
 
 const projectId: string = "2ElEf722K2XXys4wa0SkMsbHByw";
@@ -21,11 +21,11 @@ type Props = {
 }
 
 const CreateProjectContent: FC<Props> = ({ handleClose }) => {
-    const dispatch = useDispatch();
     const { account, signer, rpc_provider } = useAccount();
     const { loadingStart, loadingEnd } = useLoading();
     const { alertShow } = useAlert()
-    const { projects } = useSelector((state: any) => state.data);
+    const { updateProjectInfoByAddress } = useProject();
+
     const tokenIconRef = useRef<HTMLInputElement>(null);
     const tokenSymbolRef = useRef<HTMLInputElement>(null);
 
@@ -79,7 +79,7 @@ const CreateProjectContent: FC<Props> = ({ handleClose }) => {
         if (files.length) reader.readAsDataURL(files[0]);
     }
 
-    const createProject = useCallback(async () => {
+    const createProject = async () => {
         try {
             if (!account) {
                 alertShow({
@@ -132,11 +132,11 @@ const CreateProjectContent: FC<Props> = ({ handleClose }) => {
                 console.log("DeployedNewProject", owner, account, contractAddr, tokenAddr);
                 if (owner == account) {
                     let data = {
-                        projectTitle: title, 
-                        iconUrl: iconUrl, 
-                        ptokenAddress: tokenAddr, 
+                        projectTitle: title,
+                        iconUrl: iconUrl,
+                        ptokenAddress: tokenAddr,
                         address: contractAddr,
-                        decimals, 
+                        decimals,
                         totalSupply: total,
                         sellAmount: ((Number(total) * Number(sellPercent)) / 100).toFixed(2),
                         price: price
@@ -149,7 +149,7 @@ const CreateProjectContent: FC<Props> = ({ handleClose }) => {
                         status: 'success',
                         content: 'Project Create Success!'
                     })
-                    dispatch(addNewProject(projects, contractAddr, account) as any);
+                    updateProjectInfoByAddress(contractAddr);
                     loadingEnd();
                 }
             })
@@ -158,7 +158,7 @@ const CreateProjectContent: FC<Props> = ({ handleClose }) => {
             loadingEnd();
             console.log("create project error: ", ex)
         }
-    }, [signer]);;
+    };
 
     useEffect(() => {
         if (rpc_provider) {
