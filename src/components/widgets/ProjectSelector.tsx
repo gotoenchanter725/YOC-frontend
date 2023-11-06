@@ -21,7 +21,7 @@ const ProjectSelector: FC<PropsType> = ({ ptokenAddress, setPtokenAddress }) => 
 
     const selectHandle = (project: any) => {
         setShow(false);
-        if (setPtokenAddress) setPtokenAddress("" + Math.random());
+        if (setPtokenAddress) setPtokenAddress(project.ptokenAddress);
     };
 
     return <div className='relative flex items-center cursor-pointer p-2' onClick={() => { setShow(!isShow) }}>

@@ -64,7 +64,6 @@ const ProjectPriceChart: FC<propsType> = ({ data = [] }) => {
   useEffect(() => {
     // Create chart instance
     const chart = echarts.init(document.getElementById('chartDiv'));
-
     // Set the options and data for the chart
     const options = {
       grid: {
@@ -85,8 +84,8 @@ const ProjectPriceChart: FC<propsType> = ({ data = [] }) => {
       yAxis: {
         name: 'Value',
         type: 'value',
-        min: Math.min(...data.map((item: any) => item.value)),
-        max: Math.max(...data.map((item: any) => item.value)),
+        min: Math.min(...data.map((item: any) => item.value)) * 0.9,
+        max: Math.max(...data.map((item: any) => item.value)) * 1.1,
         show: false,
         axisLine: { show: false },
       },

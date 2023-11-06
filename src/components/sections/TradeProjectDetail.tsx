@@ -14,27 +14,31 @@ import MintSection from "./Mint";
 const ProjectPriceChart = dynamic(() => import('./ProjectPriceChart'), { ssr: false });
 
 import useAccount from "@hooks/useAccount";
-import { isValidEthAddress } from "utils/unit";
+import { convertEthToWei, isValidEthAddress } from "utils/unit";
 import axiosInstance from "utils/axios";
-import { convertPeriodToMiliSecond, multiplyNumbers } from "utils/features";
+import { convertPeriodShortToFull, convertPeriodToMiliSecond, multiplyNumbers } from "utils/features";
 import { ProjectTrade, TokenTemplate, YUSD } from 'src/constants/contracts';
 import useAlert from "@hooks/useAlert";
+import useTradeProject from "@hooks/useTrade";
+import useFundProject from "@hooks/useFund";
 
 type props = {
-    ptokenAddress: string
+    ptokenAddress: string,
+    setPtokenAddress: (v: string) => void
 }
-const TradeProjectDetail: FC<props> = ({ ptokenAddress: defaultPtokenAddress }) => {
+const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
     const { alertShow } = useAlert();
-    const { YUSDBalance, rpc_provider, signer } = useAccount();
-    const [projects, projectLoading] = useSelector((state: any) => [state.trade.projects]);
-    const [ptokenAddress, setPtokenAddress] = useState(defaultPtokenAddress);
+    const { YUSDBalance, account, signer } = useAccount();
+    const { projects: tradeProjects, loading: tradeProjectLoading } = useTradeProject();
+    const { projects: fundProjects, loading: fundProjectLoading } = useFundProject();
     const [isMintShow, setIsMintShow] = useState(false);
     const [buyOrders, setBuyOrders] = useState<any[]>([]);
     const [sellOrders, setSellOrders] = useState<any[]>([]);
     const [loadingProjectDetail, setLoadingProjectDetail] = useState(0); // 0: not loading, 1: loading, 2: done
     const [prices, setPrices] = useState<any[]>([]);
     const [comparedPrices, setComparedPrices] = useState<any[]>([]);
-    const [projectDetail, setProjectDetail] = useState<any>({});
+    const [tradeProjectDetail, setTradeProjectDetail] = useState<any>();
+    const [fundProjectDetail, setFundProjectDetail] = useState<any>();
     const [period, setPeriod] = useState("1D");
     const [percentageOfBuy, setPercentageOfBuy] = useState(0);
     const [percentageOfSell, setPercentageOfSell] = useState(0);
@@ -56,62 +60,59 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress: defaultPtokenAddress }) 
     ), [signer]);
 
     useEffect(() => {
-        console.log(ptokenAddress)
-        // if (isValidEthAddress(ptokenAddress)) {
-        if (ptokenAddress) {
+        if (isValidEthAddress(ptokenAddress)) {
             console.log("isValidEthAddress", ptokenAddress)
             // retireve the project detailed data using ptokenAddress
             setLoadingProjectDetail(1);
             axiosInstance.get(`/trade/projectDetailByPtokenAddress?ptokenAddress=${ptokenAddress}`)
                 .then((response) => {
                     let data = response.data.data;
+                    setPrices([
+                        ...data.pricesFor1d.data
+                    ])
                     setLoadingProjectDetail(2);
                     setSellOrders([...[1, 2, 3, 4]]);
                     setBuyOrders([...[1, 2, 3, 4]]);
                 }).catch(err => {
-                    // console.log(err);
+                    console.log(err);
                     setLoadingProjectDetail(2);
                 })
         }
     }, [ptokenAddress])
 
     useEffect(() => {
-        if (ptokenAddress != "-1" && projectLoading == 2) {
-            let detail = projects.find((item: any) => item.ptokenAddress == ptokenAddress);
-            setProjectDetail(detail);
+        if (ptokenAddress != "-1" && tradeProjectLoading == 2) {
+            let detail = tradeProjects.find((item: any) => item.data.ptokenAddress == ptokenAddress);
+            setTradeProjectDetail(detail);
         }
-    }, [ptokenAddress, projects])
+    }, [ptokenAddress, tradeProjects, tradeProjectLoading])
+
+    useEffect(() => {
+        if (ptokenAddress != "-1") {
+            let detail = fundProjects.find((item: any) => item.shareToken == ptokenAddress);
+            setFundProjectDetail(detail);
+            console.log(detail);
+        }
+    }, [ptokenAddress, account, fundProjects, fundProjectLoading])
 
     useEffect(() => {
         if (period) {
-            console.log(period);
             let time = convertPeriodToMiliSecond(period);
-            axiosInstance.get(`/trade/pricesByPtokenAddress?ptokenAddress=${ptokenAddress}&period=${time}`)
-                .then((response) => {
-                    console.log(response);
-                    let data = response.data.data;
-                    setPrices([...data])
-                }).catch((err) => {
-                    console.log(err);
-                    let currentDate = new Date(), data = [];
-                    for (let i = 0; i < 30; i++) {
-                        currentDate = new Date(+currentDate + (+time / 30));
-                        data.push({
-                            date: +currentDate,
-                            value: Math.floor(Math.random() * 100)
-                        })
-                    }
-                    setPrices([
-                        ...data
-                    ])
-
-                })
+            if (isValidEthAddress(ptokenAddress)) {
+                axiosInstance.get(`/trade/pricesByPtokenAddress?ptokenAddress=${ptokenAddress}&period=${time}`)
+                    .then((response) => {
+                        let data = response.data.data;
+                        setPrices([...data])
+                    }).catch((err) => {
+                        console.log(err);
+                    })
+            }
         }
     }, [period])
 
     const buyHandle = async () => {
         try {
-            let finalYUSDAmount = multiplyNumbers([priceForBuy * amountForBuy]);
+            let finalYUSDAmount = multiplyNumbers([multiplyNumbers([priceForBuy * amountForBuy]), 1.0019]);
             if (finalYUSDAmount == 0) {
                 alertShow({
                     content: `Please input Price and Amount exactly`,
@@ -119,7 +120,15 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress: defaultPtokenAddress }) 
                 })
                 return;
             }
-            let approveTx = await YUSDContract.approve(ProjectTrade.address, 0);
+            if (finalYUSDAmount > YUSDBalance) {
+                alertShow({
+                    content: `You have insufficient YUSD amount`,
+                    status: 'failed'
+                })
+                return;
+            }
+            alert('here')
+            let approveTx = await YUSDContract.approve(ProjectTrade.address, convertEthToWei(String(finalYUSDAmount), YUSD.decimals));
             await approveTx.wait();
             let buyTx = await projectTradeContract.buy(
                 ptokenAddress,
@@ -131,7 +140,7 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress: defaultPtokenAddress }) 
 
             })
         } catch (err) {
-
+            console.log(err);
         }
     }
     const sellHandle = async () => {
@@ -140,6 +149,13 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress: defaultPtokenAddress }) 
             if (finalYUSDAmount == 0) {
                 alertShow({
                     content: `Please input Price and Amount exactly`,
+                    status: 'failed'
+                })
+                return;
+            }
+            if (amountForSell > fundProjectDetail.shareTokenBalance) {
+                alertShow({
+                    content: `You have insufficient YUSD amount`,
                     status: 'failed'
                 })
                 return;
@@ -174,16 +190,16 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress: defaultPtokenAddress }) 
                 </div>
             </div>
 
-            <p className="py-2">You have {'0.00'} {"YTESTE"} in your wallet, {"0.00"} in Order, {"0.00"} available</p>
+            <p className="py-2">You have {fundProjectDetail ? fundProjectDetail.shareTokenBalance : ""} {tradeProjectDetail ? tradeProjectDetail.data.projectTitle : ""} in your wallet, {tradeProjectDetail ? tradeProjectDetail.data.ptokenTradeBalance : "0.0"} in Order, {tradeProjectDetail ? Number(tradeProjectDetail.data.ptokenSellAmount) - Number(tradeProjectDetail.data.ptokenTradeBalance) : "0.0"} available</p>
             <div className="w-full h-[calc(100vh_-_300px)] overflow-x-hidden overflow-y-auto scrollbar scrollbar-w-1 scrollbar-thumb-[#FFFFFF33] scrollbar-track-[#FFFFFF33]">
                 <div className="w-full flex items-stretch pr-2">
                     <div className="min-w-[320px] w-1/4 h-full p-4 rounded border-2 border-solid border-border-secondary bg-[#00000025]">
                         <h3 className="italic text-md mb-2">Market</h3>
                         <div className="w-full">
                             <div className="flex items-center text-[#bdbdbd]">
-                                <div className="w-1/3 text-center py-1.5">Price(YUSD)</div>
-                                <div className="w-1/3 text-center py-1.5">Amount({"YTEST"})</div>
-                                <div className="w-1/3 text-center py-1.5">Price(YUSD)</div>
+                                <div className="w-1/3 text-center py-1.5">Price({YUSD.symbol})</div>
+                                <div className="w-1/3 text-center py-1.5">Amount({tradeProjectDetail ? tradeProjectDetail.data.projectTitle : ""})</div>
+                                <div className="w-1/3 text-center py-1.5">Price({YUSD.symbol})</div>
                             </div>
                             <div className="min-h-[calc(50vh_-_300px)] h-full">
                                 {
@@ -260,8 +276,8 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress: defaultPtokenAddress }) 
                             <div className="">
                                 <div className="flex items-center mb-2">
                                     <div>
-                                        <div className="flex items-center"><p>{"YTESTE"} </p> <p className="italic">Price:</p> {0.800} YUSD</div>
-                                        <div className="flex items-center"><p>{"1 month"} variation</p> <p className="italic">{155}%</p></div>
+                                        <div className="flex items-center"><p>{tradeProjectDetail ? tradeProjectDetail.data.projectTitle : ""} </p> <p className="mx-2 italic">Price:</p> {tradeProjectDetail ? tradeProjectDetail.price.value : 0} YUSD</div>
+                                        <div className="flex items-center"><p>{convertPeriodShortToFull(period)} variation</p> <p className="italic">{155}%</p></div>
                                     </div>
                                     <div className="ml-12 flex items-center">
                                         <div>Compare:</div>
@@ -272,8 +288,8 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress: defaultPtokenAddress }) 
                                     <ProjectPriceChart data={prices} />
                                 </div>
                                 <div className=" mb-2">
-                                    <div className="flex items-center"><p>{"YTESTE"} </p> <p className="italic">Trade Valume:</p></div>
-                                    <div className="flex items-center"><p>{"1 month"} variation</p> <p className="italic">1,125,254,23456</p></div>
+                                    <div className="flex items-center"><p>{tradeProjectDetail ? tradeProjectDetail.data.projectTitle : ""} </p> <p className="italic">Trade Valume:</p></div>
+                                    <div className="flex items-center"><p>{convertPeriodShortToFull(period)} variation</p><p className="ml-2 italic">1,125,254,23456</p></div>
                                 </div>
                                 <div className="chart-section">
                                 </div>
@@ -284,16 +300,16 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress: defaultPtokenAddress }) 
                             <div className="w-[calc(50%_-_20px)] p-4 rounded border-2 border-solid border-border-secondary bg-[#00000025]">
                                 <div className="flex items-center justify-between mb-2">
                                     <div className="flex flex-col">
-                                        <h2 className="text-lg">Buy PROJECT B</h2>
+                                        <h2 className="text-lg">Buy {tradeProjectDetail ? tradeProjectDetail.data.projectTitle : ""}</h2>
                                         <p>Avbl: 0.00 YUSD</p>
                                     </div>
                                     <button className="bg-btn-primary px-3 py-2 text-sm rounded shadow-btn-primary" onClick={() => { setIsMintShow(true) }}>Mint YUSD</button>
                                 </div>
-                                <CInput value={priceForBuy} setValue={(v: any) => setPriceForBuy(v)} label="Price" className="mb-2" leftText="YUSD" />
+                                <CInput value={priceForBuy} setValue={(v: any) => { setPriceForBuy(v); setPercentageOfBuy(Number(v / YUSDBalance) * 100) }} label="Price" className="mb-2" leftText="YUSD" />
                                 <CInput value={amountForBuy} setValue={(v: any) => setAmountForBuy(v)} label="Amount" className="mb-4" leftText={"YTESTE"} />
                                 <div className="h-[2px] w-full mb-6 bg-status-plus"></div>
                                 <div className="w-full flex items-center justify-between mb-6">
-                                    <ProgressInput value={percentageOfBuy} setValue={(v: number) => setPercentageOfBuy(v)} className="w-[calc(100%_-_56px)]" inputClassName="plus" />
+                                    <ProgressInput value={percentageOfBuy} setValue={(v: number) => { setPercentageOfBuy(v); setPriceForBuy(YUSDBalance * v / 100) }} className="w-[calc(100%_-_56px)]" inputClassName="plus" />
                                     <button className="w-[50px] bg-status-plus px-3 py-2 text-sm rounded shadow-btn-primary" onClick={() => setPercentageOfBuy(100)}>MAX</button>
                                 </div>
                                 <CInput value={multiplyNumbers([priceForBuy, amountForBuy])} disabled={true} label="TOTAL" className="" leftText={"YUSD"} />
@@ -306,15 +322,15 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress: defaultPtokenAddress }) 
                             <div className="w-[calc(50%_-_20px)] p-4 rounded border-2 border-solid border-border-secondary bg-[#00000025]">
                                 <div className="flex items-center justify-between mb-2">
                                     <div className="flex flex-col">
-                                        <h2 className="text-lg">Sell PROJECT B</h2>
+                                        <h2 className="text-lg">Sell {tradeProjectDetail ? tradeProjectDetail.data.projectTitle : ""}</h2>
                                         <p>Avbl: 0.00 YUSD</p>
                                     </div>
                                 </div>
                                 <CInput value={priceForSell} setValue={(v: any) => setPriceForSell(v)} label="Price" className="mb-2" leftText="YUSD" />
-                                <CInput value={amountForSell} setValue={(v: any) => setAmountForSell(v)} label="Amount" className="mb-4" leftText={"YTESTE"} />
+                                <CInput value={amountForSell} setValue={(v: any) => { setAmountForSell(v); setPercentageOfSell(v / Number(fundProjectDetail.shareTokenBalance) * 100) }} label="Amount" className="mb-4" leftText={"YTESTE"} />
                                 <div className="h-[2px] w-full mb-6 bg-status-minus"></div>
                                 <div className="w-full flex items-center justify-between mb-6">
-                                    <ProgressInput value={percentageOfSell} setValue={(v: number) => setPercentageOfSell(v)} className="w-[calc(100%_-_56px)]" inputClassName="minus" />
+                                    <ProgressInput value={percentageOfSell} setValue={(v: number) => { setPercentageOfSell(v); setAmountForSell(Number(fundProjectDetail.shareTokenBalance) * (v / 100)) }} className="w-[calc(100%_-_56px)]" inputClassName="minus" />
                                     <button className="w-[50px] bg-status-minus px-3 py-2 text-sm rounded shadow-btn-primary" onClick={() => setPercentageOfSell(100)}>MAX</button>
                                 </div>
                                 <CInput type="text" value={multiplyNumbers([priceForSell, amountForSell])} disabled={true} label="TOTAL" className="" leftText={"YUSD"} />

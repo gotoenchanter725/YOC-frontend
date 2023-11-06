@@ -31,7 +31,7 @@ export const showBigNumber = (v: any) => {
 }
 
 export const isValidEthAddress = (address: string) => {
-    if (!address.startsWith('0x') || address.length !== 42) {
+    if (!address || !address.startsWith('0x') || address.length !== 42) {
         return false; // Address should start with '0x' and have a length of 42
     }
 

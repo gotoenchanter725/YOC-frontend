@@ -18,15 +18,15 @@ const useProject = () => {
         ]
     })
 
-    useEffect(() => {
-        (async () => {
-            if (rpc_provider && account && loading == 0) {
-                console.log("FUNDS", account)
-                await retireveProjectsDetails();
-                // console.log("funds-project")
-            }
-        })()
-    }, [rpc_provider, account, loading])
+    // useEffect(() => {
+    //     (async () => {
+    //         if (rpc_provider && account && loading == 0) {
+    //             console.log("FUNDS", account)
+    //             await retireveProjectsDetails();
+    //             // console.log("funds-project")
+    //         }
+    //     })()
+    // }, [rpc_provider, account, loading])
 
     const retireveProjectsDetails = useCallback(async () => {
         try {

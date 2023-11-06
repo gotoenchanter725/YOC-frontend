@@ -1,37 +1,48 @@
-import React, { FC, useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import React, { FC, useEffect, useState, useCallback } from "react";
 import axiosInstance from "utils/axios";
-import { retireveingProject, updateProject, errorProject } from "store/actions";
 import NoData from "@components/widgets/NoData";
 import Modal from "@components/widgets/Modalv2";
 import TradeProjectDetail from "./TradeProjectDetail";
+import useTradeProject from "@hooks/useTrade";
+import useFundProject from "@hooks/useFund";
+import useAccount from "@hooks/useAccount";
 
 type props = {
 }
 
 const TradeProjectSection: FC<props> = ({ }) => {
-    const [projects, projectLoading, projectError] = useSelector((state: any) => {
-        return [
-            state.trade.projects.data,
-            state.trade.projects.loading,
-            state.trade.projects.error,
-        ]
-    });
-    const dispatch = useDispatch();
+    const { projects, loading: projectLoading, projectRetireve, projectUpdate, projectError } = useTradeProject();
+    const { account, rpc_provider } = useAccount();
+    const { projects: fundProjects, retireveProjectsDetails, loading: fundLoading } = useFundProject();
     const [pToken, setPToken] = useState("-1");
 
     useEffect(() => {
-        dispatch(retireveingProject() as any);
-        axiosInstance.get('/trade/tradeProjects')
-            .then((response) => {
-                let data: [] = response.data.data;
-                // dispatch(updateProject(data) as any);
-                dispatch(updateProject([1, 2, 3, 4, 5, 6]) as any);
-            }).catch((error) => {
-                console.log('error while getting projects info', error)
-                dispatch(errorProject() as any);
-            })
+        projectRetireve();
     }, [])
+
+    useEffect(() => {
+        (async () => {
+            if (rpc_provider) {
+                console.log("FUNDS", account)
+                await retireveProjectsDetails();
+            }
+        })()
+        console.log('fundProjectLoading', fundProjects);
+    }, [rpc_provider, account])
+
+    const currentValueOfWallet = useCallback((ptokenAddress: string) => {
+        let index = fundProjects.findIndex((item: any) => {
+            item.ptokenAddress == ptokenAddress
+        });
+        if (index == -1) return 0;
+        else return fundProjects[index].shareTokenBalance;
+    }, []);
+
+    const filterNuanceDom = (val: string) => {
+        return <span className={Number(val) > 0 ? "text-status-plus" : "text-status-minus"}>
+            {Number(val) > 0 ? "+" : ""}{Number(val)}
+        </span>
+    }
 
     return <>
         <table className="w-full text-sm">
@@ -125,25 +136,25 @@ const TradeProjectSection: FC<props> = ({ }) => {
                                         return <tr key={`project-row-${index}`} className={`bg-[#112923] ${index != arr.length - 1 ? 'border-t border-solid border-[#4b4d4d]' : ''}`}>
                                             <td className="p-2.5">
                                                 <div className="flex items-center">
-                                                    <img src="/images/coins/ETH.png" className="w-5 h-5 mr-2" />
-                                                    <p>TEST</p>
+                                                    <img src={item.data.iconUrl} className="w-5 h-5 mr-2" />
+                                                    <p>{item.data.projectTitle}</p>
                                                 </div>
                                             </td>
-                                            <td><div><p className="text-center">0</p></div></td>
-                                            <td><div><p className="text-center">0</p></div></td>
-                                            <td><div><p className="text-center">0</p></div></td>
-                                            <td><div><p className="text-center">0</p></div></td>
-                                            <td><div><p className="text-center">0</p></div></td>
+                                            <td><div><p className="text-center">{item.data.ptokenSellAmount}</p></div></td>
+                                            <td><div><p className="text-center">{currentValueOfWallet(item.ptokenAddress)}</p></div></td>
+                                            <td><div><p className="text-center">{item.data.ptokenTradeBalance}</p></div></td>
+                                            <td><div><p className="text-center">{Number(item.data.ptokenSellAmount) - Number(item.data.ptokenTradeBalance)}</p></div></td>
+                                            <td><div><p className="text-center">{item.data.YUSDTradePoolAmount}</p></div></td>
                                             <td><div></div></td>
-                                            <td><div><p className="text-center">0</p></div></td>
-                                            <td><div><p className="text-center">0</p></div></td>
-                                            <td><div><p className="text-center">0</p></div></td>
-                                            <td><div><p className="text-center">0</p></div></td>
-                                            <td><div><p className="text-center">0</p></div></td>
+                                            <td><div><p className="text-center">{item.prices[item.prices.length - 1].value}</p></div></td>
+                                            <td><div><p className="text-center font-semibold">{filterNuanceDom(Number(item.nauncePercentageFor1d).toFixed(2))}</p></div></td>
+                                            <td><div><p className="text-center font-semibold">{filterNuanceDom(Number(item.nauncePercentageFor7d).toFixed(2))}</p></div></td>
+                                            <td><div><p className="text-center">{Number(item.tradedYUSDFor24h).toFixed(3)}</p></div></td>
+                                            <td><div><p className="text-center">{Number(item.marketCap).toFixed(2)}</p></div></td>
                                             <td><div></div></td>
                                             <td>
                                                 <div className="flex items-center justify-around">
-                                                    <button className="bg-btn-primary text-white px-2 py-1 leading-none" onClick={() => setPToken("1")}>Trade</button>
+                                                    <button className="bg-btn-primary text-white px-2 py-1 leading-none" onClick={() => setPToken(item.data.ptokenAddress)}>Trade</button>
                                                 </div>
                                             </td>
                                         </tr>
@@ -162,7 +173,7 @@ const TradeProjectSection: FC<props> = ({ }) => {
 
         <Modal size="full" show={pToken != "-1"} onClose={() => { setPToken("-1") }}>
             <div className="p-4">
-                <TradeProjectDetail ptokenAddress={pToken} />
+                <TradeProjectDetail ptokenAddress={pToken} setPtokenAddress={(v: string) => setPToken(v)} />
             </div>
         </Modal>
     </>

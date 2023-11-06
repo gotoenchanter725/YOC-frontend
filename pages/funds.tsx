@@ -22,7 +22,7 @@ const Fund: FC = () => {
     const [step, setStep] = useState(0);
     const dispatch = useDispatch();
     const { provider, signer, account, rpc_provider } = useAccount();
-    const { projects, loading, error } = useProject()
+    const { projects, retireveProjectsDetails, loading, error } = useProject()
     const { loadingStart, loadingEnd } = useLoading();
     const { alertShow } = useAlert();
     const [showMoreFlag, setShowMoreFlag] = useState(false);
@@ -139,6 +139,16 @@ const Fund: FC = () => {
         if (loading == 0) loadingStart();
         else if (loading == 2) loadingEnd();
     }, [loading])
+
+    useEffect(() => {
+        (async () => {
+            if (rpc_provider && account && loading == 0) {
+                console.log("FUNDS", account)
+                await retireveProjectsDetails();
+                // console.log("funds-project")
+            }
+        })()
+    }, [rpc_provider, account, loading])
 
     useEffect(() => {
         if (step == 0 && projects.filter((item: any) => (item && item.endDate >= Date.now() && item.currentStatus < item.ongoingPercent)).length == 0) setNoDataFlag(true);
