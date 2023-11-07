@@ -1,71 +1,81 @@
 import NoData from "@components/widgets/NoData";
+import useMyOrder from "@hooks/useMyOrder";
 import React, { FC, useEffect, useState } from "react";
 import axiosInstance from "utils/axios";
+import { convertDateToFullString } from "utils/date";
 
 type propsType = {
     orderId: string
 }
 
 const TradeTransactionSection: FC<propsType> = ({ orderId = "" }) => {
-    const [data, setData] = useState<any[]>([]);
+    const [orderDetail, setOrderDetail] = useState<any>();
+    const { myOrders, loading: myOrderLoading } = useMyOrder();
     const [loading, setLoading] = useState(0);
 
     useEffect(() => {
-        if (orderId != "-1" && orderId) {
+        if (orderId != "-1") {
             setLoading(1);
-            axiosInstance.get(`/trade/allTransactionByOrderId?orderId=${orderId}`)
-                .then((response) => {
-                    console.log(response);
-                    let data = response.data.data;
-                    setData([...data]);
-                    setLoading(2);
-                }).catch(err => {
-                    // console.log(err);
-                    setLoading(2);
-                    setData([
-                        {
-                            transactionId: "",
-                            amount: 100,
-                            ptokenAddress: "0xAAAAA",
-                            price: "10.5",
-                            buyOrderId: "10",
-                            sellOrderId: "10",
-                        }, {
-                            transactionId: "",
-                            amount: 100,
-                            ptokenAddress: "0xAAAAA",
-                            price: "10.5",
-                            buyOrderId: "10",
-                            sellOrderId: "10",
-                        }, {
-                            transactionId: "",
-                            amount: 100,
-                            ptokenAddress: "0xAAAAA",
-                            price: "10.5",
-                            buyOrderId: "10",
-                            sellOrderId: "10",
-                        }, {
-                            transactionId: "",
-                            amount: 100,
-                            ptokenAddress: "0xAAAAA",
-                            price: "10.5",
-                            buyOrderId: "10",
-                            sellOrderId: "10",
-                        },
-                    ]);
-                });
+            console.log(orderId);
+            let order = myOrders.find((item: any) => item.orderId == orderId);
+            setOrderDetail({
+                ...order
+            });
+            console.log(order);
+            setLoading(2);
+            // axiosInstance.get(`/trade/allTransactionByOrderId?orderId=${orderId}`)
+            //     .then((response) => {
+            //         console.log(response);
+            //         let data = response.data.data;
+            //         setOrderDetail([...data]);
+            //         setLoading(2);
+            //     }).catch(err => {
+            //         // console.log(err);
+            //         setLoading(2);
+            //         setOrderDetail([
+            //             {
+            //                 transactionId: "",
+            //                 amount: 100,
+            //                 ptokenAddress: "0xAAAAA",
+            //                 price: "10.5",
+            //                 buyOrderId: "10",
+            //                 sellOrderId: "10",
+            //             }, {
+            //                 transactionId: "",
+            //                 amount: 100,
+            //                 ptokenAddress: "0xAAAAA",
+            //                 price: "10.5",
+            //                 buyOrderId: "10",
+            //                 sellOrderId: "10",
+            //             }, {
+            //                 transactionId: "",
+            //                 amount: 100,
+            //                 ptokenAddress: "0xAAAAA",
+            //                 price: "10.5",
+            //                 buyOrderId: "10",
+            //                 sellOrderId: "10",
+            //             }, {
+            //                 transactionId: "",
+            //                 amount: 100,
+            //                 ptokenAddress: "0xAAAAA",
+            //                 price: "10.5",
+            //                 buyOrderId: "10",
+            //                 sellOrderId: "10",
+            //             },
+            //         ]);
+            //     });
         }
-    }, [orderId])
+    }, [orderId, myOrders, loading])
 
     return <div className="w-full px-4 py-4">
         <div className="flex items-center font-light my-3">
             <div className="flex items-center mr-4">
                 <div className="mr-2">Order No: </div>
-                <div className="font-semibold">6203148</div>
+                <div className="font-semibold">{orderId}</div>
             </div>
             <div className="flex items-center mr-2">
                 <div className="mr-2">Time Updated: </div>
-                <div className="font-semibold">2023-09-18 12:59:24</div>
+                <div className="font-semibold">{orderDetail ? convertDateToFullString(new Date(orderDetail.updatedAt)) : ""}</div>
             </div>
         </div>
         <table className="w-full text-sm border border-solid border-[#4b4d4d]">
@@ -78,7 +88,7 @@ const TradeTransactionSection: FC<propsType> = ({ orderId = "" }) => {
             </tr>
 
             {
-                loading == 1 ? <>
+                (myOrderLoading != 2 || loading != 2) ? <>
                     {
                         [0, 1, 2, 3, 4].map((item: any, index: number) => {
                             return <tr key={`transaction-${index}`} className="bg-[#101a2c] border-t border-solid border-[#4b4d4d]">
@@ -93,15 +103,15 @@ const TradeTransactionSection: FC<propsType> = ({ orderId = "" }) => {
                 </>
                     : <>
                         {
-                            data.length ? <>
+                            (orderDetail && orderDetail.transactions && orderDetail.transactions.length) ? <>
                                 {
-                                    [0, 1, 2, 3].map((item: any, index: number) => {
+                                    orderDetail.transactions.map((item: any, index: number) => {
                                         return <tr key={`transaction-${index}`} className="bg-[#101a2c] border-t border-solid border-[#4b4d4d]">
-                                            <td className="p-2.5"><div><p className="items-center">2023-10-16 15:12:08</p></div></td>
-                                            <td><div><p className="text-center">10.05</p></div></td>
-                                            <td><div><p className="text-center">100</p></div></td>
+                                            <td className="p-2.5"><div><p className="items-center">{convertDateToFullString(new Date(item.createdAt))}</p></div></td>
+                                            <td><div><p className="text-center">{Number(item.price).toFixed(2)}</p></div></td>
+                                            <td><div><p className="text-center">{item.amount}</p></div></td>
                                             <td><div><p className="text-center">0.19%</p></div></td>
-                                            <td><div><p className="text-center">100.5</p></div></td>
+                                            <td><div><p className="text-center">{Number(item.price) * Number(item.amount)}</p></div></td>
                                         </tr>
                                     })
                                 }

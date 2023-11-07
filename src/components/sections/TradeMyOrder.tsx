@@ -9,20 +9,19 @@ import useAccount from "@hooks/useAccount";
 import axiosInstance from "utils/axios";
 import { errorMyOrder, retireveingMyOrder, updateMyOrder } from "store/actions";
 import { ProjectTrade } from "src/constants/contracts";
+import { convertDateToFullString } from "utils/date";
+import useLoading from "@hooks/useLoading";
+import useMyOrder from "@hooks/useMyOrder";
+import useAlert from "@hooks/useAlert";
 
 type props = {
 }
 
 const TradeMyOrderSection: FC<props> = ({ }) => {
-    const dispatch = useDispatch();
-    const { account, YUSDBalance, rpc_provider, signer } = useAccount();
-    const [myOrders, myOrderLoading, myOrderError] = useSelector((state: any) => {
-        return [
-            state.trade.myOrders.data,
-            state.trade.myOrders.loading,
-            state.trade.myOrders.error,
-        ]
-    });
+    const { loadingStart, loadingEnd } = useLoading();
+    const { alertShow } = useAlert();
+    const { myOrders, loading: myOrderLoading, orderRetireve } = useMyOrder();
+    const { account, signer } = useAccount();
     const [orderId, setOrderId] = useState("-1");
     const projectTradeContract = useMemo(() => new Contract(
         ProjectTrade.address,
@@ -32,21 +31,33 @@ const TradeMyOrderSection: FC<props> = ({ }) => {
 
     useEffect(() => {
         if (account) {
-            dispatch(retireveingMyOrder() as any);
-            axiosInstance.get(`/trade/tradeOrdersByAddress?address=${account}`)
-                .then((response) => {
-                    let data: [] = response.data.data;
-                    // dispatch(updateMyOrder(data) as any);
-                    dispatch(updateMyOrder([1, 2, 3, 4, 5]) as any);
-                }).catch((error) => {
-                    console.log('error while getting projects info', error)
-                    dispatch(errorMyOrder() as any);
-                })
+            orderRetireve();
         }
     }, [account])
 
-    const cancelHandle = (order: any) => {
+    const filterOrderTypeDOM = (isBuy: Boolean = true) => {
+        return <span className={isBuy ? "text-status-plus" : "text-status-minus"}>
+            {isBuy ? "Buy" : "Sell"}
+        </span>
+    }
 
+    const cancelHandle = async (event: React.MouseEvent<HTMLButtonElement>, order: any) => {
+        event.stopPropagation();
+        try {
+            loadingStart();
+            let cancelTx = await projectTradeContract.cancelOrder(order.ptokenAddress, order.orderId);
+            await cancelTx.wait();
+            projectTradeContract.on("CancelOrder", (_ptoken, _orderId) => {
+                if (order.ptokenAddress == _ptoken && order.orderId == _orderId) {
+                    loadingEnd();
+                    alertShow({ content: `The order is caneled successfully`, status: 'success' });
+                    orderRetireve();
+                }
+            })
+        } catch (error) {
+            loadingEnd();
+            console.log(error);
+        }
     }
 
     return <>
@@ -60,7 +71,6 @@ const TradeMyOrderSection: FC<props> = ({ }) => {
                 <th><div>Price</div></th>
                 <th><div>Execute</div></th>
                 <th><div>Amount</div></th>
-                <th><div>Total</div></th>
                 <th><div>Order Placed On</div></th>
                 <th><div>Order Status</div></th>
                 <th><div>Actions</div></th>
@@ -84,7 +94,6 @@ const TradeMyOrderSection: FC<props> = ({ }) => {
                                 <td><div><div className="bg-gray-200 h-4 rounded animate-pulse"></div></div></td>
                                 <td><div><div className="bg-gray-200 h-4 rounded animate-pulse"></div></div></td>
                                 <td><div><div className="bg-gray-200 h-4 rounded animate-pulse"></div></div></td>
-                                <td><div><div className="bg-gray-200 h-4 rounded animate-pulse"></div></div></td>
                                 <td>
                                     <div className="flex items-center justify-around">
                                         <div className="bg-gray-200 w-12 h-4 rounded animate-pulse"></div>
@@ -101,27 +110,34 @@ const TradeMyOrderSection: FC<props> = ({ }) => {
                                     return <tr
                                         key={`myorder-row-${index}`}
                                         className={`bg-[#112923] cursor-pointer ${index != arr.length - 1 ? 'border-t border-solid border-[#4b4d4d]' : ''}`}
-                                        onClick={() => setOrderId("1")}
+                                        onClick={() => setOrderId(item.orderId)}
                                     >
-                                        <td className="p-2.5"><div><p className="items-center">2023-10-16 15:12:08</p></div></td>
-                                        <td><div><p className="text-center">161122</p></div></td>
+                                        <td className="p-2.5"><div><p className="items-center">{convertDateToFullString(new Date(item.createdAt))}</p></div></td>
+                                        <td><div><p className="text-center">{item.orderId}</p></div></td>
                                         <td className="p-2.5">
                                             <div className="flex items-center justify-center">
-                                                <img src="/images/coins/ETH.png" className="w-5 h-5 mr-2" />
-                                                <p>TEST</p>
+                                                <img src={item.project.iconUrl} className="w-5 h-5 mr-2" />
+                                                <p>{item.project.projectTitle}</p>
                                             </div>
                                         </td>
-                                        <td><div><p className="text-center">10.05</p></div></td>
-                                        <td><div><p className="text-center">10.05</p></div></td>
-                                        <td><div><p className="text-center">10.05</p></div></td>
-                                        <td><div><p className="text-center">0.19%</p></div></td>
-                                        <td><div><p className="text-center">1000</p></div></td>
-                                        <td><div><p className="text-center text-status-plus">BUY</p></div></td>
+                                        <td><div><p className="text-center">{filterOrderTypeDOM(item.isBuy)}</p></div></td>
+                                        <td><div><p className="text-center">{item.averagePrice}</p></div></td>
+                                        <td><div><p className="text-center">{item.price}</p></div></td>
+                                        <td><div><p className="text-center">{Number((Number(item.totalAmount) - Number(item.remainingAmount)) / Number(item.totalAmount) * 100).toFixed(2)}%</p></div></td>
+                                        <td><div><p className="text-center">{item.totalAmount}</p></div></td>
                                         <td><div><p className="text-center"></p></div></td>
-                                        <td><div><p className="text-center">Partial Fill</p></div></td>
+                                        <td><div>
+                                            <div className="flex items-center">
+                                                <div className={`w-1.5 h-1.5 rounded-full mr-2 ${Number(item.remainingAmount) == 0 ? 'bg-status-active' : (item.isCancelled ? 'bg-status-disable' : 'bg-status-warning')}`} />
+                                                <p>{Number(item.remainingAmount) == 0 ? 'Filled' : (item.isCancelled ? 'Canceled' : 'Partially Filled')}</p>
+                                            </div>
+                                        </div></td>
                                         <td>
                                             <div className="flex items-center justify-around">
-                                                <button onClick={() => cancelHandle(item)} className="bg-btn-primary text-white px-2 py-1 leading-none">Cancel</button>
+                                                {
+                                                    item.isCancelled ? <></> :
+                                                        <button onClick={(e) => cancelHandle(e, item)} className="bg-btn-primary text-white px-2 py-1 leading-none">Cancel</button>
+                                                }
                                             </div>
                                         </td>
                                     </tr>

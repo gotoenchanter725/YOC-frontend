@@ -50,6 +50,9 @@ module.exports = {
         'body-secondary': "#141130",
         'status-plus': '#0ead56',
         'status-minus': '#ef4444',
+        'status-active': '#0ead56',
+        'status-disable': '#898989',
+        'status-warning': '#e5ce1f',
       },
       backgroundImage: {
         'primary-pattern': "linear-gradient(90.46deg, rgba(30, 30, 30, 0.12) -18.76%, rgba(173, 173, 173, 0.12) 72.39%)",

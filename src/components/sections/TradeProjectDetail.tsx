@@ -21,6 +21,7 @@ import { ProjectTrade, TokenTemplate, YUSD } from 'src/constants/contracts';
 import useAlert from "@hooks/useAlert";
 import useTradeProject from "@hooks/useTrade";
 import useFundProject from "@hooks/useFund";
+import useLoading from "@hooks/useLoading";
 
 type props = {
     ptokenAddress: string,
@@ -28,6 +29,7 @@ type props = {
 }
 const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
     const { alertShow } = useAlert();
+    const { loadingStart, loadingEnd } = useLoading();
     const { YUSDBalance, account, signer } = useAccount();
     const { projects: tradeProjects, loading: tradeProjectLoading } = useTradeProject();
     const { projects: fundProjects, loading: fundProjectLoading } = useFundProject();
@@ -68,7 +70,12 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                 .then((response) => {
                     let data = response.data.data;
                     setPrices([
-                        ...data.pricesFor1d.data
+                        ...data.pricesFor1d.data.map((item: any) => {
+                            return {
+                                ...item,
+                                date: +new Date(item.date)
+                            }
+                        })
                     ])
                     setLoadingProjectDetail(2);
                     setSellOrders([...[1, 2, 3, 4]]);
@@ -102,7 +109,7 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                 axiosInstance.get(`/trade/pricesByPtokenAddress?ptokenAddress=${ptokenAddress}&period=${time}`)
                     .then((response) => {
                         let data = response.data.data;
-                        setPrices([...data])
+                        setPrices([...data.map((item: any) => { return { ...item, date: +new Date(item.date) } })])
                     }).catch((err) => {
                         console.log(err);
                     })
@@ -111,6 +118,7 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
     }, [period])
 
     const buyHandle = async () => {
+        loadingStart();
         try {
             let finalYUSDAmount = multiplyNumbers([multiplyNumbers([priceForBuy * amountForBuy]), 1.0019]);
             if (finalYUSDAmount == 0) {
@@ -128,22 +136,34 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                 return;
             }
             alert('here')
-            let approveTx = await YUSDContract.approve(ProjectTrade.address, convertEthToWei(String(finalYUSDAmount), YUSD.decimals));
+            let approveTx = await YUSDContract.approve(
+                ProjectTrade.address,
+                convertEthToWei(String(finalYUSDAmount), YUSD.decimals),
+                {
+                    gasLimit: 300000
+                }
+            );
             await approveTx.wait();
             let buyTx = await projectTradeContract.buy(
                 ptokenAddress,
-                amountForBuy,
-                priceForBuy,
+                convertEthToWei(String(amountForBuy), fundProjectDetail.shareDecimal),
+                convertEthToWei(String(priceForBuy), YUSD.decimals),
+                {
+                    gasLimit: 700000
+                }
             )
             await buyTx.wait();
             projectTradeContract.on('OrderCreated', (ptoken, userAddress, orderId, amount, isBuy) => {
-
+                console.log("OrderCreated:", ptoken, userAddress, orderId, amount, isBuy);
+                loadingEnd();
             })
         } catch (err) {
+            loadingEnd();
             console.log(err);
         }
     }
     const sellHandle = async () => {
+        loadingStart();
         try {
             let finalYUSDAmount = multiplyNumbers([priceForSell * amountForSell]);
             if (finalYUSDAmount == 0) {
@@ -165,19 +185,30 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                 TokenTemplate.abi,
                 signer
             )
-            let approveTx = await PTokenContract.approve(ProjectTrade.address, 0);
+            let approveTx = await PTokenContract.approve(
+                ProjectTrade.address,
+                convertEthToWei(String(amountForSell), fundProjectDetail.shareDecimal),
+                {
+                    gasLimit: 300000
+                }
+            );
             await approveTx.wait();
             let sellTx = await projectTradeContract.sell(
                 ptokenAddress,
-                amountForSell,
-                priceForSell,
+                convertEthToWei(String(amountForSell), fundProjectDetail.shareDecimal),
+                convertEthToWei(String(priceForSell), YUSD.decimals),
+                {
+                    gasLimit: 2000000
+                }
             )
             await sellTx.wait();
             projectTradeContract.on('OrderCreated', (ptoken, userAddress, orderId, amount, isBuy) => {
-
+                console.log("OrderCreated:", ptoken, userAddress, orderId, amount, isBuy);
+                loadingEnd();
             })
         } catch (err) {
-
+            loadingEnd();
+            console.log(err);
         }
     }
 
@@ -310,7 +341,7 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                                 <div className="h-[2px] w-full mb-6 bg-status-plus"></div>
                                 <div className="w-full flex items-center justify-between mb-6">
                                     <ProgressInput value={percentageOfBuy} setValue={(v: number) => { setPercentageOfBuy(v); setPriceForBuy(YUSDBalance * v / 100) }} className="w-[calc(100%_-_56px)]" inputClassName="plus" />
-                                    <button className="w-[50px] bg-status-plus px-3 py-2 text-sm rounded shadow-btn-primary" onClick={() => setPercentageOfBuy(100)}>MAX</button>
+                                    <button className="w-[50px] bg-status-plus px-3 py-2 text-sm rounded shadow-btn-primary" onClick={() => { setPercentageOfBuy(100); setPriceForBuy(Number(YUSDBalance)) }}>MAX</button>
                                 </div>
                                 <CInput value={multiplyNumbers([priceForBuy, amountForBuy])} disabled={true} label="TOTAL" className="" leftText={"YUSD"} />
                                 <div className="flex justify-end">
@@ -330,8 +361,8 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                                 <CInput value={amountForSell} setValue={(v: any) => { setAmountForSell(v); setPercentageOfSell(v / Number(fundProjectDetail.shareTokenBalance) * 100) }} label="Amount" className="mb-4" leftText={"YTESTE"} />
                                 <div className="h-[2px] w-full mb-6 bg-status-minus"></div>
                                 <div className="w-full flex items-center justify-between mb-6">
-                                    <ProgressInput value={percentageOfSell} setValue={(v: number) => { setPercentageOfSell(v); setAmountForSell(Number(fundProjectDetail.shareTokenBalance) * (v / 100)) }} className="w-[calc(100%_-_56px)]" inputClassName="minus" />
-                                    <button className="w-[50px] bg-status-minus px-3 py-2 text-sm rounded shadow-btn-primary" onClick={() => setPercentageOfSell(100)}>MAX</button>
+                                    <ProgressInput value={percentageOfSell} setValue={(v: number) => { setPercentageOfSell(v); console.log(fundProjectDetail.shareTokenBalance); setAmountForSell(Number(fundProjectDetail.shareTokenBalance) * (v / 100)) }} className="w-[calc(100%_-_56px)]" inputClassName="minus" />
+                                    <button className="w-[50px] bg-status-minus px-3 py-2 text-sm rounded shadow-btn-primary" onClick={() => { setPercentageOfSell(100); setAmountForSell(Number(fundProjectDetail.shareTokenBalance)) }}>MAX</button>
                                 </div>
                                 <CInput type="text" value={multiplyNumbers([priceForSell, amountForSell])} disabled={true} label="TOTAL" className="" leftText={"YUSD"} />
                                 <div className="flex justify-end">
