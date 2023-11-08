@@ -32,11 +32,11 @@ const TradeProjectSection: FC<props> = ({ }) => {
 
     const currentValueOfWallet = useCallback((ptokenAddress: string) => {
         let index = fundProjects.findIndex((item: any) => {
-            item.ptokenAddress == ptokenAddress
+            return String(item.shareToken).toLocaleLowerCase() == String(ptokenAddress).toLocaleLowerCase()
         });
         if (index == -1) return 0;
         else return fundProjects[index].shareTokenBalance;
-    }, []);
+    }, [fundProjects]);
 
     const filterNuanceDom = (val: string) => {
         return <span className={Number(val) > 0 ? "text-status-plus" : "text-status-minus"}>
@@ -141,7 +141,7 @@ const TradeProjectSection: FC<props> = ({ }) => {
                                                 </div>
                                             </td>
                                             <td><div><p className="text-center">{item.data.ptokenSellAmount}</p></div></td>
-                                            <td><div><p className="text-center">{currentValueOfWallet(item.ptokenAddress)}</p></div></td>
+                                            <td><div><p className="text-center">{currentValueOfWallet(item.data.ptokenAddress)}</p></div></td>
                                             <td><div><p className="text-center">{item.data.ptokenTradeBalance}</p></div></td>
                                             <td><div><p className="text-center">{Number(item.data.ptokenSellAmount) - Number(item.data.ptokenTradeBalance)}</p></div></td>
                                             <td><div><p className="text-center">{item.data.YUSDTradePoolAmount}</p></div></td>

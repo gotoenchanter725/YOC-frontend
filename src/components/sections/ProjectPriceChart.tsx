@@ -101,7 +101,6 @@ const ProjectPriceChart: FC<propsType> = ({ data = [], comparedData }) => {
           color: '#fff',
         },
         formatter: function (params: any) {
-          console.log(params);
           if (params.length == 1) {
             const category = params[0].axisValue;
             const value = params[0].data;

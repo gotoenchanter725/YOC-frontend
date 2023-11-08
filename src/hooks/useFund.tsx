@@ -45,7 +45,7 @@ const useProject = () => {
                     });
                 })
             ).then(() => {
-                dispatch(updateProjects() as any);
+                // dispatch(updateProjects() as any);
             })
         } catch (error) {
             console.log("project infos error: ", error);

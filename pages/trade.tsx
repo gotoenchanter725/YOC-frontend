@@ -10,12 +10,16 @@ const Trade: FC = () => {
     const [tabId, setTabId] = useState('project');
     const [isMintShow, setIsMintShow] = useState(false);
     const { YUSDBalance, account } = useAccount();
+    const [YUSDInOrder, setYUSDInOrder] = useState(0);
 
     useEffect(() => {
         if (account) {
+            console.log('here');
             axios.get(`/trade/tradeYUSDByAddress?address=${account}`)
                 .then((response) => {
                     console.log(response);
+                    let data = response.data;
+                    setYUSDInOrder(Number(data.value));
                 }).catch(err => {
                     console.log(err);
                 })
@@ -36,10 +40,10 @@ const Trade: FC = () => {
             <div className="bg-[#4b4d4d] px-2 py-1 flex items-center rounded text-sm">
                 <p className="mr-2">Your YUSD</p>
                 <div className="bg-body-primary px-2 py-1">
-                    <p className="leading-none text-lg mb-2">Total: {0}</p>
+                    <p className="leading-none text-lg mb-2">Total: {YUSDBalance + YUSDInOrder}</p>
                     <div className="flex items-center mr-3">
                         <p className="leading-none">Wallet: {YUSDBalance}</p>
-                        <p className="leading-none pl-2">In Order: {0}</p>
+                        <p className="leading-none pl-2">In Order: {YUSDInOrder}</p>
                     </div>
                 </div>
                 <button onClick={() => { setIsMintShow(true) }} className="ml-2 text-sm rounded p-2 leading-none bg-btn-primary">Mint YUSD</button>

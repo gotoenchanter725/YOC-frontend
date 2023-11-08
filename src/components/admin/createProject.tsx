@@ -141,8 +141,12 @@ const CreateProjectContent: FC<Props> = ({ handleClose }) => {
                         sellAmount: ((Number(total) * Number(sellPercent)) / 100).toFixed(2),
                         price: price
                     }
-                    let respons = await axios.post(process.env.API_ADDRESS + '/project/create', data);
-                    console.log(respons);
+                    try {
+                        let respons = await axios.post(process.env.API_ADDRESS + '/project/create', data);
+                        console.log(respons);
+                    } catch (error) {
+                        console.log(error)
+                    }
 
                     setTokenAddr(tokenAddr);
                     alertShow({

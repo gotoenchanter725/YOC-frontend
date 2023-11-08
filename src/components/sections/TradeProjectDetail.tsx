@@ -151,7 +151,7 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                     console.log("OrderCreated:", ptoken, userAddress, orderId, amount, isBuy);
                     alertShow({
                         content: `The ${isBuy == true ? 'Buy' : 'Sell'} order created successfully`,
-                        text: `Price: ${convertWeiToEth(price, YUSD.decimals)} YUSD, Amount: ${convertWeiToEth(amount, tradeProjectDetail.data.ptokenSymbol)}`,
+                        text: `Price: ${convertWeiToEth(price, YUSD.decimals)} YUSD, Amount: ${convertWeiToEth(amount, tradeProjectDetail.data.ptokenDecimals)}`,
                         status: 'success'
                     });
                     loadingEnd();
@@ -207,7 +207,7 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                     console.log("OrderCreated:", ptoken, userAddress, orderId, amount, isBuy);
                     alertShow({
                         content: `The ${isBuy == true ? 'Buy' : 'Sell'} order created successfully`,
-                        text: `Price: ${convertWeiToEth(price, YUSD.decimals)} YUSD, Amount: ${convertWeiToEth(amount, tradeProjectDetail.data.ptokenSymbol)}`,
+                        text: `Price: ${convertWeiToEth(price, YUSD.decimals)} YUSD, Amount: ${convertWeiToEth(amount, tradeProjectDetail.data.ptokenDecimals)}`,
                         status: 'success'
                     });
                     loadingEnd();
@@ -250,7 +250,7 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                 </div>
             </div>
 
-            <p className="py-2">You have {fundProjectDetail ? fundProjectDetail.shareTokenBalance : ""} {tradeProjectDetail ? tradeProjectDetail.data.projectTitle : ""} in your wallet, {tradeProjectDetail ? tradeProjectDetail.data.ptokenTradeBalance : "0.0"} in Order, {tradeProjectDetail ? Number(tradeProjectDetail.data.ptokenSellAmount) - Number(tradeProjectDetail.data.ptokenTradeBalance) : "0.0"} available</p>
+            <p className="py-2">You have {fundProjectDetail ? fundProjectDetail.shareTokenBalance : "0"} {tradeProjectDetail ? tradeProjectDetail.data.projectTitle : ""} in your wallet, {tradeProjectDetail ? tradeProjectDetail.data.ptokenTradeBalance : "0.0"} in Order, {tradeProjectDetail ? Number(tradeProjectDetail.data.ptokenSellAmount) - Number(tradeProjectDetail.data.ptokenTradeBalance) : "0.0"} available</p>
             <div className="w-full h-[calc(100vh_-_300px)] overflow-x-hidden overflow-y-auto scrollbar scrollbar-w-1 scrollbar-thumb-[#FFFFFF33] scrollbar-track-[#FFFFFF33]">
                 <div className="w-full flex items-stretch pr-2">
                     <div className="min-w-[320px] w-1/4 h-full p-4 rounded border-2 border-solid border-border-secondary bg-[#00000025]">
