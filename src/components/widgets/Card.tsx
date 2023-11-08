@@ -117,30 +117,30 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
                     }
                 });
 
-                // projecContract.on('Refund', (address, amount1, amount2, user) => {
-                //     updateProjectInfoByAddress(address);
+                projecContract.on('Refund', (address, amount1, amount2, user) => {
+                    updateProjectInfoByAddress(address);
 
-                //     if (user == account) {
-                //         let realInvestAmount = convertWeiToEth(amount1, investContract ? investContract.decimals : 16)
-                //         let realShareAmount = convertWeiToEth(amount2, shareContract ? shareContract.decimals : 16)
-                //         alertShow({
-                //             content: `Refund ${realShareAmount} ${shareContract?.symbol}, ${realInvestAmount} ${investContract?.symbol} Successfully`,
-                //             status: 'success'
-                //         })
-                //     }
-                // });
+                    if (user == account) {
+                        let realInvestAmount = convertWeiToEth(amount1, investContract ? investContract.decimals : 16)
+                        let realShareAmount = convertWeiToEth(amount2, shareContract ? shareContract.decimals : 16)
+                        alertShow({
+                            content: `Refund ${realShareAmount} ${shareContract?.symbol}, ${realInvestAmount} ${investContract?.symbol} Successfully`,
+                            status: 'success'
+                        })
+                    }
+                });
 
-                // projecContract.on('Claimed', (address, amount, user) => {
-                //     updateProjectInfoByAddress(address);
+                projecContract.on('Claimed', (address, amount, user) => {
+                    updateProjectInfoByAddress(address);
 
-                //     if (user == account) {
-                //         let realAmount = convertWeiToEth(amount, investContract ? investContract.decimals : 16)
-                //         alertShow({
-                //             content: `Dividend Claimed ${realAmount} ${investContract?.symbol} Successfully`,
-                //             status: 'success'
-                //         })
-                //     }
-                // })
+                    if (user == account) {
+                        let realAmount = convertWeiToEth(amount, investContract ? investContract.decimals : 16)
+                        alertShow({
+                            content: `Dividend Claimed ${realAmount} ${investContract?.symbol} Successfully`,
+                            status: 'success'
+                        })
+                    }
+                });
 
                 // projecContract.on('ProfitDeposited', (address, amount, user) => {
                 //     updateProjectInfoByAddress(address);

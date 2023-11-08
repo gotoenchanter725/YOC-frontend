@@ -14,7 +14,7 @@ import MintSection from "./Mint";
 const ProjectPriceChart = dynamic(() => import('./ProjectPriceChart'), { ssr: false });
 
 import useAccount from "@hooks/useAccount";
-import { convertEthToWei, isValidEthAddress } from "utils/unit";
+import { convertEthToWei, convertWeiToEth, isValidEthAddress } from "utils/unit";
 import axiosInstance from "utils/axios";
 import { convertPeriodShortToFull, convertPeriodToMiliSecond, multiplyNumbers } from "utils/features";
 import { ProjectTrade, TokenTemplate, YUSD } from 'src/constants/contracts';
@@ -146,9 +146,16 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                 }
             );
             await approveTx.wait();
-            projectTradeContract.on('OrderCreated', (ptoken, userAddress, orderId, amount, isBuy) => {
-                console.log("OrderCreated:", ptoken, userAddress, orderId, amount, isBuy);
-                loadingEnd();
+            projectTradeContract.on('OrderCreated', (ptoken, userAddress, orderId, amount, price, isBuy) => {
+                if (ptokenAddress == ptoken && userAddress == account) {
+                    console.log("OrderCreated:", ptoken, userAddress, orderId, amount, isBuy);
+                    alertShow({
+                        content: `The ${isBuy == true ? 'Buy' : 'Sell'} order created successfully`,
+                        text: `Price: ${convertWeiToEth(price, YUSD.decimals)} YUSD, Amount: ${convertWeiToEth(amount, tradeProjectDetail.data.ptokenSymbol)}`,
+                        status: 'success'
+                    });
+                    loadingEnd();
+                }
             })
             let buyTx = await projectTradeContract.buy(
                 ptokenAddress,
@@ -195,9 +202,16 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                 }
             );
             await approveTx.wait();
-            projectTradeContract.on('OrderCreated', (ptoken, userAddress, orderId, amount, isBuy) => {
-                console.log("OrderCreated:", ptoken, userAddress, orderId, amount, isBuy);
-                loadingEnd();
+            projectTradeContract.on('OrderCreated', (ptoken, userAddress, orderId, amount, price, isBuy) => {
+                if (ptokenAddress == ptoken && userAddress == account) {
+                    console.log("OrderCreated:", ptoken, userAddress, orderId, amount, isBuy);
+                    alertShow({
+                        content: `The ${isBuy == true ? 'Buy' : 'Sell'} order created successfully`,
+                        text: `Price: ${convertWeiToEth(price, YUSD.decimals)} YUSD, Amount: ${convertWeiToEth(amount, tradeProjectDetail.data.ptokenSymbol)}`,
+                        status: 'success'
+                    });
+                    loadingEnd();
+                }
             })
             let sellTx = await projectTradeContract.sell(
                 ptokenAddress,
