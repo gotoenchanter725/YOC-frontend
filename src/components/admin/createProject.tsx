@@ -160,17 +160,6 @@ const CreateProjectContent: FC<Props> = ({ handleClose }) => {
         }
     };
 
-    useEffect(() => {
-        if (rpc_provider) {
-            const ProjectManagerContract = new Contract(ProjectManager.address, ProjectManager.abi, rpc_provider);
-            ProjectManagerContract.on('DeployedNewProject', (owner: any, contractAddr: any, tokenAddr: any) => {
-                if (owner == account) {
-                    setTokenAddr(tokenAddr);
-                }
-            })
-        }
-    }, [rpc_provider]);
-
     const cancelProject = () => {
         handleClose();
         console.log("cancel Action");
@@ -261,7 +250,7 @@ const CreateProjectContent: FC<Props> = ({ handleClose }) => {
                 <div className='d-flex gap-4 amount_price'>
                     <div className="input_control price sold_amount">
                         <label htmlFor="">Amount of tokens to be sold</label>
-                        <input className="text-white rounded border border-[#FFFFFF22] bg-transparent bg-primary-pattern px-4 py-2 outline-none" type="text" value={sellAmount} />
+                        <input className="text-white rounded border border-[#FFFFFF22] bg-transparent bg-primary-pattern px-4 py-2 outline-none" type="text" value={sellAmount} onChange={(e) => { }} />
                     </div>
                     <div className="input_control price">
                         <label htmlFor="">Price (Tokens for 1 USDC)</label>

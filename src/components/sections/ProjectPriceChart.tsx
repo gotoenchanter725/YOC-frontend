@@ -49,23 +49,24 @@
 
 import React, { FC, useEffect } from 'react';
 import * as echarts from 'echarts/core';
-import { LineChart } from 'echarts/charts';
+import { LineChart, BarChart } from 'echarts/charts';
 import { TooltipComponent, GridComponent } from 'echarts/components';
 import { CanvasRenderer } from 'echarts/renderers';
 
 // Register components and renderers
-echarts.use([LineChart, TooltipComponent, GridComponent, CanvasRenderer]);
+echarts.use([LineChart, BarChart, TooltipComponent, GridComponent, CanvasRenderer]);
 
 type propsType = {
-  data: any[]
+  data: any[],
+  comparedData?: any[],
 }
 
-const ProjectPriceChart: FC<propsType> = ({ data = [] }) => {
+const ProjectPriceChart: FC<propsType> = ({ data = [], comparedData }) => {
   useEffect(() => {
     // Create chart instance
-    const chart = echarts.init(document.getElementById('chartDiv'));
-    // Set the options and data for the chart
-    const options = {
+    const mainChart = echarts.init(document.getElementById('chartDiv'));
+    // Set the mainOptions and data for the chart
+    const mainOptions = {
       grid: {
         top: 0,
         bottom: 0,
@@ -84,8 +85,8 @@ const ProjectPriceChart: FC<propsType> = ({ data = [] }) => {
       yAxis: {
         name: 'Value',
         type: 'value',
-        min: Math.min(...data.map((item: any) => item.value)) * 0.9,
-        max: Math.max(...data.map((item: any) => item.value)) * 1.1,
+        min: Math.min(...[...data.map((item: any) => item.value), ...(comparedData ? comparedData.map((item: any) => item.value) : [])]) * 0.9,
+        max: Math.max(...[...data.map((item: any) => item.value), ...(comparedData ? comparedData.map((item: any) => item.value) : [])]) * 1.1,
         show: false,
         axisLine: { show: false },
       },
@@ -100,10 +101,22 @@ const ProjectPriceChart: FC<propsType> = ({ data = [] }) => {
           color: '#fff',
         },
         formatter: function (params: any) {
-          const category = params[0].axisValue;
-          const value = params[0].data;
-          const formattedDate = new Date(parseFloat(category)).toISOString().split('T')[0];
-          return `Date: ${formattedDate}<br/>Value: ${value}`;
+          console.log(params);
+          if (params.length == 1) {
+            const category = params[0].axisValue;
+            const value = params[0].data;
+            const formattedDate = new Date(parseFloat(category)).toISOString().split('T')[0];
+            return `Date: ${formattedDate}<br/>Value: ${value}`;
+          } else if (params.length == 2) {
+            const category = params[0].axisValue;
+            const value = params[0].data;
+            const cValue = params[1].data;
+            const formattedDate = new Date(parseFloat(category)).toISOString().split('T')[0];
+            return `<div>
+              Date: ${formattedDate}<br/>Value1: ${value}<br/>
+              Value2: ${cValue}<br/>
+            </div>`
+          }
         },
       },
       series: [
@@ -118,18 +131,69 @@ const ProjectPriceChart: FC<propsType> = ({ data = [] }) => {
             ...data.map((item: any) => item.value)
           ],
         },
+        ...(comparedData?.length ? [{
+          type: 'line',
+          smooth: true,
+          // areaStyle: {},
+          lineStyle: {
+            color: 'red'
+          },
+          data: [
+            ...comparedData.map((item: any) => item.value)
+          ],
+        }] : [])
       ],
     };
+    mainChart.setOption(mainOptions);
 
-    chart.setOption(options);
+    // diff chart
+    const diffChart = echarts.init(document.getElementById('diffChartDiv'));
+    const diffOptions = {
+      grid: {
+        top: 0,
+        bottom: 0,
+        left: 0,
+        right: 0,
+        containLabel: true,
+      },
+      xAxis: {
+        boundaryGap: false,
+        type: 'category',
+        data: [
+          ...data.map((item: any) => item.date)
+        ],
+        show: false,
+      },
+      yAxis: {
+        type: 'value',
+        show: false,
+      },
+      series: [
+        {
+          data: [
+            ...data.map((item: any, index) => (comparedData && comparedData[index]) ? item.value - comparedData[index].value : 0)
+          ],
+          type: 'bar',
+          showBackground: true,
+          backgroundStyle: {
+            color: 'rgba(180, 180, 180, 0.2)'
+          }
+        }
+      ]
+    };
+    diffChart.setOption(diffOptions);
 
     // Dispose the chart when the component unmounts
     return () => {
-      chart.dispose();
+      mainChart.dispose();
+      diffChart.dispose();
     };
-  }, [data]);
+  }, [data, comparedData]);
 
-  return <div id="chartDiv" style={{ width: '100%', height: '200px' }}></div>
+  return <div>
+    <div id="chartDiv" style={{ width: '100%', height: '200px' }}></div>
+    <div id="diffChartDiv" style={{ width: '100%', height: (comparedData && comparedData.length) ? '60px' : '0px' }}></div>
+  </div>
 };
 
 export default ProjectPriceChart;

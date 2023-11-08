@@ -1,7 +1,7 @@
 import React, { FC, useEffect, useState, useMemo } from "react";
 import { useSelector } from "react-redux";
 import dynamic from 'next/dynamic';
-import { BsArrowDown } from "react-icons/bs";
+import { BsArrowUp } from "react-icons/bs";
 import { Contract } from "ethers";
 
 import CInput from "@components/widgets/CInput";
@@ -38,6 +38,8 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
     const [sellOrders, setSellOrders] = useState<any[]>([]);
     const [loadingProjectDetail, setLoadingProjectDetail] = useState(0); // 0: not loading, 1: loading, 2: done
     const [prices, setPrices] = useState<any[]>([]);
+    const [latestPrice, setLatestPrice] = useState(0);
+    const [comparedPtokedAddress, setComparedPtokedAddress] = useState('');
     const [comparedPrices, setComparedPrices] = useState<any[]>([]);
     const [tradeProjectDetail, setTradeProjectDetail] = useState<any>();
     const [fundProjectDetail, setFundProjectDetail] = useState<any>();
@@ -77,9 +79,10 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                             }
                         })
                     ])
+                    setLatestPrice(Number(data.latestPrice));
                     setLoadingProjectDetail(2);
-                    setSellOrders([...[1, 2, 3, 4]]);
-                    setBuyOrders([...[1, 2, 3, 4]]);
+                    setSellOrders([...data.orders.filter((item: any) => item.isCancelled == false && item.isBuy == true).sort((a: any, b: any) => Number(b.price) - Number(a.price))]);
+                    setBuyOrders([...data.orders.filter((item: any) => item.isCancelled == false && item.isBuy == false).sort((a: any, b: any) => Number(b.price) - Number(a.price))]);
                 }).catch(err => {
                     console.log(err);
                     setLoadingProjectDetail(2);
@@ -135,7 +138,6 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                 })
                 return;
             }
-            alert('here')
             let approveTx = await YUSDContract.approve(
                 ProjectTrade.address,
                 convertEthToWei(String(finalYUSDAmount), YUSD.decimals),
@@ -144,6 +146,10 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                 }
             );
             await approveTx.wait();
+            projectTradeContract.on('OrderCreated', (ptoken, userAddress, orderId, amount, isBuy) => {
+                console.log("OrderCreated:", ptoken, userAddress, orderId, amount, isBuy);
+                loadingEnd();
+            })
             let buyTx = await projectTradeContract.buy(
                 ptokenAddress,
                 convertEthToWei(String(amountForBuy), fundProjectDetail.shareDecimal),
@@ -153,10 +159,6 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                 }
             )
             await buyTx.wait();
-            projectTradeContract.on('OrderCreated', (ptoken, userAddress, orderId, amount, isBuy) => {
-                console.log("OrderCreated:", ptoken, userAddress, orderId, amount, isBuy);
-                loadingEnd();
-            })
         } catch (err) {
             loadingEnd();
             console.log(err);
@@ -193,6 +195,10 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                 }
             );
             await approveTx.wait();
+            projectTradeContract.on('OrderCreated', (ptoken, userAddress, orderId, amount, isBuy) => {
+                console.log("OrderCreated:", ptoken, userAddress, orderId, amount, isBuy);
+                loadingEnd();
+            })
             let sellTx = await projectTradeContract.sell(
                 ptokenAddress,
                 convertEthToWei(String(amountForSell), fundProjectDetail.shareDecimal),
@@ -202,15 +208,24 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                 }
             )
             await sellTx.wait();
-            projectTradeContract.on('OrderCreated', (ptoken, userAddress, orderId, amount, isBuy) => {
-                console.log("OrderCreated:", ptoken, userAddress, orderId, amount, isBuy);
-                loadingEnd();
-            })
         } catch (err) {
             loadingEnd();
             console.log(err);
         }
     }
+
+    useEffect(() => {
+        if (comparedPtokedAddress) {
+            let time = convertPeriodToMiliSecond(period);
+            axiosInstance.get(`/trade/pricesByPtokenAddress?ptokenAddress=${comparedPtokedAddress}&period=${time}`)
+                .then((response) => {
+                    let data = response.data.data;
+                    setComparedPrices([...data.map((item: any) => { return { ...item, date: +new Date(item.date) } })])
+                }).catch((err) => {
+                    console.log(err);
+                })
+        }
+    }, [comparedPtokedAddress, tradeProjects])
 
     return <>
         <div className="w-full text-sm p-2">
@@ -250,9 +265,9 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                                                 {
                                                     buyOrders.map((item, index) => {
                                                         return <div key={`buy-order-${index}`} className="flex items-center border-t border-solid border-[#bdbdbd]">
-                                                            <div className="w-1/3 p-2 text-red-500 text-center">0.9000</div>
-                                                            <div className="w-1/3 p-2 text-center">1.512</div>
-                                                            <div className="w-1/3 p-2 text-center">12.3</div>
+                                                            <div className={`w-1/3 p-2 ${latestPrice > Number(item.price) ? 'text-status-minus' : 'text-status-plus'} text-center`}>{item.price}</div>
+                                                            <div className="w-1/3 p-2 text-center">{item.remainingAmount}</div>
+                                                            <div className="w-1/3 p-2 text-center">{(Number(item.price) * Number(item.remainingAmount)).toFixed(2)}</div>
                                                         </div>
                                                     })
                                                 }
@@ -263,7 +278,7 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                                     </>
                                 }
                             </div>
-                            <div className="flex items-center text-md my-2.5">{0.1} YUSD <BsArrowDown className="ml-2 text-status-plus" /></div>
+                            <div className="flex items-center text-md my-2.5">{Number(latestPrice).toFixed(2)} YUSD <BsArrowUp className="ml-2 text-status-plus" /></div>
                             <div className="min-h-[calc(50vh_-_180px)] h-full">
                                 {
                                     loadingProjectDetail == 1 ? <>
@@ -282,9 +297,9 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                                                 {
                                                     sellOrders.map((item, index) => {
                                                         return <div key={`buy-order-${index}`} className="flex items-center border-t border-solid border-[#bdbdbd]">
-                                                            <div className="w-1/3 p-2 text-red-500 text-center">0.9000</div>
-                                                            <div className="w-1/3 p-2 text-center">1.512</div>
-                                                            <div className="w-1/3 p-2 text-center">12.3</div>
+                                                            <div className={`w-1/3 p-2 ${latestPrice > Number(item.price) ? 'text-status-minus' : 'text-status-plus'} text-center`}>{item.price}</div>
+                                                            <div className="w-1/3 p-2 text-center">{item.remainingAmount}</div>
+                                                            <div className="w-1/3 p-2 text-center">{(Number(item.price) * Number(item.remainingAmount)).toFixed(2)}</div>
                                                         </div>
                                                     })
                                                 }
@@ -312,11 +327,11 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                                     </div>
                                     <div className="ml-12 flex items-center">
                                         <div>Compare:</div>
-                                        <ProjectSelector />
+                                        <ProjectSelector ptokenAddress={comparedPtokedAddress} setPtokenAddress={(v: string) => setComparedPtokedAddress(v)} exceptAddress={ptokenAddress} />
                                     </div>
                                 </div>
                                 <div id="priceChart" className="chart-section mb-2">
-                                    <ProjectPriceChart data={prices} />
+                                    <ProjectPriceChart data={prices} comparedData={comparedPrices} />
                                 </div>
                                 <div className=" mb-2">
                                     <div className="flex items-center"><p>{tradeProjectDetail ? tradeProjectDetail.data.projectTitle : ""} </p> <p className="italic">Trade Valume:</p></div>

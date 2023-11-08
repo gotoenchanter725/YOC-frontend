@@ -6,7 +6,8 @@ import {
     USDCToken,
     Project,
     TokenTemplate,
-    AdminWalletAddress
+    AdminWalletAddress,
+    YUSD
 } from "../src/constants/contracts";
 import Card from "@components/widgets/Card";
 import ShowMoreIcon from "@components/widgets/ShowMoreIcon";
@@ -46,13 +47,13 @@ const Fund: FC = () => {
         const ProjectContractInstance = new Contract(poolAddress, Project.abi, signer);
         let investAmount = Number(ethers.utils.parseUnits(amount, investDecimal));
         let shareAmount = Number(ethers.utils.parseUnits((amount * tokenPrice).toFixed(2), shareDecimal)); // N
-        console.log(shareAmount, amount, investAllowance);
+        console.log(shareAmount, amount, investAllowance, tokenPrice);
         try {
             loadingStart();
 
             if (amount > +investAllowance) {
-                const investTokenInstance = new Contract(investAddress, USDCToken.abi, signer);
-                let approve_investToken = await investTokenInstance.approve(poolAddress, shareAmount, {
+                const investTokenInstance = new Contract(investAddress, YUSD.abi, signer);
+                let approve_investToken = await investTokenInstance.approve(poolAddress, investAmount, {
                     gasLimit: 300000
                 });
                 await approve_investToken.wait();
