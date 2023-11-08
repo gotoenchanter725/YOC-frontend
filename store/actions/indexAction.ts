@@ -176,13 +176,13 @@ export const getShareTokenBalance = (address: any, account: any) => async (dispa
   }
 }
 
-export const retireveingProject = () => (dispatch: any) => {
+export const retireveingFundProject = () => (dispatch: any) => {
   dispatch({
     type: PROJECT_INFO_RETIREVEING
   })
 }
 
-export const updateProjects = () => (dispatch: any) => {
+export const updateFundProjects = () => (dispatch: any) => {
   dispatch({
     type: PROJECT_INFO_UPDATE
   })
@@ -199,7 +199,7 @@ export const updateProjectByProjectAddress = (address: string, data: any, loadin
   })
 }
 
-export const errorProject = () => (dispatch: any) => {
+export const errorFundProject = () => (dispatch: any) => {
   dispatch({
     type: PROJECT_INFO_ERROR
   })

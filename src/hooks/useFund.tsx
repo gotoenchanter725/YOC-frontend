@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback } from "react";
 import { Contract, ethers } from "ethers";
 
 import useAccount from "./useAccount";
-import { retireveingProject, updateProjects, errorProject, updateProjectByProjectAddress } from "store/actions/indexAction";
+import { retireveingFundProject, updateFundProjects, errorFundProject, updateProjectByProjectAddress } from "store/actions/indexAction";
 import { Project, ProjectDetail, ProjectManager } from "src/constants/contracts";
 
 
@@ -34,7 +34,7 @@ const useProject = () => {
             const projects = await ProjectManagerInstance.getProjectAllContract();
             const projectsDetail: any[] = [];
 
-            dispatch(retireveingProject() as any);
+            dispatch(retireveingFundProject() as any);
 
             Promise.all(
                 projects.map((item: any) => {
@@ -45,11 +45,11 @@ const useProject = () => {
                     });
                 })
             ).then(() => {
-                // dispatch(updateProjects() as any);
+                // dispatch(updateFundProjects() as any);
             })
         } catch (error) {
             console.log("project infos error: ", error);
-            dispatch(errorProject() as any);
+            dispatch(errorFundProject() as any);
         }
     }, [rpc_provider, account]);
 
