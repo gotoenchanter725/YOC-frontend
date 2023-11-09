@@ -22,13 +22,11 @@ const TradeProjectSection: FC<props> = ({ }) => {
 
     useEffect(() => {
         (async () => {
-            if (rpc_provider) {
-                console.log("FUNDS", account)
-                await retireveProjectsDetails();
-            }
+            console.log("FUNDS", account)
+            await retireveProjectsDetails();
         })()
         console.log('fundProjectLoading', fundProjects);
-    }, [rpc_provider, account])
+    }, [account])
 
     const currentValueOfWallet = useCallback((ptokenAddress: string) => {
         let index = fundProjects.findIndex((item: any) => {
@@ -98,7 +96,7 @@ const TradeProjectSection: FC<props> = ({ }) => {
 
             <tbody>
                 {
-                    (fundLoading != 2 || projectLoading != 2) ? <>
+                    (fundLoading < 2 || projectLoading != 2) ? <>
                         {
                             [0, 0, 0, 0, 0, 0].map((item: any, index: number, arr) => {
                                 return <tr key={`project-row-${index}`} className={`bg-[#112923] ${index != arr.length - 1 ? 'border-b border-solid border-[#4b4d4d]' : ''}`}>

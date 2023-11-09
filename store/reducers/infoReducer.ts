@@ -41,9 +41,9 @@ const infoReducer = (state = initialState, action: any) => {
         ...state,
         projects: {
           data: [
-            ...state.projects.data
+            ...action.payload.data
           ],
-          loading: 2
+          loading: state.projects.loading + 1
         }
       }
     case PROJECT_INFO_UPDATE_BY_PROJECT_ADDRESS:

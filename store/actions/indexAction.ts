@@ -182,9 +182,12 @@ export const retireveingFundProject = () => (dispatch: any) => {
   })
 }
 
-export const updateFundProjects = () => (dispatch: any) => {
+export const updateFundProjects = (data: any[]) => (dispatch: any) => {
   dispatch({
-    type: PROJECT_INFO_UPDATE
+    type: PROJECT_INFO_UPDATE,
+    payload: {
+      data
+    }
   })
 }
 

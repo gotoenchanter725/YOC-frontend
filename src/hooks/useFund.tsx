@@ -45,7 +45,12 @@ const useProject = () => {
                     });
                 })
             ).then(() => {
-                // dispatch(updateFundProjects() as any);
+                console.log('eeeeeeeeeeeeeeeee', projectsDetail);
+                if (account) {
+                    setTimeout(() => {
+                        dispatch(updateFundProjects(projectsDetail) as any);
+                    }, 500);
+                }
             })
         } catch (error) {
             console.log("project infos error: ", error);
