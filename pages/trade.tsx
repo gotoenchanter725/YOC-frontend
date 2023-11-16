@@ -40,10 +40,10 @@ const Trade: FC = () => {
             <div className="bg-[#4b4d4d] px-2 py-1 flex items-center rounded text-sm">
                 <p className="mr-2">Your YUSD</p>
                 <div className="bg-body-primary px-2 py-1">
-                    <p className="leading-none text-lg mb-2">Total: {YUSDBalance + YUSDInOrder}</p>
+                    <p className="leading-none text-lg mb-2">Total: {(YUSDBalance + YUSDInOrder).toFixed(2)}</p>
                     <div className="flex items-center mr-3">
-                        <p className="leading-none">Wallet: {YUSDBalance}</p>
-                        <p className="leading-none pl-2">In Order: {YUSDInOrder}</p>
+                        <p className="leading-none">Wallet: {YUSDBalance.toFixed(2)}</p>
+                        <p className="leading-none pl-2">In Order: {YUSDInOrder.toFixed(2)}</p>
                     </div>
                 </div>
                 <button onClick={() => { setIsMintShow(true) }} className="ml-2 text-sm rounded p-2 leading-none bg-btn-primary">Mint YUSD</button>

@@ -19,10 +19,10 @@ export const convertRate = function (in_: any, out_: any) {
     }
 }
 
-export const showBigNumber = (v: any) => {
+export const showBigNumber = (v: any, decimals = 3) => {
     if (Number(v) == 0) return "0";
     const number = new BigNumber(v);
-    const formattedNumber = number.toFormat(3, BigNumber.ROUND_DOWN, {
+    const formattedNumber = number.toFormat(decimals, BigNumber.ROUND_DOWN, {
         decimalSeparator: '.',
         groupSeparator: ',',
     }).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,');

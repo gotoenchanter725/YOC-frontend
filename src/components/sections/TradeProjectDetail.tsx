@@ -1,8 +1,7 @@
 import React, { FC, useEffect, useState, useMemo } from "react";
-import { useSelector } from "react-redux";
 import dynamic from 'next/dynamic';
 import { BsArrowUp } from "react-icons/bs";
-import { Contract } from "ethers";
+import { Contract, constants } from "ethers";
 
 import CInput from "@components/widgets/CInput";
 import Period from "@components/widgets/Period";
@@ -12,9 +11,10 @@ import Modal from "@components/widgets/Modalv2";
 import NoData from "@components/widgets/NoData";
 import MintSection from "./Mint";
 const ProjectPriceChart = dynamic(() => import('./ProjectPriceChart'), { ssr: false });
+const { MaxUint256 } = constants;
 
 import useAccount from "@hooks/useAccount";
-import { convertEthToWei, convertWeiToEth, isValidEthAddress } from "utils/unit";
+import { convertEthToWei, convertWeiToEth, isValidEthAddress, showBigNumber } from "utils/unit";
 import axiosInstance from "utils/axios";
 import { convertPeriodShortToFull, convertPeriodToMiliSecond, multiplyNumbers } from "utils/features";
 import { ProjectTrade, TokenTemplate, YUSD } from 'src/constants/contracts';
@@ -46,6 +46,9 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
     const [period, setPeriod] = useState("1D");
     const [percentageOfBuy, setPercentageOfBuy] = useState(0);
     const [percentageOfSell, setPercentageOfSell] = useState(0);
+    const [variation, setVariation] = useState(0);
+    const [valume, setValume] = useState(0);
+    const [reloading, setReloading] = useState(1);
 
     const [priceForBuy, setPriceForBuy] = useState(0);
     const [priceForSell, setPriceForSell] = useState(0);
@@ -64,38 +67,38 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
     ), [signer]);
 
     useEffect(() => {
-        if (isValidEthAddress(ptokenAddress)) {
+        if (isValidEthAddress(ptokenAddress) && reloading) {
             console.log("isValidEthAddress", ptokenAddress)
             // retireve the project detailed data using ptokenAddress
             setLoadingProjectDetail(1);
             axiosInstance.get(`/trade/projectDetailByPtokenAddress?ptokenAddress=${ptokenAddress}`)
                 .then((response) => {
                     let data = response.data.data;
-                    setPrices([
-                        ...data.pricesFor1d.data.map((item: any) => {
-                            return {
-                                ...item,
-                                date: +new Date(item.date)
-                            }
-                        })
-                    ])
+                    // setPrices([
+                    //     ...data.pricesFor1d.data.map((item: any) => {
+                    //         return {
+                    //             ...item,
+                    //             date: +new Date(item.date)
+                    //         }
+                    //     })
+                    // ])
                     setLatestPrice(Number(data.latestPrice));
                     setLoadingProjectDetail(2);
-                    setSellOrders([...data.orders.filter((item: any) => item.isCancelled == false && item.isBuy == true).sort((a: any, b: any) => Number(b.price) - Number(a.price))]);
-                    setBuyOrders([...data.orders.filter((item: any) => item.isCancelled == false && item.isBuy == false).sort((a: any, b: any) => Number(b.price) - Number(a.price))]);
+                    setSellOrders([...data.orders.filter((item: any) => item.isCancelled == false && item.isBuy == false).sort((a: any, b: any) => Number(b.price) - Number(a.price))]);
+                    setBuyOrders([...data.orders.filter((item: any) => item.isCancelled == false && item.isBuy == true).sort((a: any, b: any) => Number(b.price) - Number(a.price))]);
                 }).catch(err => {
                     console.log(err);
                     setLoadingProjectDetail(2);
                 })
         }
-    }, [ptokenAddress])
+    }, [ptokenAddress, reloading])
 
     useEffect(() => {
-        if (ptokenAddress != "-1" && tradeProjectLoading == 2) {
+        if (ptokenAddress != "-1" && tradeProjectLoading == 2 && reloading) {
             let detail = tradeProjects.find((item: any) => item.data.ptokenAddress == ptokenAddress);
             setTradeProjectDetail(detail);
         }
-    }, [ptokenAddress, tradeProjects, tradeProjectLoading])
+    }, [ptokenAddress, tradeProjects, tradeProjectLoading, reloading])
 
     useEffect(() => {
         if (ptokenAddress != "-1") {
@@ -103,22 +106,34 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
             setFundProjectDetail(detail);
             console.log(detail);
         }
-    }, [ptokenAddress, account, fundProjects, fundProjectLoading])
+    }, [ptokenAddress, account, fundProjects, fundProjectLoading, reloading])
 
     useEffect(() => {
-        if (period) {
+        if (period && ptokenAddress != "-1" && reloading) {
             let time = convertPeriodToMiliSecond(period);
             if (isValidEthAddress(ptokenAddress)) {
                 axiosInstance.get(`/trade/pricesByPtokenAddress?ptokenAddress=${ptokenAddress}&period=${time}`)
                     .then((response) => {
                         let data = response.data.data;
-                        setPrices([...data.map((item: any) => { return { ...item, date: +new Date(item.date) } })])
+                        let filteredData = [...data.map((item: any) => { return { ...item, date: +new Date(item.date) } })]
+                        setPrices([...filteredData])
+                        let first = filteredData[0].value, last = filteredData[filteredData.length - 1].value;
+                        if (first == 0) setVariation(0);
+                        else setVariation((last - first) / first * 100);
+                    }).catch((err) => {
+                        console.log(err);
+                    })
+                axiosInstance.get(`/trade/variationByPtokenAddressAndPeriod?ptokenAddress=${ptokenAddress}&period=${time}`)
+                    .then((response) => {
+                        let data = response.data;
+                        console.log(data);
+                        setValume(data.value);
                     }).catch((err) => {
                         console.log(err);
                     })
             }
         }
-    }, [period])
+    }, [period, ptokenAddress, reloading])
 
     const buyHandle = async () => {
         loadingStart();
@@ -129,23 +144,26 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                     content: `Please input Price and Amount exactly`,
                     status: 'failed'
                 })
-                return;
+                throw "invalid input";
             }
             if (finalYUSDAmount > YUSDBalance) {
                 alertShow({
                     content: `You have insufficient YUSD amount`,
                     status: 'failed'
                 })
-                return;
+                throw "insufficient amount";
             }
-            let approveTx = await YUSDContract.approve(
-                ProjectTrade.address,
-                convertEthToWei(String(finalYUSDAmount), YUSD.decimals),
-                {
-                    gasLimit: 300000
-                }
-            );
-            await approveTx.wait();
+            let allowanceAmount = Number(convertWeiToEth(await YUSDContract.allowance(account, ProjectTrade.address), YUSD.decimals));
+            if (allowanceAmount < finalYUSDAmount) {
+                let approveTx = await YUSDContract.approve(
+                    ProjectTrade.address,
+                    MaxUint256,
+                    {
+                        gasLimit: 300000
+                    }
+                );
+                await approveTx.wait();
+            }
             projectTradeContract.on('OrderCreated', (ptoken, userAddress, orderId, amount, price, isBuy) => {
                 if (ptokenAddress == ptoken && userAddress == account) {
                     console.log("OrderCreated:", ptoken, userAddress, orderId, amount, isBuy);
@@ -155,6 +173,9 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                         status: 'success'
                     });
                     loadingEnd();
+                    setTimeout(() => {
+                        setReloading(reloading + 1);
+                    }, 500);
                 }
             })
             let buyTx = await projectTradeContract.buy(
@@ -179,29 +200,32 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                 alertShow({
                     content: `Please input Price and Amount exactly`,
                     status: 'failed'
-                })
-                return;
+                });
+                throw "invalid input";
             }
             if (amountForSell > fundProjectDetail.shareTokenBalance) {
                 alertShow({
                     content: `You have insufficient YUSD amount`,
                     status: 'failed'
                 })
-                return;
+                throw "insufficient amount";
             }
             const PTokenContract = new Contract(
                 ptokenAddress,
                 TokenTemplate.abi,
                 signer
             )
-            let approveTx = await PTokenContract.approve(
-                ProjectTrade.address,
-                convertEthToWei(String(amountForSell), fundProjectDetail.shareDecimal),
-                {
-                    gasLimit: 300000
-                }
-            );
-            await approveTx.wait();
+            let allowanceAmount = Number(convertWeiToEth(await PTokenContract.allowance(account, ProjectTrade.address), fundProjectDetail.shareDecimal));
+            if (allowanceAmount < finalYUSDAmount) {
+                let approveTx = await PTokenContract.approve(
+                    ProjectTrade.address,
+                    MaxUint256,
+                    {
+                        gasLimit: 300000
+                    }
+                );
+                await approveTx.wait();
+            }
             projectTradeContract.on('OrderCreated', (ptoken, userAddress, orderId, amount, price, isBuy) => {
                 if (ptokenAddress == ptoken && userAddress == account) {
                     console.log("OrderCreated:", ptoken, userAddress, orderId, amount, isBuy);
@@ -211,6 +235,10 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                         status: 'success'
                     });
                     loadingEnd();
+                    let backupPtokenAddress = ptokenAddress;
+                    setTimeout(() => {
+                        setReloading(reloading + 1);
+                    }, 500)
                 }
             })
             let sellTx = await projectTradeContract.sell(
@@ -250,7 +278,7 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                 </div>
             </div>
 
-            <p className="py-2">You have {fundProjectDetail ? fundProjectDetail.shareTokenBalance : "0"} {tradeProjectDetail ? tradeProjectDetail.data.projectTitle : ""} in your wallet, {tradeProjectDetail ? tradeProjectDetail.data.ptokenTradeBalance : "0.0"} in Order, {tradeProjectDetail ? Number(tradeProjectDetail.data.ptokenSellAmount) - Number(tradeProjectDetail.data.ptokenTradeBalance) : "0.0"} available</p>
+            <p className="py-2">You have {fundProjectDetail ? fundProjectDetail.shareTokenBalance : "0"} {tradeProjectDetail ? tradeProjectDetail.data.projectTitle : ""} in your wallet, {tradeProjectDetail ? tradeProjectDetail.inOrder : "0.0"} in Order</p>
             <div className="w-full h-[calc(100vh_-_300px)] overflow-x-hidden overflow-y-auto scrollbar scrollbar-w-1 scrollbar-thumb-[#FFFFFF33] scrollbar-track-[#FFFFFF33]">
                 <div className="w-full flex items-stretch pr-2">
                     <div className="min-w-[320px] w-1/4 h-full p-4 rounded border-2 border-solid border-border-secondary bg-[#00000025]">
@@ -259,14 +287,14 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                             <div className="flex items-center text-[#bdbdbd]">
                                 <div className="w-1/3 text-center py-1.5">Price({YUSD.symbol})</div>
                                 <div className="w-1/3 text-center py-1.5">Amount({tradeProjectDetail ? tradeProjectDetail.data.projectTitle : ""})</div>
-                                <div className="w-1/3 text-center py-1.5">Price({YUSD.symbol})</div>
+                                <div className="w-1/3 text-center py-1.5">Total({YUSD.symbol})</div>
                             </div>
                             <div className="min-h-[calc(50vh_-_300px)] h-full">
                                 {
                                     loadingProjectDetail == 1 ? <>
                                         {
                                             [1, 2, 3, 4, 5].map((item, index: number) => {
-                                                return <div key={`buy-order-${index}`} className="flex items-center border-t border-solid border-[#bdbdbd]">
+                                                return <div key={`sell-order-${index}`} className="flex items-center border-t border-solid border-[#bdbdbd]">
                                                     <div className="w-1/3 p-2 text-red-500 text-center"><div className="bg-gray-200 h-4 rounded animate-pulse"></div></div>
                                                     <div className="w-1/3 p-2 text-center"><div className="bg-gray-200 h-4 rounded animate-pulse"></div></div>
                                                     <div className="w-1/3 p-2 text-center"><div className="bg-gray-200 h-4 rounded animate-pulse"></div></div>
@@ -275,11 +303,11 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                                         }
                                     </> : <>
                                         {
-                                            buyOrders.length ? <>
+                                            sellOrders.length ? <>
                                                 {
-                                                    buyOrders.map((item, index) => {
-                                                        return <div key={`buy-order-${index}`} className="flex items-center border-t border-solid border-[#bdbdbd]">
-                                                            <div className={`w-1/3 p-2 ${latestPrice > Number(item.price) ? 'text-status-minus' : 'text-status-plus'} text-center`}>{item.price}</div>
+                                                    sellOrders.filter(item => Number(item.remainingAmount) != 0 && Number(item.isCancelled) == 0).map((item, index) => {
+                                                        return <div key={`sell-order-${index}`} className="flex items-center border-t border-solid border-[#bdbdbd]">
+                                                            <div className={`w-1/3 p-2 text-status-minus text-center`}>{item.price}</div>
                                                             <div className="w-1/3 p-2 text-center">{item.remainingAmount}</div>
                                                             <div className="w-1/3 p-2 text-center">{(Number(item.price) * Number(item.remainingAmount)).toFixed(2)}</div>
                                                         </div>
@@ -307,11 +335,11 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                                         }
                                     </> : <>
                                         {
-                                            sellOrders.length ? <>
+                                            buyOrders.length ? <>
                                                 {
-                                                    sellOrders.map((item, index) => {
+                                                    buyOrders.filter(item => Number(item.remainingAmount) != 0 && Number(item.isCancelled) == 0).map((item, index) => {
                                                         return <div key={`buy-order-${index}`} className="flex items-center border-t border-solid border-[#bdbdbd]">
-                                                            <div className={`w-1/3 p-2 ${latestPrice > Number(item.price) ? 'text-status-minus' : 'text-status-plus'} text-center`}>{item.price}</div>
+                                                            <div className={`w-1/3 p-2 text-status-plus text-center`}>{item.price}</div>
                                                             <div className="w-1/3 p-2 text-center">{item.remainingAmount}</div>
                                                             <div className="w-1/3 p-2 text-center">{(Number(item.price) * Number(item.remainingAmount)).toFixed(2)}</div>
                                                         </div>
@@ -337,7 +365,7 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                                 <div className="flex items-center mb-2">
                                     <div>
                                         <div className="flex items-center"><p>{tradeProjectDetail ? tradeProjectDetail.data.projectTitle : ""} </p> <p className="mx-2 italic">Price:</p> {tradeProjectDetail ? tradeProjectDetail.price.value : 0} YUSD</div>
-                                        <div className="flex items-center"><p>{convertPeriodShortToFull(period)} variation</p> <p className="italic">{155}%</p></div>
+                                        <div className="flex items-center mt-2"><p>{convertPeriodShortToFull(period)} variation:</p> <p className="italic ml-2">{Number(variation).toFixed(2)}%</p></div>
                                     </div>
                                     <div className="ml-12 flex items-center">
                                         <div>Compare:</div>
@@ -348,8 +376,8 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                                     <ProjectPriceChart data={prices} comparedData={comparedPrices} />
                                 </div>
                                 <div className=" mb-2">
-                                    <div className="flex items-center"><p>{tradeProjectDetail ? tradeProjectDetail.data.projectTitle : ""} </p> <p className="italic">Trade Valume:</p></div>
-                                    <div className="flex items-center"><p>{convertPeriodShortToFull(period)} variation</p><p className="ml-2 italic">1,125,254,23456</p></div>
+                                    <div className="flex items-center"><p>{tradeProjectDetail ? tradeProjectDetail.data.projectTitle : ""} </p> <p className="italic ml-2">Trade Valume:</p></div>
+                                    <div className="flex items-center"><p>{convertPeriodShortToFull(period)} variation:</p><p className="ml-2 italic">{showBigNumber(valume, 2)}</p></div>
                                 </div>
                                 <div className="chart-section">
                                 </div>
@@ -357,11 +385,11 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                         </div>
 
                         <div className="w-full flex justify-between">
-                            <div className="w-[calc(50%_-_20px)] p-4 rounded border-2 border-solid border-border-secondary bg-[#00000025]">
+                            <div className="w-[calc(50%_-_20px)] max-w-[500px] p-4 rounded border-2 border-solid border-border-secondary bg-[#00000025]">
                                 <div className="flex items-center justify-between mb-2">
                                     <div className="flex flex-col">
                                         <h2 className="text-lg">Buy {tradeProjectDetail ? tradeProjectDetail.data.projectTitle : ""}</h2>
-                                        <p>Avbl: 0.00 YUSD</p>
+                                        <p>Avbl: {YUSDBalance} YUSD</p>
                                     </div>
                                     <button className="bg-btn-primary px-3 py-2 text-sm rounded shadow-btn-primary" onClick={() => { setIsMintShow(true) }}>Mint YUSD</button>
                                 </div>
@@ -379,11 +407,11 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                                 <button className="w-full bg-status-plus px-3 py-2 text-sm rounded shadow-btn-primary" onClick={() => buyHandle()}>Buy {'YTEST'}</button>
                             </div>
 
-                            <div className="w-[calc(50%_-_20px)] p-4 rounded border-2 border-solid border-border-secondary bg-[#00000025]">
+                            <div className="w-[calc(50%_-_20px)] max-w-[500px] p-4 rounded border-2 border-solid border-border-secondary bg-[#00000025]">
                                 <div className="flex items-center justify-between mb-2">
                                     <div className="flex flex-col">
                                         <h2 className="text-lg">Sell {tradeProjectDetail ? tradeProjectDetail.data.projectTitle : ""}</h2>
-                                        <p>Avbl: 0.00 YUSD</p>
+                                        <p>Avbl: {fundProjectDetail ? fundProjectDetail.shareTokenBalance : ""} {tradeProjectDetail ? tradeProjectDetail.data.projectTitle : ""}</p>
                                     </div>
                                 </div>
                                 <CInput value={priceForSell} setValue={(v: any) => setPriceForSell(v)} label="Price" className="mb-2" leftText="YUSD" />

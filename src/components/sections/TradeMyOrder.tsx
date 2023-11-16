@@ -45,8 +45,6 @@ const TradeMyOrderSection: FC<props> = ({ }) => {
         event.stopPropagation();
         try {
             loadingStart();
-            let cancelTx = await projectTradeContract.cancelOrder(order.ptokenAddress, order.orderId);
-            await cancelTx.wait();
             projectTradeContract.on("CancelOrder", (_ptoken, _orderId) => {
                 if (order.ptokenAddress == _ptoken && order.orderId == _orderId) {
                     loadingEnd();
@@ -54,6 +52,8 @@ const TradeMyOrderSection: FC<props> = ({ }) => {
                     orderRetireve();
                 }
             })
+            let cancelTx = await projectTradeContract.cancelOrder(order.ptokenAddress, order.orderId);
+            await cancelTx.wait();
         } catch (error) {
             loadingEnd();
             console.log(error);

@@ -146,52 +146,53 @@ const ProjectPriceChart: FC<propsType> = ({ data = [], comparedData }) => {
     mainChart.setOption(mainOptions);
 
     // diff chart
-    const diffChart = echarts.init(document.getElementById('diffChartDiv'));
-    const diffOptions = {
-      grid: {
-        top: 0,
-        bottom: 0,
-        left: 0,
-        right: 0,
-        containLabel: true,
-      },
-      xAxis: {
-        boundaryGap: false,
-        type: 'category',
-        data: [
-          ...data.map((item: any) => item.date)
-        ],
-        show: false,
-      },
-      yAxis: {
-        type: 'value',
-        show: false,
-      },
-      series: [
-        {
-          data: [
-            ...data.map((item: any, index) => (comparedData && comparedData[index]) ? item.value - comparedData[index].value : 0)
-          ],
-          type: 'bar',
-          showBackground: true,
-          backgroundStyle: {
-            color: 'rgba(180, 180, 180, 0.2)'
-          }
-        }
-      ]
-    };
-    diffChart.setOption(diffOptions);
+    // const diffChart = echarts.init(document.getElementById('diffChartDiv'));
+    // const diffOptions = {
+    //   grid: {
+    //     top: 0,
+    //     bottom: 0,
+    //     left: 0,
+    //     right: 0,
+    //     containLabel: true,
+    //   },
+    //   xAxis: {
+    //     boundaryGap: false,
+    //     type: 'category',
+    //     data: [
+    //       ...data.map((item: any) => item.date)
+    //     ],
+    //     show: false,
+    //   },
+    //   yAxis: {
+    //     type: 'value',
+    //     show: false,
+    //   },
+    //   series: [
+    //     {
+    //       data: [
+    //         ...data.map((item: any, index) => (comparedData && comparedData[index]) ? item.value - comparedData[index].value : 0)
+    //       ],
+    //       type: 'bar',
+    //       showBackground: true,
+    //       backgroundStyle: {
+    //         color: 'rgba(180, 180, 180, 0.2)'
+    //       }
+    //     }
+    //   ]
+    // };
+    // diffChart.setOption(diffOptions);
+    console.log(data);
 
     // Dispose the chart when the component unmounts
     return () => {
       mainChart.dispose();
-      diffChart.dispose();
+      // diffChart.dispose();
     };
   }, [data, comparedData]);
 
   return <div>
     <div id="chartDiv" style={{ width: '100%', height: '200px' }}></div>
-    <div id="diffChartDiv" style={{ width: '100%', height: (comparedData && comparedData.length) ? '60px' : '0px' }}></div>
+    {/* <div id="diffChartDiv" style={{ width: '100%', height: (comparedData && comparedData.length) ? '60px' : '0px' }}></div> */}
   </div>
 };
 

@@ -12,24 +12,24 @@ const useProject = () => {
         ]
     });
 
-    const projectRetireve = () => {
-      dispatch(retireveingProject() as any);
-      axiosInstance.get('/trade/tradeProjects')
-          .then((response) => {
-              let data: [] = response.data.data;
-              projectUpdate(data);
-          }).catch((error) => {
-              console.log('error while getting projects info', error)
-              projectError();
-          })
+    const projectRetireve = (account: string) => {
+        dispatch(retireveingProject() as any);
+        axiosInstance.get('/trade/tradeProjects?address=' + account)
+            .then((response) => {
+                let data: [] = response.data.data;
+                projectUpdate(data);
+            }).catch((error) => {
+                console.log('error while getting projects info', error)
+                projectError();
+            })
     }
 
     const projectUpdate = (data: any[]) => {
-      dispatch(updateProject(data) as any);
+        dispatch(updateProject(data) as any);
     }
 
     const projectError = () => {
-      dispatch(errorProject() as any);
+        dispatch(errorProject() as any);
     }
 
     return { projects, loading, error, projectRetireve, projectUpdate, projectError };

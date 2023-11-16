@@ -15,10 +15,13 @@ const TradeProjectSection: FC<props> = ({ }) => {
     const { account, rpc_provider } = useAccount();
     const { projects: fundProjects, retireveProjectsDetails, loading: fundLoading } = useFundProject();
     const [pToken, setPToken] = useState("-1");
+    const [onlyYourToken, setOnlyYourToken] = useState(false);
 
     useEffect(() => {
-        projectRetireve();
-    }, [])
+        if (account) {
+            projectRetireve(account);
+        }
+    }, [account])
 
     useEffect(() => {
         (async () => {
@@ -50,11 +53,11 @@ const TradeProjectSection: FC<props> = ({ }) => {
                         <div className="flex items-center justify-around">
                             <div className="flex items-center">
                                 <label htmlFor="onlyyou">Only your tokens</label>
-                                <input id="onlyyou" className="ml-2" type="checkbox" />
+                                <input id="onlyyou" className="ml-2" type="checkbox" onChange={(e) => setOnlyYourToken(e.target.checked)} />
                             </div>
                         </div>
                     </th>
-                    <th colSpan={5} className="border-b-2 border-solid border-secondary">
+                    <th colSpan={4} className="border-b-2 border-solid border-secondary">
                         <div className="px-3 py-2">Your Balance</div>
                     </th>
                     <th className="w-[20px]"></th>
@@ -69,7 +72,6 @@ const TradeProjectSection: FC<props> = ({ }) => {
                     <th><div>Total</div></th>
                     <th><div>Wallet</div></th>
                     <th><div>In Order</div></th>
-                    <th><div>Available</div></th>
                     <th>
                         <div>Value</div>
                         <p>(YUSD)</p>
@@ -110,7 +112,6 @@ const TradeProjectSection: FC<props> = ({ }) => {
                                     <td><div><div className="bg-gray-200 h-4 rounded animate-pulse"></div></div></td>
                                     <td><div><div className="bg-gray-200 h-4 rounded animate-pulse"></div></div></td>
                                     <td><div><div className="bg-gray-200 h-4 rounded animate-pulse"></div></div></td>
-                                    <td><div><div className="bg-gray-200 h-4 rounded animate-pulse"></div></div></td>
                                     <td><div></div></td>
                                     <td><div><div className="bg-gray-200 h-4 rounded animate-pulse"></div></div></td>
                                     <td><div><div className="bg-gray-200 h-4 rounded animate-pulse"></div></div></td>
@@ -130,7 +131,10 @@ const TradeProjectSection: FC<props> = ({ }) => {
                         {
                             projects.length ? <>
                                 {
-                                    projects.map((item: any, index: number, arr: any[]) => {
+                                    projects.filter((item: any) => {
+                                        if (onlyYourToken) return (Number(currentValueOfWallet(item.data.ptokenAddress)) + Number(item.inOrder))
+                                        return true;
+                                    }).map((item: any, index: number, arr: any[]) => {
                                         return <tr key={`project-row-${index}`} className={`bg-[#112923] ${index != arr.length - 1 ? 'border-t border-solid border-[#4b4d4d]' : ''}`}>
                                             <td className="p-2.5">
                                                 <div className="flex items-center">
@@ -138,11 +142,10 @@ const TradeProjectSection: FC<props> = ({ }) => {
                                                     <p>{item.data.projectTitle}</p>
                                                 </div>
                                             </td>
-                                            <td><div><p className="text-center">{item.data.ptokenSellAmount}</p></div></td>
+                                            <td><div><p className="text-center">{(Number(currentValueOfWallet(item.data.ptokenAddress)) + Number(item.inOrder)).toFixed(2)}</p></div></td>
                                             <td><div><p className="text-center">{currentValueOfWallet(item.data.ptokenAddress)}</p></div></td>
-                                            <td><div><p className="text-center">{item.data.ptokenTradeBalance}</p></div></td>
-                                            <td><div><p className="text-center">{Number(item.data.ptokenSellAmount) - Number(item.data.ptokenTradeBalance)}</p></div></td>
-                                            <td><div><p className="text-center">{item.data.YUSDTradePoolAmount}</p></div></td>
+                                            <td><div><p className="text-center">{item.inOrder}</p></div></td>
+                                            <td><div><p className="text-center">{((Number(currentValueOfWallet(item.data.ptokenAddress)) + Number(item.inOrder)) * item.price.value).toFixed(2)}</p></div></td>
                                             <td><div></div></td>
                                             <td><div><p className="text-center">{item.prices[item.prices.length - 1].value}</p></div></td>
                                             <td><div><p className="text-center font-semibold">{filterNuanceDom(Number(item.nauncePercentageFor1d).toFixed(2))}</p></div></td>
