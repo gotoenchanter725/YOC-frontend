@@ -19,8 +19,9 @@ const useAccount = () => {
         (async () => {
             let t_signer = await getEthersSigner();
             setSigner(t_signer as any);
-            let t_provider = getEthersProvider();
-            setProvider(t_provider as any);
+            // let t_provider = getEthersProvider(); 
+            let t_provider = WebSocketProvider
+            setProvider(WebSocketProvider as any);
         })();
     }, [address])
     useEffect(() => {
