@@ -13,7 +13,6 @@ import Modal from '@components/widgets/Modalv2';
 
 import { TOKENS, tokenInterface } from '../../src/constants/tokens';
 import { TokenTemplate, YOCSwapRouter, YOCSwapFactory, WETH } from "../../src/constants/contracts";
-import { rpc_provider_basic } from '../../utils/rpc_provider';
 import { convertEthToWei, convertRate, convertWeiToEth } from "../../utils/unit";
 
 import { useWallet, useAccount, useLoading, useAlert } from '@hooks/index';
@@ -22,7 +21,7 @@ const tempMaxValue = 99999999999;
 const txRunLimitTime = 1000 * 60 * 5; // 5 min
 
 const Liquidity: FC = () => {
-    const { account, provider, getETHBalance, signer, rpc_provider } = useAccount();
+    const { account, provider, getETHBalance, signer } = useAccount();
     const { loadingStart, loadingEnd } = useLoading();
     const { alertShow } = useAlert();
     const { connectWallet } = useWallet();
@@ -115,7 +114,7 @@ const Liquidity: FC = () => {
                 const contract = new Contract(
                     v.address,
                     TokenTemplate.abi,
-                    rpc_provider
+                    provider
                 );
 
                 let balance = await contract.balanceOf(account);
@@ -145,7 +144,7 @@ const Liquidity: FC = () => {
                 const contract = new Contract(
                     v.address,
                     TokenTemplate.abi,
-                    rpc_provider
+                    provider
                 );
                 let balance = await contract.balanceOf(account);
                 setMyBalanceOut(+convertWeiToEth(balance, v.decimals));
@@ -177,8 +176,8 @@ const Liquidity: FC = () => {
                 amount = tempMaxValue;
             }
             let tx = await tokenContract.approve(YOCSwapRouter.address, MaxUint256, {
-				gasLimit: 50000
-			});
+                gasLimit: 50000
+            });
             const receipt = await tx.wait();
             console.log(receipt.events)
             if (type == "in") {

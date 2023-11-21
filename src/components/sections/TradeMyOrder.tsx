@@ -45,13 +45,15 @@ const TradeMyOrderSection: FC<props> = ({ }) => {
         event.stopPropagation();
         try {
             loadingStart();
-            projectTradeContract.on("CancelOrder", (_ptoken, _orderId) => {
+            const eventlistencer = (_ptoken: string, _orderId: string) => {
                 if (order.ptokenAddress == _ptoken && order.orderId == _orderId) {
                     loadingEnd();
                     alertShow({ content: `The order is caneled successfully`, status: 'success' });
                     orderRetireve();
                 }
-            })
+                projectTradeContract.removeListener("CancelOrder", eventlistencer);
+            }
+            projectTradeContract.on("CancelOrder", eventlistencer);
             let cancelTx = await projectTradeContract.cancelOrder(order.ptokenAddress, order.orderId);
             await cancelTx.wait();
         } catch (error) {

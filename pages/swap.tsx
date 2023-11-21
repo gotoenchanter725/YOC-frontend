@@ -26,7 +26,7 @@ const txRunLimitTime = 1000 * 60 * 5; // 5 min
 const Swap: FC = () => {
 
     const dispatch = useDispatch();
-    const { provider, signer, account, ETHBalance, rpc_provider } = useAccount();
+    const { provider, signer, account, ETHBalance } = useAccount();
     const { disconnectWallet } = useWallet();
     const [typeIn, setTypeIn] = useState<tokenInterface>();
     const [typeOut, setTypeOut] = useState<tokenInterface>();
@@ -43,10 +43,11 @@ const Swap: FC = () => {
     const [lastTarget, setLastTarget] = useState('in');
     const swapContract = useMemo(() => {
         return new Contract(
-        YOCSwapRouter.address,
-        YOCSwapRouter.abi,
-        provider
-    )}, [provider]);
+            YOCSwapRouter.address,
+            YOCSwapRouter.abi,
+            provider
+        )
+    }, [provider]);
     const [swapStep, setSwapStep] = useState('swap');
     const [priceImpact, setPriceImpact] = useState(0);
 
@@ -172,7 +173,7 @@ const Swap: FC = () => {
                 const contract = new Contract(
                     v.address,
                     TokenTemplate.abi,
-                    rpc_provider
+                    provider
                 );
 
                 let balance = await contract.balanceOf(account);

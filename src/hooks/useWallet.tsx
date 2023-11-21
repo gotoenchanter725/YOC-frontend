@@ -6,14 +6,13 @@ import useAccount from "./useAccount";
 import { WALLET_UPDATE } from "../../store/types";
 import ethers, { Contract } from "ethers";
 import { TokenTemplate, YOC } from "../constants/contracts";
-import { rpc_provider_basic } from "../../utils/rpc_provider";
 import { convertWeiToEth } from "../../utils/unit";
 
 const useWallet = () => {
     const dispatch = useDispatch();
     const { address, connector, isConnected } = useWagmiAccount()
     const { disconnect } = useDisconnect()
-    const { account } = useAccount();
+    const { account, provider } = useAccount();
     const { connect, connectors, error, isLoading, pendingConnector } = useConnect();
 
     const connectWallet = useCallback(async () => {
@@ -63,7 +62,7 @@ const useWallet = () => {
             let YOCContract = new Contract(
                 YOC.address,
                 YOC.abi,
-                rpc_provider_basic
+                provider
             )
             let balance = Number(convertWeiToEth(await YOCContract.balanceOf(account), YOC.decimals));
             dispatch({

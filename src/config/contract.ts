@@ -13,7 +13,7 @@ const ETH_NETWORK = {
         // RPC_URL: "https://sepolia.infura.io/v3/f00540d3d0c846d093e61d939dd3be59",
         // RPC_URL: "https://eth-sepolia.g.alchemy.com/v2/9XxUB2Hodsix6mDB_6uE4U-Ap6tg4c5c",
         // https: "https://ethereum-sepolia.blockpi.network/v1/rpc/public",
-        // wws: "https://ethereum-sepolia.blockpi.network/v1/rpc/public",
+        // wss: "https://ethereum-sepolia.blockpi.network/v1/rpc/public",
         RPC_URL: "https://rpc.ankr.com/eth_sepolia/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf",
         https: "https://rpc.ankr.com/eth_sepolia/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf",
         wss: "wss://rpc.ankr.com/eth_sepolia/ws/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf",

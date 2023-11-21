@@ -5,7 +5,6 @@ import axios from "axios";
 
 import Button from "../widgets/Button";
 import { ProjectManager, YUSD } from "../../constants/contracts";
-import { addNewProject } from "../../../store/actions";
 import useAccount from "@hooks/useAccount";
 import useLoading from "@hooks/useLoading";
 import useAlert from "@hooks/useAlert";
@@ -21,7 +20,7 @@ type Props = {
 }
 
 const CreateProjectContent: FC<Props> = ({ handleClose }) => {
-    const { account, signer, rpc_provider } = useAccount();
+    const { account, signer } = useAccount();
     const { loadingStart, loadingEnd } = useLoading();
     const { alertShow } = useAlert()
     const { updateProjectInfoByAddress } = useProject();

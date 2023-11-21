@@ -8,7 +8,7 @@ import { Project, ProjectDetail, ProjectManager } from "src/constants/contracts"
 
 
 const useProject = () => {
-    const { account, rpc_provider } = useAccount();
+    const { account, provider } = useAccount();
     const dispatch = useDispatch();
     const [projects, loading, error] = useSelector((state: any) => {
         return [
@@ -20,17 +20,17 @@ const useProject = () => {
 
     // useEffect(() => {
     //     (async () => {
-    //         if (rpc_provider && account && loading == 0) {
+    //         if (provider && account && loading == 0) {
     //             console.log("FUNDS", account)
     //             await retireveProjectsDetails();
     //             // console.log("funds-project")
     //         }
     //     })()
-    // }, [rpc_provider, account, loading])
+    // }, [provider, account, loading])
 
     const retireveProjectsDetails = useCallback(async () => {
         try {
-            const ProjectManagerInstance = new Contract(ProjectManager.address, ProjectManager.abi, rpc_provider);
+            const ProjectManagerInstance = new Contract(ProjectManager.address, ProjectManager.abi, provider);
             const projects = await ProjectManagerInstance.getProjectAllContract();
             const projectsDetail: any[] = [];
 
@@ -56,7 +56,7 @@ const useProject = () => {
             console.log("project infos error: ", error);
             dispatch(errorFundProject() as any);
         }
-    }, [rpc_provider, account]);
+    }, [provider, account]);
 
     const updateProjectInfoByAddress = useCallback(async (address: any) => {
         try {
@@ -67,7 +67,7 @@ const useProject = () => {
                 },
                 1
             ) as any);
-            const detailContract = new Contract(ProjectDetail.address, ProjectDetail.abi, rpc_provider);
+            const detailContract = new Contract(ProjectDetail.address, ProjectDetail.abi, provider);
             let detailProject = await detailContract.getProjectDetails(address, account ? account : "0x0000000000000000000000000000000000000000");
 
             const projectDetailObj: any = {};
@@ -79,7 +79,7 @@ const useProject = () => {
             const totalYTEST_temp = Number(ethers.utils.formatUnits(detailProject.shareTokenSellAmount, shareDecimal_temp));
             const shareTokenAmount_temp = Number(ethers.utils.formatUnits(detailProject.shareTokenBalanceTemp, shareDecimal_temp));
 
-            projectDetailObj.projectContract = new Contract(address, Project.abi, rpc_provider);
+            projectDetailObj.projectContract = new Contract(address, Project.abi, provider);
             projectDetailObj.poolAddress = address;
             projectDetailObj.APR = Number(ethers.utils.formatUnits(detailProject.apr, 0));
             projectDetailObj.totalRaise = totalRaise_temp;
@@ -125,7 +125,7 @@ const useProject = () => {
         } catch (err) {
             console.log("project detail info error: ", err);
         }
-    }, [account, rpc_provider]);
+    }, [account, provider]);
 
     return { retireveProjectsDetails, updateProjectInfoByAddress, projects, loading, error };
 }

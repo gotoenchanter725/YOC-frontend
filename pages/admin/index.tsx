@@ -19,19 +19,19 @@ const AdminPage: NextPage = () => {
     const [step, setStep] = useState(0);
     const [showModal, setShowModal] = useState(false);
     const admin = useAdmin();
-    const { account, signer, rpc_provider } = useAccount();
+    const { account, signer, provider } = useAccount();
     const { loadingStart, loadingEnd } = useLoading();
     const { alertShow } = useAlert();
     const { projects, retireveProjectsDetails, loading } = useProject()
 
     useEffect(() => {
         (async () => {
-            if (rpc_provider && account) {
+            if (provider && account) {
                 console.log("FUNDS", account)
                 await retireveProjectsDetails()
             }
         })()
-    }, [rpc_provider, account])
+    }, [provider, account])
 
     const showCreatePage = () => {
         setShowModal(true);

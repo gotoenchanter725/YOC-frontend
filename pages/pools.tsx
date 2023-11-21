@@ -21,7 +21,7 @@ import useNetwork from "@hooks/useNetwork";
 const yocAmountYear = 4.5 * 60 * 24 * 365 * 20;
 
 const Pools: FC = () => {
-	const { provider, signer, account, rpc_provider } = useAccount();
+	const { provider, signer, account } = useAccount();
 	const { loadingStart, loadingEnd } = useLoading();
 	const { alertShow } = useAlert();
 	const { connectWallet, disconnectWallet, updateWalletBalance } = useWallet();
@@ -45,12 +45,12 @@ const Pools: FC = () => {
 	const [farmContract] = useState(new Contract(
 		YOCFarm.address,
 		YOCFarm.abi,
-		rpc_provider
+		provider
 	));
 	const [swapContract] = useState(new Contract(
 		YOCSwapRouter.address,
 		YOCSwapRouter.abi,
-		rpc_provider
+		provider
 	));
 
 	useEffect(() => {
@@ -77,13 +77,13 @@ const Pools: FC = () => {
 						const stakingContract = new Contract(
 							item.address,
 							(isYocCheck(item.currency.id) ? YOCPool.abi : YOCPool.TokenABI),
-							rpc_provider
+							provider
 						)
 						console.log(stakingContract);
 						const tokenContract = new Contract(
 							item.currency.address,
 							TokenTemplate.abi,
-							rpc_provider
+							provider
 						)
 
 						let totalLiquidity, APR;
@@ -663,7 +663,7 @@ const Pools: FC = () => {
 				<div className="flex items-stretch justify-between mb-4">
 					<div className="flex flex-col justify-between w-[calc(100%_-_180px)]">
 						<p className="mb-4">Stake</p>
-						<input className="w-full px-2 py-1 rounded border-[1px] border-solid border-secondary bg-transparent text-dark-primary" value={stakeAmount} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { stakeAmountChangleHandle(e.target.value)}} />
+						<input className="w-full px-2 py-1 rounded border-[1px] border-solid border-secondary bg-transparent text-dark-primary" value={stakeAmount} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { stakeAmountChangleHandle(e.target.value) }} />
 					</div>
 					<div className="flex flex-col justify-between w-[160px]">
 						<p className="mb-4">Balance: {(selectPool && selectPool.balance) ? Number(selectPool.balance).toFixed(selectPool.currency.decimals) : 0}</p>

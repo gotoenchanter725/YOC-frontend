@@ -19,6 +19,7 @@ import useNetwork from "@hooks/useNetwork";
 import { convertWeiToEth } from "utils/unit";
 import useAccount from "@hooks/useAccount";
 import useProject from "@hooks/useFund";
+import { WebSocketProvider } from "utils/ethers";
 
 interface Props {
     item?: any;
@@ -45,7 +46,7 @@ interface detailTokenInterface {
 }
 
 const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAction, admin, status }) => {
-    const { account, rpc_provider } = useAccount();
+    const { account, provider } = useAccount();
     const { loadingStart, loadingEnd } = useLoading();
     const { updateProjectInfoByAddress } = useProject();
     const { alertShow } = useAlert();
@@ -74,7 +75,7 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
 
     useEffect(() => {
         (async () => {
-            if (item.investToken && rpc_provider) {
+            if (item.investToken && provider) {
                 if (status == 'my') {
                     if (item.endDate >= Date.now() && item.currentStatus < item.ongoingPercent) setProjectStatus("open");
                     else if (item.currentStatus >= item.ongoingPercent) setProjectStatus("ongoing");
@@ -85,7 +86,7 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
                 let detailContract = new Contract(
                     ProjectDetail.address,
                     ProjectDetail.abi,
-                    rpc_provider
+                    provider
                 )
                 setProjectDetailContract(detailContract);
                 setInvestContract({
@@ -98,12 +99,13 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
                 })
             }
         })();
-    }, [item, rpc_provider, account])
+    }, [item, provider, account])
 
     useEffect(() => {
-        if (item && rpc_provider && account && investContract && shareContract) {
+        if (item && provider && account && investContract && shareContract) {
             try {
-                const projecContract = item.projectContract as Contract;
+                // const projecContract = item.projectContract as Contract;
+                const projecContract = new Contract(item.poolAddress, Project.abi, WebSocketProvider);
                 projecContract.on('Participated', (address, amount1, amount2, user) => {
                     updateProjectInfoByAddress(address);
 
@@ -142,17 +144,17 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
                     }
                 });
 
-                // projecContract.on('ProfitDeposited', (address, amount, user) => {
-                //     updateProjectInfoByAddress(address);
+                projecContract.on('ProfitDeposited', (address, amount, user) => {
+                    updateProjectInfoByAddress(address);
 
-                //     if (user == account) {
-                //         let realAmount = convertWeiToEth(amount, investContract ? investContract.decimals : 16)
-                //         alertShow({
-                //             content: `Deposit ${realAmount} ${investContract?.symbol} Successfully`,
-                //             status: 'success'
-                //         })
-                //     }
-                // });
+                    if (user == account) {
+                        let realAmount = convertWeiToEth(amount, investContract ? investContract.decimals : 16)
+                        alertShow({
+                            content: `Deposit ${realAmount} ${investContract?.symbol} Successfully`,
+                            status: 'success'
+                        })
+                    }
+                });
 
                 (async () => {
                     axios.get(process.env.API_ADDRESS + `/voting/projectTitle/${item.name}`).then(res => {
@@ -166,7 +168,7 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
                 console.log("event listen error: ", ex);
             }
         }
-    }, [item, account, rpc_provider, investContract, shareContract]);
+    }, [item, account, provider, investContract, shareContract]);
 
     const getVotingInfo = useCallback(() => {
         loadingStart();

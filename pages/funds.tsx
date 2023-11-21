@@ -1,5 +1,4 @@
 import React, { FC, useCallback, useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
 import { Contract, ethers, constants } from "ethers";
 const { MaxUint256 } = constants;
 import {
@@ -11,7 +10,6 @@ import {
 } from "../src/constants/contracts";
 import Card from "@components/widgets/Card";
 import ShowMoreIcon from "@components/widgets/ShowMoreIcon";
-import { projectInfos } from "../store/actions";
 
 import useLoading from "@hooks/useLoading";
 import useAlert from "@hooks/useAlert";
@@ -21,8 +19,7 @@ import NoData from "@components/widgets/NoData";
 
 const Fund: FC = () => {
     const [step, setStep] = useState(0);
-    const dispatch = useDispatch();
-    const { provider, signer, account, rpc_provider } = useAccount();
+    const { provider, signer, account } = useAccount();
     const { projects, retireveProjectsDetails, loading, error } = useProject()
     const { loadingStart, loadingEnd } = useLoading();
     const { alertShow } = useAlert();
@@ -143,13 +140,13 @@ const Fund: FC = () => {
 
     useEffect(() => {
         (async () => {
-            if (rpc_provider && account && loading == 0) {
+            if (provider && account && loading == 0) {
                 console.log("FUNDS", account)
                 await retireveProjectsDetails();
                 // console.log("funds-project")
             }
         })()
-    }, [rpc_provider, account, loading])
+    }, [provider, account, loading])
 
     useEffect(() => {
         if (step == 0 && projects.filter((item: any) => (item && item.endDate >= Date.now() && item.currentStatus < item.ongoingPercent)).length == 0) setNoDataFlag(true);
@@ -181,19 +178,19 @@ const Fund: FC = () => {
                     step == 0 ?
                         projects.filter((item: any) => (item && item.endDate >= Date.now() && item.currentStatus < item.ongoingPercent)).map((item: any, index: number) => {
                             return (
-                                <Card key={`card- + ${index}`} item={item} poolAddress={item} buyAction={buyToken} provider={rpc_provider} status="open" />
+                                <Card key={`card- + ${index}`} item={item} poolAddress={item} buyAction={buyToken} provider={provider} status="open" />
                             )
                         }) :
                         step == 1 ?
                             projects.filter((item: any) => (item && item.currentStatus >= item.ongoingPercent)).map((item: any, index: number) => {
                                 return (
-                                    <Card key={`card- + ${index}`} item={item} poolAddress={item} buyAction={buyToken} claimAction={claim} provider={rpc_provider} status="ongoing" />
+                                    <Card key={`card- + ${index}`} item={item} poolAddress={item} buyAction={buyToken} claimAction={claim} provider={provider} status="ongoing" />
                                 )
                             }) :
                             step == 2 ?
                                 projects.filter((item: any) => (item && item.endDate < Date.now() && item.currentStatus < item.ongoingPercent)).map((item: any, index: number) => {
                                     return (
-                                        <Card key={`card- + ${index}`} item={item} poolAddress={item} refundAction={refund} provider={rpc_provider} status="close" />
+                                        <Card key={`card- + ${index}`} item={item} poolAddress={item} refundAction={refund} provider={provider} status="close" />
                                     )
                                 }) : ""
                 }
@@ -201,7 +198,7 @@ const Fund: FC = () => {
                     step == 3 ?
                         projects.filter((item: any) => item && item.joinState).map((item: any, index: number) => {
                             return (
-                                <Card key={`card- + ${index}`} item={item} poolAddress={item} buyAction={buyToken} claimAction={claim} refundAction={refund} provider={rpc_provider} status="my" />
+                                <Card key={`card- + ${index}`} item={item} poolAddress={item} buyAction={buyToken} claimAction={claim} refundAction={refund} provider={provider} status="my" />
                             )
                         })
                         : ""

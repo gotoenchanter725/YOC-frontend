@@ -1,5 +1,5 @@
 import { type WalletClient, getWalletClient, type PublicClient, getPublicClient } from '@wagmi/core'
-import { providers } from 'ethers'
+import { ethers, providers } from 'ethers'
 import { NETWORK } from "../src/config/contract"
 import { type HttpTransport } from 'viem'
 
@@ -45,3 +45,7 @@ export function getEthersProvider() {
   const publicClient = getPublicClient({ chainId })
   return publicClientToProvider(publicClient)
 }
+
+export const WebSocketProvider = new ethers.providers.WebSocketProvider(NETWORK.wss);
+
+export const JsonRpcProvider = new ethers.providers.JsonRpcProvider(NETWORK.RPC_URL);

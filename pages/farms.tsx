@@ -18,7 +18,7 @@ import { CurrencyDataInterface } from "src/interfaces/currency";
 import useNetwork from "@hooks/useNetwork";
 
 const Farm: FC = () => {
-	const { account, provider, signer, rpc_provider } = useAccount();
+	const { account, provider, signer } = useAccount();
 	const { loadingStart, loadingEnd } = useLoading();
 	const { explorer } = useNetwork();
 	const { alertShow } = useAlert();
@@ -40,8 +40,8 @@ const Farm: FC = () => {
 	const farmContract = useMemo(() => new Contract(
 		YOCFarm.address,
 		YOCFarm.abi,
-		rpc_provider
-	), [YOCFarm, rpc_provider]);
+		provider
+	), [YOCFarm, provider]);
 
 	const checkPools = useCallback(async () => {
 		try {
@@ -92,7 +92,7 @@ const Farm: FC = () => {
 								let PairContract = new Contract(
 									item.liquidity.pairAddress + '',
 									YOCPair.abi,
-									rpc_provider
+									provider
 								)
 								balance = convertWeiToEth(String(await PairContract.balanceOf(account)), Number(item.liquidity.pairDecimals));
 								if (farmUserDetail) {

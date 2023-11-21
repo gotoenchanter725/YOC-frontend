@@ -12,7 +12,7 @@ type props = {
 
 const TradeProjectSection: FC<props> = ({ }) => {
     const { projects, loading: projectLoading, projectRetireve, projectUpdate, projectError } = useTradeProject();
-    const { account, rpc_provider } = useAccount();
+    const { account } = useAccount();
     const { projects: fundProjects, retireveProjectsDetails, loading: fundLoading } = useFundProject();
     const [pToken, setPToken] = useState("-1");
     const [onlyYourToken, setOnlyYourToken] = useState(false);

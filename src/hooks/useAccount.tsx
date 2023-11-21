@@ -1,9 +1,8 @@
+import { useEffect, useState } from "react";
 // import { useSelector } from "react-redux";
 import { useAccount as useWagmiAccount } from 'wagmi';
 import { fetchBalance } from '@wagmi/core'
-import { rpc_provider_basic } from '../../utils/rpc_provider';
-import { getEthersProvider, getEthersSigner } from "utils/ethers";
-import { useEffect, useState } from "react";
+import { getEthersProvider, getEthersSigner, WebSocketProvider, JsonRpcProvider } from "utils/ethers";
 import { convertWeiToEth } from "../../utils/unit";
 import { YOC, YUSD } from 'src/constants/contracts';
 
@@ -64,7 +63,7 @@ const useAccount = () => {
         return Number(convertWeiToEth(rst.value, YUSD.decimals));
     }
 
-    return { account, YOCBalance, YUSDBalance, ETHBalance, getETHBalance, provider, signer, rpc_provider: rpc_provider_basic };
+    return { account, YOCBalance, YUSDBalance, ETHBalance, getETHBalance, provider, signer, JsonRpcProvider, WebSocketProvider };
 }
 
 export default useAccount;
