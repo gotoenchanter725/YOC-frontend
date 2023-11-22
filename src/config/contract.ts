@@ -11,12 +11,12 @@ const ETH_NETWORK = {
         // RPC_URL: "https://rpc.sepolia.org",
         // RPC_URL: "https://ethereum-sepolia.blockpi.network/v1/rpc/public",
         // RPC_URL: "https://sepolia.infura.io/v3/f00540d3d0c846d093e61d939dd3be59",
-        RPC_URL: "https://rpc.ankr.com/eth_sepolia",
-        https: "https://rpc.ankr.com/eth_sepolia/",
-        wss: "wss://rpc.ankr.com/eth_sepolia/ws/",
-        // RPC_URL: "https://rpc.ankr.com/eth_sepolia/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf",
-        // https: "https://rpc.ankr.com/eth_sepolia/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf",
-        // wss: "wss://rpc.ankr.com/eth_sepolia/ws/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf",
+        // RPC_URL: "https://rpc.ankr.com/eth_sepolia",
+        // https: "https://rpc.ankr.com/eth_sepolia/",
+        // wss: "wss://rpc.ankr.com/eth_sepolia/ws/",
+        RPC_URL: "https://rpc.ankr.com/eth_sepolia/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf",
+        https: "https://rpc.ankr.com/eth_sepolia/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf",
+        wss: "wss://rpc.ankr.com/eth_sepolia/ws/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf",
         CHAIN_ID: 11155111
     }
 }
@@ -46,12 +46,12 @@ const BNB_NETWORK = {
     },
     testnet: {
         // RPC_URL: "https://data-seed-prebsc-1-s1.binance.org:8545/",
-        RPC_URL: "https://rpc.ankr.com/bsc_testnet_chapel",
-        https: "https://rpc.ankr.com/bsc_testnet_chapel/",
-        wss: "wss://rpc.ankr.com/bsc_testnet_chapel/ws/",
-        // RPC_URL: "https://rpc.ankr.com/bsc_testnet_chapel/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf",
-        // https: "https://rpc.ankr.com/bsc_testnet_chapel/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf",
-        // wss: "wss://rpc.ankr.com/bsc_testnet_chapel/ws/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf",
+        // RPC_URL: "https://rpc.ankr.com/bsc_testnet_chapel",
+        // https: "https://rpc.ankr.com/bsc_testnet_chapel/",
+        // wss: "wss://rpc.ankr.com/bsc_testnet_chapel/ws/",
+        RPC_URL: "https://rpc.ankr.com/bsc_testnet_chapel/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf",
+        https: "https://rpc.ankr.com/bsc_testnet_chapel/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf",
+        wss: "wss://rpc.ankr.com/bsc_testnet_chapel/ws/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf",
         CHAIN_ID: 97
     }
 }
@@ -70,7 +70,7 @@ const BNB_CONTRACT_ADDRESS = {
     ProjectTradeAddress: "0xBFF3F3b75390934ff5e48c2381967c691BDA3074",
 }
 
-const NETWORK = process.env.NET_WORK === "ETH" ? (process.env.env == 'development' ? ETH_NETWORK.testnet : ETH_NETWORK.mainnet) : (process.env.env == 'development' ? BNB_NETWORK.testnet : BNB_NETWORK.mainnet);
+const NETWORK = process.env.NET_WORK === "ETH" ? (process.env.NEXT_PUBLIC_ENV == 'development' ? ETH_NETWORK.testnet : ETH_NETWORK.mainnet) : (process.env.NEXT_PUBLIC_ENV == 'development' ? BNB_NETWORK.testnet : BNB_NETWORK.mainnet);
 const CONTRACT_ADDRESS = process.env.NET_WORK === "ETH" ? ETH_CONTRACT_ADDRESS : BNB_CONTRACT_ADDRESS;
 const PRIVATE_KEY = process.env.PRIVATE_KEY;
 
