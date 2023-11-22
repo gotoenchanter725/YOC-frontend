@@ -60,6 +60,7 @@ const useProject = () => {
 
     const updateProjectInfoByAddress = useCallback(async (address: any) => {
         try {
+            console.log('updateProjectInfoByAddress', address, provider);
             dispatch(updateProjectByProjectAddress(
                 address,
                 {

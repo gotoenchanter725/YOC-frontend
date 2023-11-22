@@ -11,20 +11,20 @@ const ETH_NETWORK = {
         // RPC_URL: "https://rpc.sepolia.org",
         // RPC_URL: "https://ethereum-sepolia.blockpi.network/v1/rpc/public",
         // RPC_URL: "https://sepolia.infura.io/v3/f00540d3d0c846d093e61d939dd3be59",
-        // RPC_URL: "https://eth-sepolia.g.alchemy.com/v2/9XxUB2Hodsix6mDB_6uE4U-Ap6tg4c5c",
-        // https: "https://ethereum-sepolia.blockpi.network/v1/rpc/public",
-        // wss: "https://ethereum-sepolia.blockpi.network/v1/rpc/public",
-        RPC_URL: "https://rpc.ankr.com/eth_sepolia/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf",
-        https: "https://rpc.ankr.com/eth_sepolia/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf",
-        wss: "wss://rpc.ankr.com/eth_sepolia/ws/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf",
+        RPC_URL: "https://rpc.ankr.com/eth_sepolia",
+        https: "https://rpc.ankr.com/eth_sepolia/",
+        wss: "wss://rpc.ankr.com/eth_sepolia/ws/",
+        // RPC_URL: "https://rpc.ankr.com/eth_sepolia/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf",
+        // https: "https://rpc.ankr.com/eth_sepolia/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf",
+        // wss: "wss://rpc.ankr.com/eth_sepolia/ws/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf",
         CHAIN_ID: 11155111
     }
 }
 
 const ETH_CONTRACT_ADDRESS = {
     AdminWalletAddress: "0x5141383723037FBd3818dAEcb7d4C5DF1Dc8c6B1",
-    ProjectManagerAddress: "0x87DA8B7c9A2bf2D2674f8A07aC700e2eB9a19d48",
-    ProjectDetailAddress: "0xDb23a69EbbD3c6427bEd29E33A2D50eAfc99C202",
+    ProjectManagerAddress: "0xf22a19f66dAC0b4143bDc0960DC4899c697FB55C",
+    ProjectDetailAddress: "0xd143e3F349af8d45Bb6BAc0EE99d7aAf2Ed132aF",
     WETH: "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9",
     USDCAddress: "0x5E4702eD9b138B1985ca3a978fD89a5842026F10",
     YOCAddress: "0x66524763757C6ddaFDB4a7b7Fa33121CD6F2599A",
@@ -32,7 +32,7 @@ const ETH_CONTRACT_ADDRESS = {
     YOCSwapRouterAddress: "0x2522611B7740cB21Cb3AdA16ac2f1393f52A3a87",
     YOCFarmAddress: "0xFAda526021cd20feac4902583C8647Eff2bc38F8",
     YUSDAddress: "0x99da355c817BC41413aE8D8771832271521aeac2",
-    ProjectTradeAddress: "0xE0df132f6067dAdA7817993e108D8bcd4687a1bB",
+    ProjectTradeAddress: "0x03D0990ff37fC590dc93680a7bA01F97ce74771C",
 }
 
 const BNB_NETWORK = {
@@ -47,17 +47,19 @@ const BNB_NETWORK = {
     testnet: {
         // RPC_URL: "https://data-seed-prebsc-1-s1.binance.org:8545/",
         RPC_URL: "https://rpc.ankr.com/bsc_testnet_chapel",
+        https: "https://rpc.ankr.com/bsc_testnet_chapel/",
+        wss: "wss://rpc.ankr.com/bsc_testnet_chapel/ws/",
         // RPC_URL: "https://rpc.ankr.com/bsc_testnet_chapel/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf",
-        https: "https://rpc.ankr.com/bsc_testnet_chapel",
-        wss: "wss://rpc.ankr.com/bsc_testnet_chapel/ws",
+        // https: "https://rpc.ankr.com/bsc_testnet_chapel/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf",
+        // wss: "wss://rpc.ankr.com/bsc_testnet_chapel/ws/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf",
         CHAIN_ID: 97
     }
 }
 
 const BNB_CONTRACT_ADDRESS = {
     AdminWalletAddress: "0x5141383723037FBd3818dAEcb7d4C5DF1Dc8c6B1",
-    ProjectManagerAddress: "0x17B04150F1569aDADEB43f5a707c8ecC45443826",
-    ProjectDetailAddress: "0xF26ab3153bA7E90E2abd9EA2074e8395eA5C88a5",
+    ProjectManagerAddress: "0x31Ac6A58287da86d95875E5dFc3Fe797eF80f385",
+    ProjectDetailAddress: "0x8E2AAEF73371AD54f8dbF6C39963D5729D2A38eA",
     WETH: "0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd",
     USDCAddress: "0x932836a161E7e6dd0272BC4D8912B17af8060C84",
     YOCAddress: "0x040930f16EC07B155475F6F21c25859dB36405Ec",
@@ -65,7 +67,7 @@ const BNB_CONTRACT_ADDRESS = {
     YOCSwapRouterAddress: "0xF837e5670C9Eb93eEfe4682199A9a96B48B33c65",
     YOCFarmAddress: "0x7f6B2C27B397F2E1b68C7A18e626edB275d07b2a",
     YUSDAddress: "0x01EDb3444A197E346Ba613B22EdBA4B00ff03cB4",
-    ProjectTradeAddress: "0xf636530b14f52CCb2aD13e54Abf47378E00BDa08",
+    ProjectTradeAddress: "0xBFF3F3b75390934ff5e48c2381967c691BDA3074",
 }
 
 const NETWORK = process.env.NET_WORK === "ETH" ? (process.env.env == 'development' ? ETH_NETWORK.testnet : ETH_NETWORK.mainnet) : (process.env.env == 'development' ? BNB_NETWORK.testnet : BNB_NETWORK.mainnet);

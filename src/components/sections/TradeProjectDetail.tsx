@@ -31,8 +31,8 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
     const { alertShow } = useAlert();
     const { loadingStart, loadingEnd } = useLoading();
     const { YUSDBalance, account, signer } = useAccount();
-    const { projects: tradeProjects, loading: tradeProjectLoading } = useTradeProject();
-    const { projects: fundProjects, loading: fundProjectLoading } = useFundProject();
+    const { projects: tradeProjects, loading: tradeProjectLoading, projectRetireve } = useTradeProject();
+    const { projects: fundProjects, loading: fundProjectLoading, updateProjectInfoByAddress } = useFundProject();
     const [isMintShow, setIsMintShow] = useState(false);
     const [buyOrders, setBuyOrders] = useState<any[]>([]);
     const [sellOrders, setSellOrders] = useState<any[]>([]);
@@ -104,9 +104,9 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
         if (ptokenAddress != "-1") {
             let detail = fundProjects.find((item: any) => item.shareToken == ptokenAddress);
             setFundProjectDetail(detail);
-            console.log(detail);
+            console.log('fundProjectDetail', detail);
         }
-    }, [ptokenAddress, account, fundProjects, fundProjectLoading, reloading])
+    }, [ptokenAddress, account, JSON.stringify(fundProjects), fundProjectLoading, reloading])
 
     useEffect(() => {
         if (period && ptokenAddress != "-1" && reloading) {
@@ -126,7 +126,6 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                 axiosInstance.get(`/trade/variationByPtokenAddressAndPeriod?ptokenAddress=${ptokenAddress}&period=${time}`)
                     .then((response) => {
                         let data = response.data;
-                        console.log(data);
                         setValume(data.value);
                     }).catch((err) => {
                         console.log(err);
@@ -175,7 +174,10 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                     loadingEnd();
                     setTimeout(() => {
                         setReloading(reloading + 1);
-                    }, 500);
+                        projectRetireve(String(account))
+                        updateProjectInfoByAddress(String(fundProjectDetail.poolAddress));
+                        loadingEnd();
+                    }, 800);
                 }
             })
             let buyTx = await projectTradeContract.buy(
@@ -234,11 +236,13 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                         text: `Price: ${convertWeiToEth(price, YUSD.decimals)} YUSD, Amount: ${convertWeiToEth(amount, tradeProjectDetail.data.ptokenDecimals)}`,
                         status: 'success'
                     });
-                    loadingEnd();
                     let backupPtokenAddress = ptokenAddress;
-                    setTimeout(() => {
+                    setTimeout(async () => {
                         setReloading(reloading + 1);
-                    }, 500)
+                        projectRetireve(String(account))
+                        updateProjectInfoByAddress(String(fundProjectDetail.poolAddress));
+                        loadingEnd();
+                    }, 800)
                 }
             })
             let sellTx = await projectTradeContract.sell(

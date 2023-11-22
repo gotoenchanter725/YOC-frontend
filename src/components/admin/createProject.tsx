@@ -127,7 +127,7 @@ const CreateProjectContent: FC<Props> = ({ handleClose }) => {
             setCreatingProject(false);
 
             loadingStart();
-            ProjectManagerContract.on('DeployedNewProject', async (owner: any, contractAddr: any, tokenAddr: any) => {
+            const eventlistencer = async (owner: any, contractAddr: any, tokenAddr: any) => {
                 console.log("DeployedNewProject", owner, account, contractAddr, tokenAddr);
                 if (owner == account) {
                     let data = {
@@ -154,8 +154,10 @@ const CreateProjectContent: FC<Props> = ({ handleClose }) => {
                     })
                     updateProjectInfoByAddress(contractAddr);
                     loadingEnd();
+                    ProjectManagerContract.removeListener("DeployedNewProject", eventlistencer);
                 }
-            })
+            }
+            ProjectManagerContract.on('DeployedNewProject', eventlistencer);
 
         } catch (ex) {
             loadingEnd();

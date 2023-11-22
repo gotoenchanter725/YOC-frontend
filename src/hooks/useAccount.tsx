@@ -12,7 +12,7 @@ const useAccount = () => {
     const [YOCBalance, setYOCBalance] = useState(0); // YOC
     const [ETHBalance, setETHBalance] = useState(0); // ETH
     const [YUSDBalance, setYUSDBalance] = useState(0); // YUSD
-    const [provider, setProvider] = useState();
+    // const [provider, setProvider] = useState();
     const [signer, setSigner] = useState();
     const account = address;
     useEffect(() => {
@@ -20,8 +20,8 @@ const useAccount = () => {
             let t_signer = await getEthersSigner();
             setSigner(t_signer as any);
             // let t_provider = getEthersProvider(); 
-            let t_provider = WebSocketProvider
-            setProvider(WebSocketProvider as any);
+            // let t_provider = WebSocketProvider
+            // setProvider(WebSocketProvider as any);
         })();
     }, [address])
     useEffect(() => {
@@ -64,7 +64,7 @@ const useAccount = () => {
         return Number(convertWeiToEth(rst.value, YUSD.decimals));
     }
 
-    return { account, YOCBalance, YUSDBalance, ETHBalance, getETHBalance, provider, signer, JsonRpcProvider, WebSocketProvider };
+    return { account, YOCBalance, YUSDBalance, ETHBalance, getETHBalance, provider: JsonRpcProvider, signer, JsonRpcProvider, WebSocketProvider };
 }
 
 export default useAccount;
