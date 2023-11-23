@@ -185,7 +185,7 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                 convertEthToWei(String(amountForBuy), fundProjectDetail.shareDecimal),
                 convertEthToWei(String(priceForBuy), YUSD.decimals),
                 {
-                    gasLimit: 700000
+                    gasLimit: 2000000
                 }
             )
             await buyTx.wait();
