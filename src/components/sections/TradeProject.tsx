@@ -41,7 +41,7 @@ const TradeProjectSection: FC<props> = ({ }) => {
 
     const filterNuanceDom = (val: string) => {
         return <span className={Number(val) > 0 ? "text-status-plus" : "text-status-minus"}>
-            {Number(val) > 0 ? "+" : ""}{Number(val)}%
+            {Number(val) > 0 ? "" : ""}{Math.abs(Number(val))}%
         </span>
     }
 

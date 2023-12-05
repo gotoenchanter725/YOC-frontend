@@ -108,7 +108,7 @@ const TradeTransactionSection: FC<propsType> = ({ orderId = "" }) => {
                                     orderDetail.transactions.map((item: any, index: number) => {
                                         return <tr key={`transaction-${index}`} className="bg-[#101a2c] border-t border-solid border-[#4b4d4d]">
                                             <td className="p-2.5"><div><p className="items-center">{convertDateToFullString(new Date(item.createdAt))}</p></div></td>
-                                            <td><div><p className="text-center">{Number(item.price).toFixed(2)}</p></div></td>
+                                            <td><div><p className="text-center">{Number(item.price).toFixed(4)}</p></div></td>
                                             <td><div><p className="text-center">{item.amount}</p></div></td>
                                             <td><div><p className="text-center">0.19%</p></div></td>
                                             <td><div><p className="text-center">{Number(item.price) * Number(item.amount)}</p></div></td>

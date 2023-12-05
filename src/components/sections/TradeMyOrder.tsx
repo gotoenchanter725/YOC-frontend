@@ -115,7 +115,7 @@ const TradeMyOrderSection: FC<props> = ({ }) => {
                                         onClick={() => setOrderId(item.orderId)}
                                     >
                                         <td className="p-2.5"><div><p className="items-center">{convertDateToFullString(new Date(item.createdAt))}</p></div></td>
-                                        <td><div><p className="text-center">{item.orderId}</p></div></td>
+                                        <td><div><p className="text-center">{item.id}</p></div></td>
                                         <td className="p-2.5">
                                             <div className="flex items-center justify-center">
                                                 <img src={item.project.iconUrl} className="w-5 h-5 mr-2" />

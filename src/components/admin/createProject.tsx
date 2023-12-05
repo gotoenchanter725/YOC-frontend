@@ -138,7 +138,8 @@ const CreateProjectContent: FC<Props> = ({ handleClose }) => {
                         decimals,
                         totalSupply: total,
                         sellAmount: ((Number(total) * Number(sellPercent)) / 100).toFixed(2),
-                        price: price
+                        price: price,
+                        endDate: endDate
                     }
                     try {
                         let respons = await axios.post(process.env.API_ADDRESS + '/project/create', data);

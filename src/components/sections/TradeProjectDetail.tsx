@@ -207,7 +207,7 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
             }
             if (amountForSell > fundProjectDetail.shareTokenBalance) {
                 alertShow({
-                    content: `You have insufficient YUSD amount`,
+                    content: `You have insufficient ${tradeProjectDetail.data.projectTitle} amount`,
                     status: 'failed'
                 })
                 throw "insufficient amount";
@@ -273,19 +273,47 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
         }
     }, [comparedPtokedAddress, tradeProjects])
 
+    const applyPrice = () => {
+        setPriceForBuy(latestPrice);
+        setPriceForSell(latestPrice);
+    }
+
+    const addPtokenHandle = async (insertedAddress: string, insertedSymbol: string, insertedDecimals: number) => {
+        await window.ethereum.request({
+            method: 'wallet_watchAsset',
+            params: {
+                type: 'ERC20', // Initially only supports ERC20, but eventually more!
+                options: {
+                    address: insertedAddress, // The address that the token is at.
+                    symbol: insertedSymbol, // A ticker symbol or shorthand, up to 5 chars.
+                    decimals: insertedDecimals, // The number of decimals in the token
+                    // image: 'https://otaris.io/png/otaris_logo.png', // A string url of the token logo
+                },
+            },
+        });
+    }
+
+    const addComparePtokenHandle = () => {
+        let detail = tradeProjects.find((item: any) => item.data.ptokenAddress == comparedPtokedAddress);
+        if (detail) {
+            addPtokenHandle(comparedPtokedAddress, detail.data.ptokenSymbol, detail.data.ptokenDecimals);
+        }
+    }
+
     return <>
         <div className="w-full text-sm p-2">
             <div className="flex justify-around">
                 <div className="flex items-center text-xl">
                     <div>TRADE</div>
                     <ProjectSelector ptokenAddress={ptokenAddress} setPtokenAddress={(v: string) => setPtokenAddress(v)} />
+                    <button className="ml-6 w-full bg-btn-primary px-1 py-1 text-xs rounded shadow-btn-primary" onClick={() => addPtokenHandle(ptokenAddress, tradeProjectDetail ? tradeProjectDetail.data.projectTitle : "", tradeProjectDetail ? Number(tradeProjectDetail.data.ptokenDecimals) : 0)}>Add Token</button>
                 </div>
             </div>
 
             <p className="py-2">You have {fundProjectDetail ? fundProjectDetail.shareTokenBalance : "0"} {tradeProjectDetail ? tradeProjectDetail.data.projectTitle : ""} in your wallet, {tradeProjectDetail ? tradeProjectDetail.inOrder : "0.0"} in Order</p>
             <div className="w-full h-[calc(100vh_-_300px)] overflow-x-hidden overflow-y-auto scrollbar scrollbar-w-1 scrollbar-thumb-[#FFFFFF33] scrollbar-track-[#FFFFFF33]">
                 <div className="w-full flex items-stretch pr-2">
-                    <div className="min-w-[320px] w-1/4 h-full p-4 rounded border-2 border-solid border-border-secondary bg-[#00000025]">
+                    <div className="min-w-[400px] w-1/4 h-full p-4 rounded border-2 border-solid border-border-secondary bg-[#00000025]">
                         <h3 className="italic text-md mb-2">Market</h3>
                         <div className="w-full">
                             <div className="flex items-center text-[#bdbdbd]">
@@ -324,7 +352,7 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                                     </>
                                 }
                             </div>
-                            <div className="flex items-center text-md my-2.5">{Number(latestPrice).toFixed(2)} YUSD <BsArrowUp className="ml-2 text-status-plus" /></div>
+                            <div className="flex items-center text-md my-2.5 cursor-pointer" onClick={() => applyPrice()}>{Number(latestPrice).toFixed(4)} YUSD <BsArrowUp className="ml-2 text-status-plus" /></div>
                             <div className="min-h-[calc(50vh_-_180px)] h-full">
                                 {
                                     loadingProjectDetail == 1 ? <>
@@ -374,6 +402,11 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                                     <div className="ml-12 flex items-center">
                                         <div>Compare:</div>
                                         <ProjectSelector ptokenAddress={comparedPtokedAddress} setPtokenAddress={(v: string) => setComparedPtokedAddress(v)} exceptAddress={ptokenAddress} />
+                                        {
+                                            comparedPtokedAddress ?
+                                                <button className="ml-6 w-full bg-btn-primary py-1 text-xs rounded shadow-btn-primary" onClick={() => addComparePtokenHandle()}>Add Token</button>
+                                                : ""
+                                        }
                                     </div>
                                 </div>
                                 <div id="priceChart" className="chart-section mb-2">
@@ -408,7 +441,7 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                                 <div className="flex justify-end">
                                     <span>Fee: 0.19%</span>
                                 </div>
-                                <button className="w-full bg-status-plus px-3 py-2 text-sm rounded shadow-btn-primary" onClick={() => buyHandle()}>Buy {'YTEST'}</button>
+                                <button className="w-full bg-status-plus px-3 py-2 text-sm rounded shadow-btn-primary" onClick={() => buyHandle()}>Buy {tradeProjectDetail ? tradeProjectDetail.data.projectTitle : ""}</button>
                             </div>
 
                             <div className="w-[calc(50%_-_20px)] max-w-[500px] p-4 rounded border-2 border-solid border-border-secondary bg-[#00000025]">
@@ -429,7 +462,7 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                                 <div className="flex justify-end">
                                     <span>Fee: 0.19%</span>
                                 </div>
-                                <button className="w-full bg-status-minus px-3 py-2 text-sm rounded shadow-btn-primary" onClick={() => sellHandle()}>Sell {'YTEST'}</button>
+                                <button className="w-full bg-status-minus px-3 py-2 text-sm rounded shadow-btn-primary" onClick={() => sellHandle()}>Sell {tradeProjectDetail ? tradeProjectDetail.data.projectTitle : ""}</button>
                             </div>
                         </div>
                     </div>
