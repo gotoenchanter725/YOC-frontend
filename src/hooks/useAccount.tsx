@@ -27,9 +27,9 @@ const useAccount = () => {
     useEffect(() => {
         (async () => {
             if (address) {
-                setYOCBalance(await getYOCBalance());
-                setETHBalance(await getETHBalance());
-                setYUSDBalance(await getYUSDBalance());
+                await updateYOCBalance();
+                await updateETHBalance();
+                await updateYUSDBalance();
             }
         })();
     }, [address])
@@ -64,7 +64,19 @@ const useAccount = () => {
         return Number(convertWeiToEth(rst.value, YUSD.decimals));
     }
 
-    return { account, YOCBalance, YUSDBalance, ETHBalance, getETHBalance, provider: JsonRpcProvider, signer, JsonRpcProvider, WebSocketProvider };
+    const updateYUSDBalance = async () => {
+        setYUSDBalance(await getYUSDBalance());
+    }
+
+    const updateETHBalance = async () => {
+        setETHBalance(await getETHBalance());
+    }
+
+    const updateYOCBalance = async () => {
+        setYOCBalance(await getYOCBalance());
+    }
+
+    return { account, YOCBalance, YUSDBalance, ETHBalance, updateYOCBalance, updateYUSDBalance, updateETHBalance, getETHBalance, provider: JsonRpcProvider, signer, JsonRpcProvider, WebSocketProvider };
 }
 
 export default useAccount;

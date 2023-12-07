@@ -30,7 +30,7 @@ type props = {
 const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
     const { alertShow } = useAlert();
     const { loadingStart, loadingEnd } = useLoading();
-    const { YUSDBalance, account, signer } = useAccount();
+    const { YUSDBalance, account, signer, updateYUSDBalance } = useAccount();
     const { projects: tradeProjects, loading: tradeProjectLoading, projectRetireve } = useTradeProject();
     const { projects: fundProjects, loading: fundProjectLoading, updateProjectInfoByAddress } = useFundProject();
     const [isMintShow, setIsMintShow] = useState(false);
@@ -84,8 +84,18 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                     // ])
                     setLatestPrice(Number(data.latestPrice));
                     setLoadingProjectDetail(2);
-                    setSellOrders([...data.orders.filter((item: any) => item.isCancelled == false && item.isBuy == false).sort((a: any, b: any) => Number(b.price) - Number(a.price))]);
-                    setBuyOrders([...data.orders.filter((item: any) => item.isCancelled == false && item.isBuy == true).sort((a: any, b: any) => Number(b.price) - Number(a.price))]);
+                    setSellOrders([...data.orders.filter((item: any) => item.isCancelled == false && item.isBuy == false).sort((a: any, b: any) => {
+                        if (Number(b.price) - Number(a.price)) return Number(b.price) - Number(a.price)
+                        else {
+                            return Number(new Date(b.createdAt)) - Number(new Date(a.createdAt))
+                        }
+                    })]);
+                    setBuyOrders([...data.orders.filter((item: any) => item.isCancelled == false && item.isBuy == true).sort((a: any, b: any) => {
+                        if (Number(b.price) - Number(a.price)) return Number(b.price) - Number(a.price)
+                        else {
+                            return Number(new Date(a.createdAt)) - Number(new Date(b.createdAt))
+                        }
+                    })]);
                 }).catch(err => {
                     console.log(err);
                     setLoadingProjectDetail(2);
@@ -145,7 +155,7 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                 })
                 throw "invalid input";
             }
-            if (finalYUSDAmount > YUSDBalance) {
+            if (+finalYUSDAmount > +YUSDBalance) {
                 alertShow({
                     content: `You have insufficient YUSD amount`,
                     status: 'failed'
@@ -176,6 +186,7 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                         setReloading(reloading + 1);
                         projectRetireve(String(account))
                         updateProjectInfoByAddress(String(fundProjectDetail.poolAddress));
+                        updateYUSDBalance();
                         loadingEnd();
                     }, 800);
                 }
@@ -205,7 +216,7 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                 });
                 throw "invalid input";
             }
-            if (amountForSell > fundProjectDetail.shareTokenBalance) {
+            if (+amountForSell > +fundProjectDetail.shareTokenBalance) {
                 alertShow({
                     content: `You have insufficient ${tradeProjectDetail.data.projectTitle} amount`,
                     status: 'failed'
@@ -241,6 +252,7 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                         setReloading(reloading + 1);
                         projectRetireve(String(account))
                         updateProjectInfoByAddress(String(fundProjectDetail.poolAddress));
+                        updateYUSDBalance();
                         loadingEnd();
                     }, 800)
                 }
@@ -306,7 +318,7 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                 <div className="flex items-center text-xl">
                     <div>TRADE</div>
                     <ProjectSelector ptokenAddress={ptokenAddress} setPtokenAddress={(v: string) => setPtokenAddress(v)} />
-                    <button className="ml-6 w-full bg-btn-primary px-1 py-1 text-xs rounded shadow-btn-primary" onClick={() => addPtokenHandle(ptokenAddress, tradeProjectDetail ? tradeProjectDetail.data.projectTitle : "", tradeProjectDetail ? Number(tradeProjectDetail.data.ptokenDecimals) : 0)}>Add Token</button>
+                    <button className="ml-2 w-full bg-btn-primary px-1 py-1 text-xs rounded shadow-btn-primary" onClick={() => addPtokenHandle(ptokenAddress, tradeProjectDetail ? tradeProjectDetail.data.projectTitle : "", tradeProjectDetail ? Number(tradeProjectDetail.data.ptokenDecimals) : 0)}>Add Token</button>
                 </div>
             </div>
 
@@ -404,7 +416,7 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                                         <ProjectSelector ptokenAddress={comparedPtokedAddress} setPtokenAddress={(v: string) => setComparedPtokedAddress(v)} exceptAddress={ptokenAddress} />
                                         {
                                             comparedPtokedAddress ?
-                                                <button className="ml-6 w-full bg-btn-primary py-1 text-xs rounded shadow-btn-primary" onClick={() => addComparePtokenHandle()}>Add Token</button>
+                                                <button className="ml-2 w-full bg-btn-primary py-1 text-xs rounded shadow-btn-primary" onClick={() => addComparePtokenHandle()}>Add Token</button>
                                                 : ""
                                         }
                                     </div>
@@ -431,7 +443,7 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                                     <button className="bg-btn-primary px-3 py-2 text-sm rounded shadow-btn-primary" onClick={() => { setIsMintShow(true) }}>Mint YUSD</button>
                                 </div>
                                 <CInput value={priceForBuy} setValue={(v: any) => { setPriceForBuy(v); setPercentageOfBuy(Number(v / YUSDBalance) * 100) }} label="Price" className="mb-2" leftText="YUSD" />
-                                <CInput value={amountForBuy} setValue={(v: any) => setAmountForBuy(v)} label="Amount" className="mb-4" leftText={"YTESTE"} />
+                                <CInput value={amountForBuy} setValue={(v: any) => setAmountForBuy(v)} label="Amount" className="mb-4" leftText={tradeProjectDetail ? tradeProjectDetail.data.projectTitle : ""} />
                                 <div className="h-[2px] w-full mb-6 bg-status-plus"></div>
                                 <div className="w-full flex items-center justify-between mb-6">
                                     <ProgressInput value={percentageOfBuy} setValue={(v: number) => { setPercentageOfBuy(v); setPriceForBuy(YUSDBalance * v / 100) }} className="w-[calc(100%_-_56px)]" inputClassName="plus" />
@@ -452,7 +464,7 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                                     </div>
                                 </div>
                                 <CInput value={priceForSell} setValue={(v: any) => setPriceForSell(v)} label="Price" className="mb-2" leftText="YUSD" />
-                                <CInput value={amountForSell} setValue={(v: any) => { setAmountForSell(v); setPercentageOfSell(v / Number(fundProjectDetail.shareTokenBalance) * 100) }} label="Amount" className="mb-4" leftText={"YTESTE"} />
+                                <CInput value={amountForSell} setValue={(v: any) => { setAmountForSell(v); setPercentageOfSell(v / Number(fundProjectDetail.shareTokenBalance) * 100) }} label="Amount" className="mb-4" leftText={tradeProjectDetail ? tradeProjectDetail.data.projectTitle : ""} />
                                 <div className="h-[2px] w-full mb-6 bg-status-minus"></div>
                                 <div className="w-full flex items-center justify-between mb-6">
                                     <ProgressInput value={percentageOfSell} setValue={(v: number) => { setPercentageOfSell(v); console.log(fundProjectDetail.shareTokenBalance); setAmountForSell(Number(fundProjectDetail.shareTokenBalance) * (v / 100)) }} className="w-[calc(100%_-_56px)]" inputClassName="minus" />

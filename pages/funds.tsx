@@ -196,7 +196,7 @@ const Fund: FC = () => {
                 }
                 {
                     step == 3 ?
-                        projects.filter((item: any) => item && (item.joinState || item.shareTokenBalance)).map((item: any, index: number) => {
+                        projects.filter((item: any) => item && (item.joinState || Number(item.shareTokenBalance))).map((item: any, index: number) => {
                             return (
                                 <Card key={`card- + ${index}`} item={item} poolAddress={item} buyAction={buyToken} claimAction={claim} refundAction={refund} provider={provider} status="my" />
                             )
