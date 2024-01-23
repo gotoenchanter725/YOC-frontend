@@ -5,19 +5,6 @@
   "abi": [
     {
       "inputs": [],
-      "name": "apr",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
       "name": "category",
       "outputs": [
         {
@@ -82,6 +69,25 @@
       "type": "function"
     },
     {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_userAddr",
+          "type": "address"
+        }
+      ],
+      "name": "investEarnAmountCheck",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
       "inputs": [],
       "name": "investToken",
       "outputs": [
@@ -97,6 +103,19 @@
     {
       "inputs": [],
       "name": "investTotalAmount",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "multiplier",
       "outputs": [
         {
           "internalType": "uint256",
@@ -157,6 +176,19 @@
           "internalType": "bool",
           "name": "",
           "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "projectTrade",
+      "outputs": [
+        {
+          "internalType": "contract IProjectTrade",
+          "name": "",
+          "type": "address"
         }
       ],
       "stateMutability": "view",
@@ -261,6 +293,19 @@
           "internalType": "string",
           "name": "",
           "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "treasuryWallet",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
         }
       ],
       "stateMutability": "view",
