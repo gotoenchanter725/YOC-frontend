@@ -84,7 +84,7 @@ const TradeProjectSection: FC<props> = ({ }) => {
                     <th><div>24h</div></th>
                     <th><div>7d</div></th>
                     <th>
-                        <div>24th Volume</div>
+                        <div>24h Volume</div>
                         <p>(YUSD)</p>
                     </th>
                     <th>

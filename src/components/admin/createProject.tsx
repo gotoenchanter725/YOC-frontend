@@ -4,7 +4,7 @@ import { Contract, ethers } from "ethers";
 import axios from "axios";
 
 import Button from "../widgets/Button";
-import { ProjectManager, YUSD } from "../../constants/contracts";
+import { ProjectManager, ProjectTrade, YUSD } from "../../constants/contracts";
 import useAccount from "@hooks/useAccount";
 import useLoading from "@hooks/useLoading";
 import useAlert from "@hooks/useAlert";
@@ -20,7 +20,7 @@ type Props = {
 }
 
 const CreateProjectContent: FC<Props> = ({ handleClose }) => {
-    const { account, signer } = useAccount();
+    const { account, signer, provider } = useAccount();
     const { loadingStart, loadingEnd } = useLoading();
     const { alertShow } = useAlert()
     const { updateProjectInfoByAddress } = useProject();
@@ -39,7 +39,6 @@ const CreateProjectContent: FC<Props> = ({ handleClose }) => {
     const [category, setCategory] = useState<string>("");
     const [decimals, setDecimal] = useState<string>("");
     const [roi, setRoi] = useState<string>("");
-    const [apr, setApr] = useState<string>("");
     const [startDate, setStartDate] = useState<string>("");
     const [endDate, setEndDate] = useState<string>("");
     const [total, setTotal] = useState<string>("");
@@ -47,7 +46,8 @@ const CreateProjectContent: FC<Props> = ({ handleClose }) => {
     const [ongoingPercent, setOngoingPercent] = useState<string>("70");
     const [sellAmount, setShowAmount] = useState<string>("");
     const [price, setPrice] = useState<string>("");
-    const [tokenAddr, setTokenAddr] = useState<string>("");
+    const [multiplier, setMultiplier] = useState<string>("");
+    const [projectAddress, setProjectAddress] = useState<string>(String(account));
     const [projectWebsite, setProjectWebsite] = useState<string>("");
 
     const [creatingProject, setCreatingProject] = useState(false);
@@ -88,7 +88,7 @@ const CreateProjectContent: FC<Props> = ({ handleClose }) => {
                 return;
             }
 
-            if (!title || !desc || !category || !decimals || !roi || !apr || !startDate || !endDate || !tokenIconImage || !tokenSymbolImage || !total || !sellPercent || +price < 0 || !ongoingPercent) {
+            if (!title || !desc || !category || !decimals || !roi || !startDate || !endDate || !tokenIconImage || !tokenSymbolImage || !total || !sellPercent || +price < 0 || !ongoingPercent || !multiplier || !projectAddress) {
                 alertShow({
                     status: 'failed',
                     content: 'Please input correct data'
@@ -112,18 +112,32 @@ const CreateProjectContent: FC<Props> = ({ handleClose }) => {
 
             const ProjectManagerContract = new Contract(ProjectManager.address, ProjectManager.abi, signer);
 
-            let createProject = await ProjectManagerContract.createProject(
+            const gasPrice = await provider.getGasPrice();
+            let createProjectEstimate = await ProjectManagerContract.estimateGas.createProject(
                 `${title} Token`,
                 title,
                 ethers.utils.parseUnits(total, decimals),
                 ethers.utils.parseUnits(decimals, 0),
                 ethers.utils.parseUnits(((Number(total) * Number(sellPercent)) / 100).toFixed(2), decimals),
                 [title, desc, category, projectWebsite, iconUrl, symbolUrl],
-                [ethers.utils.parseUnits(price, 3), ethers.utils.parseUnits(roi, 0), ethers.utils.parseUnits(apr, 0), ethers.utils.parseUnits(startDate, 0), ethers.utils.parseUnits(endDate, 0), ongoingPercent],
-                YUSD.address,
-                { gasLimit: 5000000 }
+                [ethers.utils.parseUnits(price, 3), ethers.utils.parseUnits(roi, 0), ethers.utils.parseUnits(startDate, 0), ethers.utils.parseUnits(endDate, 0), ongoingPercent, multiplier],
+                [YUSD.address, projectAddress]
             );
-
+            const gasLimit = createProjectEstimate.mul(120).div(100);
+            console.log(+gasPrice / 10 ** 18, +gasLimit, +gasPrice * +gasLimit / 10 ** 18);
+            const createProjectTransaction = await ProjectManagerContract.createProject(
+                `${title} Token`,
+                title,
+                ethers.utils.parseUnits(total, decimals),
+                ethers.utils.parseUnits(decimals, 0),
+                ethers.utils.parseUnits(((Number(total) * Number(sellPercent)) / 100).toFixed(2), decimals),
+                [title, desc, category, projectWebsite, iconUrl, symbolUrl],
+                [ethers.utils.parseUnits(price, 3), ethers.utils.parseUnits(roi, 0), ethers.utils.parseUnits(startDate, 0), ethers.utils.parseUnits(endDate, 0), ongoingPercent, multiplier],
+                [YUSD.address, projectAddress],
+                { gasLimit: gasLimit, gasPrice: gasPrice } // Set the gas limit here
+            );
+            const createProjectReceipt = await createProjectTransaction.wait();
+            console.log(createProjectReceipt);
             setCreatingProject(false);
 
             loadingStart();
@@ -139,7 +153,9 @@ const CreateProjectContent: FC<Props> = ({ handleClose }) => {
                         totalSupply: total,
                         sellAmount: ((Number(total) * Number(sellPercent)) / 100).toFixed(2),
                         price: price,
-                        endDate: endDate
+                        endDate: endDate,
+                        multiplier: multiplier,
+                        projectAddress: projectAddress
                     }
                     try {
                         let respons = await axios.post(process.env.API_ADDRESS + '/project/create', data);
@@ -148,7 +164,6 @@ const CreateProjectContent: FC<Props> = ({ handleClose }) => {
                         console.log(error)
                     }
 
-                    setTokenAddr(tokenAddr);
                     alertShow({
                         status: 'success',
                         content: 'Project Create Success!'
@@ -206,13 +221,9 @@ const CreateProjectContent: FC<Props> = ({ handleClose }) => {
                     <label htmlFor="">Decimals</label>
                     <input className="text-white rounded border border-[#FFFFFF22] bg-transparent bg-primary-pattern px-4 py-2" type="number" value={decimals} onChange={(e) => setDecimal(e.target.value)} />
                 </div>
-                <div className="input_control ROI">
-                    <label htmlFor="">ROI</label>
+                <div className="input_control Breakeven">
+                    <label htmlFor="">Breakeven</label>
                     <input className="text-white rounded border border-[#FFFFFF22] bg-transparent bg-primary-pattern px-4 py-2" type="number" value={roi} onChange={(e) => setRoi(e.target.value)} />
-                </div>
-                <div className="input_control APR">
-                    <label htmlFor="">APR</label>
-                    <input className="text-white rounded border border-[#FFFFFF22] bg-transparent bg-primary-pattern px-4 py-2" type="number" value={apr} onChange={(e) => setApr(e.target.value)} />
                 </div>
                 <div className="input_control start_date">
                     <label htmlFor="">Start Date</label>
@@ -259,7 +270,7 @@ const CreateProjectContent: FC<Props> = ({ handleClose }) => {
                         <input className="text-white rounded border border-[#FFFFFF22] bg-transparent bg-primary-pattern px-4 py-2 outline-none" type="text" value={sellAmount} onChange={(e) => { }} />
                     </div>
                     <div className="input_control price">
-                        <label htmlFor="">Price (Tokens for 1 USDC)</label>
+                        <label htmlFor="">Price (Tokens for 1 {YUSD.symbol})</label>
                         <input className="text-white rounded border border-[#FFFFFF22] bg-transparent bg-primary-pattern px-4 py-2 outline-none" type="number" value={price} onChange={(e) => setPrice(e.target.value)} />
                     </div>
                 </div>
@@ -267,10 +278,14 @@ const CreateProjectContent: FC<Props> = ({ handleClose }) => {
                     <label htmlFor="">Ongoing Percentage</label>
                     <input className="text-white rounded border border-[#FFFFFF22] bg-transparent bg-primary-pattern px-4 py-2 outline-none" type="number" min={0} max={100} placeholder='70%' value={ongoingPercent} onChange={(e) => setOngoingPercent(e.target.value)} />
                 </div>
-                {/* <div className="input_control address">
-                    <label htmlFor="">Token Address</label>
-                    <input className="text-white rounded border border-[#FFFFFF22] bg-transparent bg-primary-pattern px-4 py-2 outline-none" type="text" value={tokenAddr} onChange={(e) => setTokenAddr(e.target.value)} />
-                </div> */}
+                <div className="input_control wallet">
+                    <label htmlFor="">Multiplier</label>
+                    <input className="text-white rounded border border-[#FFFFFF22] bg-transparent bg-primary-pattern px-4 py-2 outline-none" type="number" min={0} max={100} placeholder='10' value={multiplier} onChange={(e) => setMultiplier(e.target.value)} />
+                </div>
+                <div className="input_control address">
+                    <label htmlFor="">Project Wallet</label>
+                    <input className="text-white rounded border border-[#FFFFFF22] bg-transparent bg-primary-pattern px-4 py-2 outline-none" type="text" value={projectAddress} onChange={(e) => setProjectAddress(e.target.value)} />
+                </div>
                 <div className="input_control website">
                     <label htmlFor="">Project website</label>
                     <input className="text-white rounded border border-[#FFFFFF22] bg-transparent bg-primary-pattern px-4 py-2 outline-none" type="text" value={projectWebsite} onChange={(e) => setProjectWebsite(e.target.value)} />

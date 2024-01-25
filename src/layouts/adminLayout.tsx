@@ -18,7 +18,7 @@ const adminLayout = ({ children }: LayoutProps) => {
         <div className='w-full flex justify-between bg-[#141517]'>
             <MenuBar />
 
-            <div className='w-[calc(100vw_-_340px)] mr-[10px] bg-[#1a1b1e] overflow-x-hidden'>
+            <div className='w-[calc(100vw_-_260px)] mr-[10px] bg-[#1a1b1e] overflow-x-hidden'>
                 {
                     account ?
                         isAdmin ?

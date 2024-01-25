@@ -1,6 +1,6 @@
 import React, { FC, useEffect, useState, useMemo } from "react";
 import dynamic from 'next/dynamic';
-import { BsArrowUp } from "react-icons/bs";
+import { BsArrowDown, BsArrowUp } from "react-icons/bs";
 import { Contract, constants } from "ethers";
 
 import CInput from "@components/widgets/CInput";
@@ -39,6 +39,7 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
     const [loadingProjectDetail, setLoadingProjectDetail] = useState(0); // 0: not loading, 1: loading, 2: done
     const [prices, setPrices] = useState<any[]>([]);
     const [latestPrice, setLatestPrice] = useState(0);
+    const [isRaise, setIsRaise] = useState(false);
     const [comparedPtokedAddress, setComparedPtokedAddress] = useState('');
     const [comparedPrices, setComparedPrices] = useState<any[]>([]);
     const [tradeProjectDetail, setTradeProjectDetail] = useState<any>();
@@ -47,7 +48,7 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
     const [percentageOfBuy, setPercentageOfBuy] = useState(0);
     const [percentageOfSell, setPercentageOfSell] = useState(0);
     const [variation, setVariation] = useState(0);
-    const [valume, setValume] = useState(0);
+    const [volume, setVolume] = useState(0);
     const [reloading, setReloading] = useState(1);
 
     const [priceForBuy, setPriceForBuy] = useState(0);
@@ -83,6 +84,7 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                     //     })
                     // ])
                     setLatestPrice(Number(data.latestPrice));
+                    setIsRaise(Boolean(data.isRaise));
                     setLoadingProjectDetail(2);
                     setSellOrders([...data.orders.filter((item: any) => item.isCancelled == false && item.isBuy == false).sort((a: any, b: any) => {
                         if (Number(b.price) - Number(a.price)) return Number(b.price) - Number(a.price)
@@ -133,10 +135,10 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                     }).catch((err) => {
                         console.log(err);
                     })
-                axiosInstance.get(`/trade/variationByPtokenAddressAndPeriod?ptokenAddress=${ptokenAddress}&period=${time}`)
+                axiosInstance.get(`/trade/volumeByPtokenAddressForPeriod?ptokenAddress=${ptokenAddress}&period=${time}`)
                     .then((response) => {
                         let data = response.data;
-                        setValume(data.value);
+                        setVolume(data.value);
                     }).catch((err) => {
                         console.log(err);
                     })
@@ -333,7 +335,7 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                                 <div className="w-1/3 text-center py-1.5">Amount({tradeProjectDetail ? tradeProjectDetail.data.projectTitle : ""})</div>
                                 <div className="w-1/3 text-center py-1.5">Total({YUSD.symbol})</div>
                             </div>
-                            <div className="min-h-[calc(50vh_-_300px)] h-full">
+                            <div className="max-h-[554px] min-h-[calc(50vh_-_300px)] overflow-x-hidden overflow-y-auto h-full scrollbar scrollbar-w-1 scrollbar-thumb-[#FFFFFF33] scrollbar-track-[#FFFFFF33]">
                                 {
                                     loadingProjectDetail == 1 ? <>
                                         {
@@ -364,8 +366,13 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                                     </>
                                 }
                             </div>
-                            <div className="flex items-center text-md my-2.5 cursor-pointer" onClick={() => applyPrice()}>{Number(latestPrice).toFixed(4)} YUSD <BsArrowUp className="ml-2 text-status-plus" /></div>
-                            <div className="min-h-[calc(50vh_-_180px)] h-full">
+                            <div className="flex items-center text-md my-2.5 cursor-pointer" onClick={() => applyPrice()}>
+                                {Number(latestPrice).toFixed(4)} {YUSD.symbol}
+                                {
+                                    isRaise ? <BsArrowUp className="ml-2 text-status-plus" /> : <BsArrowDown className="ml-2 text-status-minus" />
+                                }
+                            </div>
+                            <div className="max-h-[554px] min-h-[calc(50vh_-_180px)] overflow-x-hidden overflow-y-auto h-full scrollbar scrollbar-w-1 scrollbar-thumb-[#FFFFFF33] scrollbar-track-[#FFFFFF33]">
                                 {
                                     loadingProjectDetail == 1 ? <>
                                         {
@@ -426,7 +433,7 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                                 </div>
                                 <div className=" mb-2">
                                     <div className="flex items-center"><p>{tradeProjectDetail ? tradeProjectDetail.data.projectTitle : ""} </p> <p className="italic ml-2">Trade Valume:</p></div>
-                                    <div className="flex items-center"><p>{convertPeriodShortToFull(period)} variation:</p><p className="ml-2 italic">{showBigNumber(valume, 2)}</p></div>
+                                    <div className="flex items-center"><p>{convertPeriodShortToFull(period)} volume:</p><p className="ml-2 italic">{showBigNumber(volume, 2)} {YUSD.symbol}</p></div>
                                 </div>
                                 <div className="chart-section">
                                 </div>

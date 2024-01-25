@@ -3,6 +3,7 @@ import React, { FC, useRef, useState, useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import Button from "../widgets/Button";
+import useAccount from "@hooks/useAccount";
 
 
 type Props = {
@@ -13,7 +14,7 @@ type Props = {
 }
 
 const UserVotingContent: FC<Props> = ({ handleClose, votingQueryDetail, userVotingDetail, currentUserBalance }) => {
-    const { projects, account, signer } = useSelector((state: any) => state.data);
+    const { account } = useAccount();
     const queryId = useMemo(() => {
         if (votingQueryDetail && votingQueryDetail.id) return votingQueryDetail.id;
         else return 0;
@@ -55,7 +56,7 @@ const UserVotingContent: FC<Props> = ({ handleClose, votingQueryDetail, userVoti
                 <p>{answerArr[i]}</p>
                 {i == userVotingDetail.votingState ? (<div className="ml-3 rounded-full w-[8px] h-[8px] bg-secondary"></div>) : ""}
             </div>
-            <Button className={userVotingDetail.votingState != undefined ? "vote_btn disabled" : "vote_btn"} disabled={userVotingDetail.votingState != undefined} onClick={() => saveUserVotingStatus(account, i, queryId)} text="Vote" />
+            <Button className={userVotingDetail.votingState != undefined ? "vote_btn disabled" : "vote_btn"} disabled={userVotingDetail.votingState != undefined} onClick={() => saveUserVotingStatus(String(account), i, queryId)} text="Vote" />
         </div>)
     }
     let endDate = new Date(votingQueryDetail.endDate);

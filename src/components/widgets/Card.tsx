@@ -1,4 +1,4 @@
-import React, { FC, useState, useEffect, useRef, useCallback } from "react";
+import React, { FC, useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Contract, ethers } from "ethers";
 import ProgressBar from "./ProgressBar";
@@ -8,7 +8,7 @@ import ModalV2 from "./Modalv2";
 import AdminVotingContent from "./AdminVotingContent";
 import UserVotingContent from "./UserVotingContent";
 import UserVotingResult from "./UserVotingResultModal";
-import { Project, ProjectDetail, TokenTemplate, USDCToken, YUSD } from "../../constants/contracts";
+import { Project, ProjectDetail, TokenTemplate, YOC, YUSD } from "../../constants/contracts";
 import { VotingQueryInterface, VotingResultInterface } from "../../interfaces/voting";
 import axios from "axios";
 import VotingHistory from "./VotingHistoryModalContent";
@@ -19,7 +19,7 @@ import useNetwork from "@hooks/useNetwork";
 import { convertWeiToEth } from "utils/unit";
 import useAccount from "@hooks/useAccount";
 import useProject from "@hooks/useFund";
-import { WebSocketProvider } from "utils/ethers";
+import useCurrency from "@hooks/useCurrency";
 
 interface Props {
     item?: any;
@@ -28,6 +28,7 @@ interface Props {
     refundAction?: any;
     claimAction?: any;
     depositAction?: any;
+    harvestAction?: any;
     provider?: any;
     status: string;
     admin?: boolean;
@@ -45,12 +46,12 @@ interface detailTokenInterface {
     decimals: number
 }
 
-const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAction, admin, status }) => {
+const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAction, harvestAction, admin, status }) => {
     const { account, provider } = useAccount();
     const { loadingStart, loadingEnd } = useLoading();
     const { updateProjectInfoByAddress } = useProject();
     const { alertShow } = useAlert();
-    const { explorer } = useNetwork();
+    const { explorer, network, scan } = useNetwork();
 
     const [showBuyTokenModal, setShowBuyTokenModal] = useState(false);
     const [showDepositModal, setShowDepositModal] = useState(false);
@@ -72,14 +73,15 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
     const [shareContract, setShareContract] = useState<detailTokenInterface>();
     const [projectDetailContract, setProjectDetailContract] = useState<Contract>();
     const [projectStatus, setProjectStatus] = useState("");
+    const { getCurrencyDetail } = useCurrency();
 
     useEffect(() => {
         (async () => {
             if (item.investToken && provider) {
                 if (status == 'my') {
-                    if (item.endDate >= Date.now() && item.currentStatus < item.ongoingPercent) setProjectStatus("open");
-                    else if (item.currentStatus >= item.ongoingPercent) setProjectStatus("ongoing");
-                    else setProjectStatus("close");
+                    if (item.endDate >= Date.now() && item.currentStatus < item.ongoingPercent) setProjectStatus("Fundraising");
+                    else if (item.currentStatus >= item.ongoingPercent) setProjectStatus("Ongoing");
+                    else setProjectStatus("Closed");
                 } else {
                     setProjectStatus(status);
                 }
@@ -97,77 +99,79 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
                     symbol: item.shareSymbol,
                     decimals: item.shareDecimal
                 })
+                if (item.vote.loading == 2) {
+                    setVotingRsponse(item.vote.data);
+                }
             }
         })();
     }, [item, provider, account])
 
     useEffect(() => {
-        if (item && provider && account && investContract && shareContract) {
-            try {
-                // const projecContract = item.projectContract as Contract;
-                const projecContract = new Contract(item.poolAddress, Project.abi, WebSocketProvider);
-                projecContract.on('Participated', (address, amount1, amount2, user) => {
-                    updateProjectInfoByAddress(address);
+        // if (item && provider && account && investContract && shareContract) {
+        //     try {
+        //         // const projecContract = item.projectContract as Contract;
+        //         const projecContract = new Contract(item.poolAddress, Project.abi, WebSocketProvider);
+        //         projecContract.on('Participated', (address, amount1, amount2, user) => {
+        //             updateProjectInfoByAddress(address);
 
-                    if (user == account) {
-                        let realInvestAmount = convertWeiToEth(amount1, investContract ? investContract.decimals : 16)
-                        let realShareAmount = convertWeiToEth(amount2, shareContract ? shareContract.decimals : 16)
-                        alertShow({
-                            content: `Participated ${realShareAmount} ${shareContract?.symbol}, ${realInvestAmount} ${investContract?.symbol} Successfully`,
-                            status: 'success'
-                        })
-                    }
-                });
+        //             if (user == account) {
+        //                 let realInvestAmount = convertWeiToEth(amount1, investContract ? investContract.decimals : 16)
+        //                 let realShareAmount = convertWeiToEth(amount2, shareContract ? shareContract.decimals : 16)
+        //                 alertShow({
+        //                     content: `Participated ${realShareAmount} ${shareContract?.symbol}, ${realInvestAmount} ${investContract?.symbol} Successfully`,
+        //                     status: 'success'
+        //                 })
+        //             }
+        //         });
 
-                projecContract.on('Refund', (address, amount1, amount2, user) => {
-                    updateProjectInfoByAddress(address);
+        //         projecContract.on('Refund', (address, amount1, amount2, user) => {
+        //             updateProjectInfoByAddress(address);
 
-                    if (user == account) {
-                        let realInvestAmount = convertWeiToEth(amount1, investContract ? investContract.decimals : 16)
-                        let realShareAmount = convertWeiToEth(amount2, shareContract ? shareContract.decimals : 16)
-                        alertShow({
-                            content: `Refund ${realShareAmount} ${shareContract?.symbol}, ${realInvestAmount} ${investContract?.symbol} Successfully`,
-                            status: 'success'
-                        })
-                    }
-                });
+        //             if (user == account) {
+        //                 let realInvestAmount = convertWeiToEth(amount1, investContract ? investContract.decimals : 16)
+        //                 let realShareAmount = convertWeiToEth(amount2, shareContract ? shareContract.decimals : 16)
+        //                 alertShow({
+        //                     content: `Refund ${realShareAmount} ${shareContract?.symbol}, ${realInvestAmount} ${investContract?.symbol} Successfully`,
+        //                     status: 'success'
+        //                 })
+        //             }
+        //         });
 
-                projecContract.on('Claimed', (address, amount, user) => {
-                    updateProjectInfoByAddress(address);
+        //         projecContract.on('Claimed', (address, amount, user) => {
+        //             updateProjectInfoByAddress(address);
 
-                    if (user == account) {
-                        let realAmount = convertWeiToEth(amount, investContract ? investContract.decimals : 16)
-                        alertShow({
-                            content: `Dividend Claimed ${realAmount} ${investContract?.symbol} Successfully`,
-                            status: 'success'
-                        })
-                    }
-                });
+        //             if (user == account) {
+        //                 let realAmount = convertWeiToEth(amount, investContract ? investContract.decimals : 16)
+        //                 alertShow({
+        //                     content: `Dividend Claimed ${realAmount} ${investContract?.symbol} Successfully`,
+        //                     status: 'success'
+        //                 })
+        //             }
+        //         });
 
-                projecContract.on('ProfitDeposited', (address, amount, user) => {
-                    updateProjectInfoByAddress(address);
+        //         projecContract.on('ProfitDeposited', (address, amount, user) => {
+        //             updateProjectInfoByAddress(address);
 
-                    if (user == account) {
-                        let realAmount = convertWeiToEth(amount, investContract ? investContract.decimals : 16)
-                        alertShow({
-                            content: `Deposit ${realAmount} ${investContract?.symbol} Successfully`,
-                            status: 'success'
-                        })
-                    }
-                });
+        //             if (user == account) {
+        //                 let realAmount = convertWeiToEth(amount, investContract ? investContract.decimals : 16)
+        //                 alertShow({
+        //                     content: `Deposit ${realAmount} ${investContract?.symbol} Successfully`,
+        //                     status: 'success'
+        //                 })
+        //             }
+        //         });
 
-                (async () => {
-                    axios.get(process.env.API_ADDRESS + `/voting/projectTitle/${item.name}`).then(res => {
-                        let rst = res.data.votingQueryDetail;
-                        rst = rst.sort((a: any, b: any) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime()).map((item: any) => new Date(item.endDate).getTime() > new Date().getTime() ? { ...item, ongoing: true } : { ...item, ongoing: false })
-                        setVotingRsponse(rst);
-                    });
-                })();
-
-            } catch (ex) {
-                console.log("event listen error: ", ex);
-            }
-        }
+        //         if (item.vote.loading == 2) {
+        //             setVotingRsponse(
+        //                 [
+        //                     ...item.vote.data
+        //                 ]
+        //             )
+        //         }
+        //     } catch (ex) {
+        //         console.log("event listen error: ", ex);
+        //     }
+        // }
     }, [item, account, provider, investContract, shareContract]);
 
     const getVotingInfo = useCallback(() => {
@@ -304,8 +308,17 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
         });
     }
 
-    const openBuyTokenModal = () => {
-        setShowBuyTokenModal(true)
+    const buyHandler = () => {
+        if (projectStatus == "Fundraising") {
+            setShowBuyTokenModal(true)
+        } else {
+            location.href = "/trade"
+
+        }
+    }
+
+    const investHarvestHandler = () => {
+        harvestAction(item.poolAddress)
     }
 
     const votingHistoryModalHandle = () => {
@@ -363,37 +376,186 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
     //     console.log(item.poolAddress);
     // }
 
-    let btnGroup;
-    if (projectStatus == 'open') {
-        btnGroup = admin ?
-            <div className="btn-group">
-            </div> :
-            <div className="btn-group">
-                <Button text="Buy Token" onClick={openBuyTokenModal} />
-                <Button text="Add Token" onClick={() => addToken()} />
-            </div>
-    } else if (projectStatus == 'ongoing') {
-        btnGroup = admin ?
-            <div className="btn-group">
-                <Button text="Deposit Profit" onClick={() => setShowDepositModal(true)} />
-            </div> :
-            <div className="btn-group">
-                {item.currentStatus < 100 ? <Button text="Buy Token" onClick={openBuyTokenModal} /> : ''}
-                <div>
-                    <p>{`claim amount: ${(item.claimAmount || 0).toFixed(2)} USDC`}</p>
-                </div>
-                <Button disabled={!(item.claimAmount > 0 && !item.claimable)} text="Claim Dividend" onClick={claimHandler} />
-                <Button text="Add Token" onClick={() => addToken()} />
-            </div>
-    } else if (projectStatus == 'close') {
-        btnGroup = <Button className={"mt-1"} text={"Refund"} disabled={item.shareTokenBalance == 0} onClick={refundHandler} />
+    const pauseTradeHandle = () => {
+
     }
-    return (<div className="app-card">
+
+    const cancelOrders = () => {
+
+    }
+
+    const removeOrders = () => {
+
+    }
+
+    const makeProjectTradeHandle = () => {
+
+    }
+
+    const updateMultiplier = () => {
+
+    }
+
+    const contentElement = useMemo(() => {
+        let temp;
+        if (projectStatus == 'Fundraising') {
+            temp = <>
+                <a href={item.projectURL} target="_blank" rel="noreferrer">Go to project page</a>
+                <a href={`${explorer}/token/${item.shareToken}#balances`} target="_blank" rel="noreferrer">Go to {scan} to Token Address</a>
+                <p>Break Even: Aprox. {item.ROI} months</p>
+                <p>Category: {item.category}</p>
+                <p>End Date: {(new Date(item.endDate)).toLocaleDateString()}</p>
+
+                <p>Invest & Earn Multiplier: {item.multiplier}</p>
+                <p>APR: Aprox. {item.APR}%</p>
+                <p>Total Tokens: {item.shareTokenTotalSupply}</p>
+                <a href="" target="_blank">Dividend History</a>
+            </>
+        } else if (projectStatus == 'Ongoing') {
+            temp = <>
+                <a href={item.projectURL} target="_blank" rel="noreferrer">Go to project page</a>
+                <a href={`${explorer}/token/${item.shareToken}#balances`} target="_blank" rel="noreferrer">Go to {scan} to Token Address</a>
+                <p>Break Even: Aprox. {item.ROI} months</p>
+                <p>Category: {item.category}</p>
+                <p>End Date: {(new Date(item.endDate)).toLocaleDateString()}</p>
+
+                <p>Total Tokens: {item.shareTokenTotalSupply}</p>
+                <a href="" target="_blank">Dividend History</a>
+            </>
+        } else if (projectStatus == 'close') {
+            temp = <>
+                <a href={item.projectURL} target="_blank" rel="noreferrer">Go to project page</a>
+                <a href={`${explorer}/token/${item.shareToken}#balances`} target="_blank" rel="noreferrer">Go to {scan} to Token Address</a>
+                <p>Break Even: Aprox. {item.ROI} months</p>
+                <p>Category: {item.category}</p>
+                <p>End Date: {(new Date(item.endDate)).toLocaleDateString()}</p>
+
+                <p>Total Tokens: {item.shareTokenTotalSupply}</p>
+            </>
+        }
+        return temp;
+    }, [admin, item, projectStatus]);
+
+    const btnGroupElement = useMemo(() => {
+        let temp;
+        if (projectStatus == 'Fundraising') {
+            temp = <div className="btn-group">
+                {
+                    admin ? <>
+                        <Button text="Update Multiplier" onClick={updateMultiplier} />
+                    </> : <>
+                        <Button text="Buy Token" onClick={buyHandler} />
+                        <Button text="Add Token" onClick={() => addToken()} />
+                        <div className="invest-wrap flex flex-col items-end">
+                            <p>{`Invest & Earn: ${0} ${YOC.symbol}${network == "ETH" ? 'e' : 'b'}`}</p>
+                            <p>{`Invest & Earn Value: $${0}`}</p>
+                        </div>
+                    </>
+                }
+            </div>
+        } else if (projectStatus == 'Ongoing') {
+            temp = <div className="btn-group">
+                {
+                    admin ?
+                        <>
+                            <Button text="Update Multiplier" onClick={updateMultiplier} />
+                            <Button text="Deposit Profit" onClick={() => setShowDepositModal(true)} />
+                            <Button text="Cancel Orders" onClick={cancelOrders} />
+                            <Button text="Pause Trade" onClick={pauseTradeHandle} />
+                            <Button text="Remove Orders" onClick={removeOrders} />
+                        </>
+                        :
+                        <>
+                            <Button text="Buy Token" onClick={buyHandler} />
+                            <div className="claim-wrap flex flex-col items-end">
+                                <p>{`Claim amount: ${(item.claimAmount || 0).toFixed(2)} YUSD`}</p>
+                                <Button disabled={!(item.claimAmount > 0 && !item.claimable)} text="Claim Dividend" onClick={claimHandler} />
+                            </div>
+                            <Button text="Add Token" onClick={() => addToken()} />
+                            <div className="invest-wrap flex flex-col items-end">
+                                <p>{`Invest & Earn: ${item.investEarnAmount} ${YOC.symbol}${network == "ETH" ? 'e' : 'b'}`}</p>
+                                <p>{`Invest & Earn Value: $${0}`}</p>
+                                {
+                                    item.investEarnAmount ?
+                                        <Button text="Invest & Earn Harvest" onClick={investHarvestHandler} />
+                                        : ""
+                                }
+                            </div>
+                        </>
+                }
+            </div>
+        } else if (projectStatus == 'Closed') {
+            temp = <>
+                {
+                    admin ? <>
+                        <Button text="Update Multiplier" onClick={updateMultiplier} />
+                        <Button text="Go to secondary" onClick={makeProjectTradeHandle} />
+                    </> :
+                        <>
+                            <Button className={"mt-1"} text={"Refund"} disabled={Number(item.shareTokenBalance) == 0} onClick={refundHandler} />
+                            <div className="invest-wrap flex flex-col items-end">
+                                <p>{`Invest & Earn: ${item.investEarnAmount} ${YOC.symbol}${network == "ETH" ? 'e' : 'b'}`}</p>
+                                <p>{`Invest & Earn Value: $${0}`}</p>
+                                {
+                                    item.investEarnAmount ?
+                                        <Button text="Invest & Earn Harvest" onClick={investHarvestHandler} />
+                                        : ""
+                                }
+                            </div>
+                        </>
+                }
+            </>
+        }
+        return temp;
+    }, [admin, item, projectStatus]);
+
+    const statusElement = useMemo(() => {
+        let temp;
+        if (projectStatus == 'Fundraising') {
+            temp = <>
+                <p>Soft Cap: {item.ongoingPercent}%</p>
+                <p>Status: {item.ongoingPercent < item.currentStatus ? "Over" : "Under"} Soft Cap</p>
+            </>
+        } else if (projectStatus == 'Ongoing') {
+            temp = <>
+                <p>Soft Cap: {item.ongoingPercent}%</p>
+                <p>Status: {item.detail && item.detail.data.status ? item.detail.data.status : ""}</p>
+            </>
+        } else if (projectStatus == 'close') {
+            temp = <>
+                <p>Soft Cap: {item.ongoingPercent}%</p>
+                <p>Status: {item.detail && item.detail.data.status ? item.detail.data.status : ""}</p>
+            </>
+        }
+        return temp;
+    }, [admin, item, projectStatus]);
+
+    const votingElement = useMemo(() => {
+        return <>
+            {
+                projectStatus == 'Ongoing' && !votingResponse.length && admin ? <Button className="mt-1" text="Create Voting" onClick={() => getVotingInfo()}></Button> : ''
+            }
+            {
+                (projectStatus == 'Ongoing' && votingResponse && votingResponse.length) ? <Button className="mt-1" text={(new Date(String(votingResponse[0].endDate)).getTime() < new Date().getTime()) && admin ? "Create Voting" : "Voting Poll"} disabled={(new Date(String(votingResponse[0].endDate)).getTime() < new Date().getTime()) && !admin} onClick={() => getVotingInfo()}></Button> : ''
+            }
+            {
+                (projectStatus == 'Ongoing') ?
+                    <Button
+                        className="mt-1"
+                        disabled={!Boolean(votingResponse && votingResponse.length)}
+                        text="Voting History"
+                        onClick={() => votingHistoryModalHandle()} />
+                    : ""
+            }
+        </>
+    }, [votingResponse, admin, projectStatus]);
+
+    return <div className="app-card">
         <div className="w-full card-header">
             <div className="d-flex justify-between align-center">
-                <img src={item.logoSrc} width={40} height={30} alt="" />
+                <img className="w-[38px] h-[38px] rounded-full" src={item.logoSrc} alt="logo" />
                 <p className="project-name">{item.name}</p>
-                <div className="token-price">1 USD = {item.tokenPrice} {item.name}</div>
+                <div className="token-price !text-xs !px-2 !py-1 rounded text-white border border-border-primary">1 USD = {item.tokenPrice} {item.name}</div>
                 {/* <button onClick={() => deleteProjectHandle(item)} className='p-2 rounded bg-btn-primary text-white ml-2'><BsFillTrashFill /></button> */}
             </div>
             <p className="explanation">
@@ -405,50 +567,34 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
                 <p>Total Raise</p>
                 <p>Total Amount</p>
             </div>
-            <div className="d-flex justify-between" style={{ marginBottom: '5px' }}>
-                <div className="d-flex align-center" style={{ gap: '5px' }}>
-                    <img src="/images/usd.png" width={35} height={35} alt="" />
+            <div className="d-flex justify-between items-center my-2">
+                <div className="d-flex align-center">
+                    <img className="rounded-full w-[26px] h-[26px] mr-2" src="/images/coins/YUSD.png" alt="YUSD logo" />
                     <p>{item.totalRaise.toLocaleString()}</p>
                 </div>
-                <div className="d-flex align-center" style={{ gap: '5px' }}>
-                    <img src={item.symbolImage} width={35} height={35} alt="" />
+                <div className="d-flex align-center">
+                    <img className="rounded-full w-[26px] h-[26px] mr-2" src={item.symbolImage} alt="company logo" />
                     <p>{item.totalYTEST.toLocaleString()}</p>
                 </div>
             </div>
             <ProgressBar percent={item.currentStatus} />
-            <div className="d-flex justify-between" style={{ margin: '5px 0 10px' }}>
+            <div className="d-flex justify-between mt-1 mb-2">
                 <p>{item.currentStatus.toFixed(2)}%</p>
-                <p>{(item.currentStatus * item.totalYTEST / 100).toLocaleString()}/{item.totalYTEST.toLocaleString(
-
-                )}</p>
+                <p>{(item.currentStatus * item.totalYTEST / 100).toLocaleString()}/{item.totalYTEST.toLocaleString()}</p>
             </div>
             <div className="extra-info">
                 <div>
-                    <a href={item.projectURL} target="_blank" rel="noreferrer">Go to project page</a>
-                    <a href={`${explorer}/token/${item.shareToken}#balances`} target="_blank" rel="noreferrer">Go to xscan to Token Address</a>
-                    <p>ROI: Aprox. {item.ROI} months</p>
-                    <p>APR: Aprox. {item.APR}%</p>
-                    <p>Category: {item.category}</p>
-                    <p>End Date: {(new Date(item.endDate)).toLocaleDateString()}</p>
-                    {
-                        projectStatus == 'ongoing' && !votingResponse.length && admin ? <Button className="mt-1" text="Create Voting" onClick={() => getVotingInfo()}></Button> : ''
-                    }
-                    {
-                        (projectStatus == 'ongoing' && votingResponse && votingResponse.length) ? <Button className="mt-1" text={(new Date(String(votingResponse[0].endDate)).getTime() < new Date().getTime()) && admin ? "Create Voting" : "Voting Poll"} disabled={(new Date(String(votingResponse[0].endDate)).getTime() < new Date().getTime()) && !admin} onClick={() => getVotingInfo()}></Button> : ''
-                    }
-                    {
-                        (projectStatus == 'ongoing' && votingResponse && votingResponse.length) ?
-                            <Button className="mt-1" text="Voting History" onClick={() => votingHistoryModalHandle()}></Button>
-                            : ""
-                    }
+                    {contentElement}
+                    {statusElement}
+                    {votingElement}
                 </div>
                 <div>
-                    <div className="right-info m-b-1">
+                    <div className="right-info mb-2">
                         <p>YUSD: {(Number(item.investTokenBalance) || 0).toFixed(2) || 0}</p>
                         <p>{item.name}: {(Number(item.shareTokenBalance) || 0).toFixed(2) || 0}</p>
                     </div>
                     <div className="btn-group">
-                        {btnGroup}
+                        {btnGroupElement}
                     </div>
                 </div>
             </div>
@@ -557,8 +703,7 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
                 />
             </div>
         </ModalV2>
-    </div>);
-
+    </div>;
 }
 
 export default Card;

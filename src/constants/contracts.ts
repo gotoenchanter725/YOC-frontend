@@ -48,6 +48,7 @@ const YUSD = {
     decimals: 6,
     symbol: "YUSD",
     name: "YUSD",
+    logo: "https://w7.pngwing.com/pngs/113/18/png-transparent-tether-hd-logo-thumbnail.png",
     ...YUSDABI
 }
 

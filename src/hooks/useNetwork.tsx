@@ -5,6 +5,7 @@ const useNetwork = () => {
 
     const YOC = network == "BSC" ? "YOCb" : "YOCe";
     const native = network == "BSC" ? "BNB" : "ETH";
+    const scan = network == "BSC" ? 'bscscan' : "ethscan";
 
     const explorer = useMemo(() => {
         var rpc = "";
@@ -29,7 +30,7 @@ const useNetwork = () => {
         }
     }, [network])
 
-    return { network, explorer, rpcUrl, YOC, native };
+    return { network, explorer, rpcUrl, YOC, native, scan };
 }
 
 export default useNetwork;

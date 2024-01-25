@@ -9,30 +9,31 @@ const ETH_NETWORK = {
     },
     testnet: {
         // RPC_URL: "https://rpc.sepolia.org",
-        // RPC_URL: "https://ethereum-sepolia.blockpi.network/v1/rpc/public",
+        RPC_URL: "https://ethereum-sepolia.blockpi.network/v1/rpc/public",
+        https: "https://ethereum-sepolia.blockpi.network/v1/rpc/public",
         // RPC_URL: "https://sepolia.infura.io/v3/f00540d3d0c846d093e61d939dd3be59",
         // RPC_URL: "https://rpc.ankr.com/eth_sepolia",
         // https: "https://rpc.ankr.com/eth_sepolia/",
-        // wss: "wss://rpc.ankr.com/eth_sepolia/ws/",
-        RPC_URL: "https://rpc.ankr.com/eth_sepolia/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf",
-        https: "https://rpc.ankr.com/eth_sepolia/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf",
-        wss: "wss://rpc.ankr.com/eth_sepolia/ws/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf",
+        wss: "wss://rpc.ankr.com/eth_sepolia/ws/",
+        // RPC_URL: "https://rpc.ankr.com/eth_sepolia/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf",
+        // https: "https://rpc.ankr.com/eth_sepolia/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf",
+        // wss: "wss://rpc.ankr.com/eth_sepolia/ws/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf",
         CHAIN_ID: 11155111
     }
 }
 
 const ETH_CONTRACT_ADDRESS = {
     AdminWalletAddress: "0x5141383723037FBd3818dAEcb7d4C5DF1Dc8c6B1",
-    ProjectManagerAddress: "0x8Fa3988D8f08284F4100dC812e3d2A06fE475C69",
-    ProjectDetailAddress: "0xD9F43aEC8301990537e1c046A2DC1FB2FF7f0aa4",
+    ProjectManagerAddress: "0xB07A948A8Fe8E0014814E36Fd5e9EDEae9F9F1E5",
+    ProjectDetailAddress: "0xDd85CbdC87F5FD4aec0072980a6De751D5d7a900",
     WETH: "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9",
     USDCAddress: "0x5E4702eD9b138B1985ca3a978fD89a5842026F10",
-    YOCAddress: "0x66524763757C6ddaFDB4a7b7Fa33121CD6F2599A",
-    YOCSwapFactoryAddress: "0x11B0Bd6bF5884af984cE01FcbfF7A2e180d8b840",
-    YOCSwapRouterAddress: "0x2522611B7740cB21Cb3AdA16ac2f1393f52A3a87",
-    YOCFarmAddress: "0xFAda526021cd20feac4902583C8647Eff2bc38F8",
+    YOCAddress: "0x12734c4a246054Dea61731c6647Ae4577450318c",
+    YOCSwapFactoryAddress: "0xC9365Ae9f46167959f073fbAb51eD92931A53774",
+    YOCSwapRouterAddress: "0xBc90e7c4b906482078c811126eFCd5C89f45bEb0",
+    YOCFarmAddress: "0x0c0E6bdd4f74Fe8629FACD4cDCC550714adEA95F",
     YUSDAddress: "0x99da355c817BC41413aE8D8771832271521aeac2",
-    ProjectTradeAddress: "0x6070DF5223faeB224D53612F7D4D9E0F7D96d61e",
+    ProjectTradeAddress: "0x631062140EFcFb09fB55e0BE7Ff94D681656E20d",
 }
 
 const BNB_NETWORK = {

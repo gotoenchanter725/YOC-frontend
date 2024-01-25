@@ -7,7 +7,6 @@ import { convertWeiToEth } from "../../utils/unit";
 import { YOC, YUSD } from 'src/constants/contracts';
 
 const useAccount = () => {
-    // const { account, balance, provider, signer } = useSelector((state: any) => state.data);
     const { address, connector, isConnected } = useWagmiAccount();
     const [YOCBalance, setYOCBalance] = useState(0); // YOC
     const [ETHBalance, setETHBalance] = useState(0); // ETH

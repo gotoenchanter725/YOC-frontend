@@ -9,7 +9,7 @@
                 @apply text-secondary;
             }
             &.children {
-                @apply pr-10;
+                @apply pr-7;
                 .child-list {
                     @apply opacity-0 invisible transition-all text-primary;
                     @apply w-[160px] rounded bg-[#0f120de8] px-1.5 py-1 absolute left-0 top-10 z-50 flex flex-col;
@@ -25,7 +25,7 @@
                     @apply opacity-100 visible;
                 }
                 &::before {
-                    @apply absolute top-1.5 right-1.5 w-[24px] h-[24px] content-['_'] bg-[length:100%_100%];
+                    @apply absolute top-1.5 right-2 w-[12px] h-[12px] content-['_'] bg-[length:100%_100%];
                     background-image: url(../../../public/images/arrow-down.png);
                 }
             }
@@ -65,7 +65,7 @@
         }
 
         &.children::before {
-            @apply absolute top-1.5 right-1.5 w-[24px] h-[24px] content-['_'] bg-[length:100%_100%];
+            @apply absolute top-1.5 right-2 w-[12px] h-[12px] content-['_'] bg-[length:100%_100%];
             background-image: url(../../../public/images/arrow-down.png);
         }
     }
