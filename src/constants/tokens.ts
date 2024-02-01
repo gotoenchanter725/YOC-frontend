@@ -7,6 +7,7 @@ export interface tokenInterface {
     symbol: string,
     address: string,
     decimals: number,
+    price?: number | string,
     chainId?: number,
     isYoc?: boolean
 }

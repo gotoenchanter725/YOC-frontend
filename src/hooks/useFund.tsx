@@ -72,48 +72,51 @@ const useProject = () => {
             let detailProject = await detailContract.getProjectDetails(address, account ? account : "0x0000000000000000000000000000000000000000");
 
             const projectDetailObj: any = {};
-            const shareTokenAddress = detailProject.shareToken;
-            const investTokenAddress = detailProject.investToken;
-            const shareTokenDecimals = Number(ethers.utils.formatUnits(detailProject.shareTokenDecimals, 0));
-            const totalRaise = Number(ethers.utils.formatUnits(detailProject.investTotalAmount, YUSD.decimals));
-            const shareTokenSellAmount = Number(ethers.utils.formatUnits(detailProject.shareTokenSellAmount, shareTokenDecimals));
-            const shareTokenBalanceOfProject = Number(ethers.utils.formatUnits(detailProject.shareTokenBalanceOfProject, shareTokenDecimals));
-            const shareTokenTotalSupply = Number(ethers.utils.formatUnits(detailProject.shareTokenTotalSupply, shareTokenDecimals));
+            const shareTokenAddress = detailProject.shareToken.tokenAddress;
+            const investTokenAddress = detailProject.investToken.tokenAddress;
+            const shareTokenDecimals = Number(ethers.utils.formatUnits(detailProject.shareToken.decimals, 0));
+            const totalRaise = Number(ethers.utils.formatUnits(detailProject.project.investTotalAmount, YUSD.decimals));
+            const shareTokenSellAmount = Number(ethers.utils.formatUnits(detailProject.shareToken.sellAmount, shareTokenDecimals));
+            const shareTokenRemainingBalanceOfProject = Number(ethers.utils.formatUnits(detailProject.shareToken.remainingBalanceOfProject, shareTokenDecimals));
+            const shareTokenTotalSupply = Number(ethers.utils.formatUnits(detailProject.shareToken.totalSupply, shareTokenDecimals));
 
             projectDetailObj.projectContract = new Contract(address, Project.abi, provider);
             projectDetailObj.poolAddress = address;
             projectDetailObj.APR = 0;
             projectDetailObj.totalRaise = totalRaise;
             projectDetailObj.totalYTEST = shareTokenSellAmount;
-            projectDetailObj.currentStatus = Number((shareTokenSellAmount - shareTokenBalanceOfProject) * 100 / shareTokenSellAmount);
-            projectDetailObj.endDate = Number(ethers.utils.formatUnits(detailProject.endDate, 0));
-            projectDetailObj.ongoingPercent = Number(detailProject.ongoingPercent);
-            projectDetailObj.name = detailProject.title;
-            projectDetailObj.logoSrc = detailProject.icon;
-            projectDetailObj.symbolImage = detailProject.symbolImage;
-            projectDetailObj.tokenPrice = Number(ethers.utils.formatUnits(detailProject.shareTokenPrice, 3));
-            projectDetailObj.explanation = detailProject.description;
-            projectDetailObj.multiplier = +detailProject.multiplier;
+            projectDetailObj.currentStatus = Number((shareTokenSellAmount - shareTokenRemainingBalanceOfProject) * 100 / shareTokenSellAmount);
+            projectDetailObj.endDate = Number(ethers.utils.formatUnits(detailProject.project.endDate, 0));
+            projectDetailObj.ongoingPercent = Number(detailProject.project.ongoingPercent);
+            projectDetailObj.name = detailProject.project.title;
+            projectDetailObj.logoSrc = detailProject.project.icon;
+            projectDetailObj.symbolImage = detailProject.project.symbolImage;
+            projectDetailObj.tokenPrice = Number(ethers.utils.formatUnits(detailProject.project.shareTokenPrice, 3));
+            projectDetailObj.explanation = detailProject.project.description;
+            projectDetailObj.multiplier = +detailProject.project.multiplier;
+            projectDetailObj.ROI = Number(ethers.utils.formatUnits(detailProject.project.roi, 0));
+            projectDetailObj.category = detailProject.project.category;
+            projectDetailObj.projectURL = detailProject.project.projectWebsite;
+            projectDetailObj.tradePaused = detailProject.project.tradePaused;
 
-            projectDetailObj.ROI = Number(ethers.utils.formatUnits(detailProject.roi, 0));
-            projectDetailObj.category = detailProject.category;
             projectDetailObj.investDecimal = YUSD.decimals;
             projectDetailObj.shareDecimal = shareTokenDecimals;
-            projectDetailObj.shareSymbol = detailProject.shareTokenSymbol;
+            projectDetailObj.shareSymbol = detailProject.shareToken.symbol;
             projectDetailObj.shareToken = shareTokenAddress;
             projectDetailObj.shareTokenTotalSupply = shareTokenTotalSupply;
             projectDetailObj.investToken = investTokenAddress;
-            projectDetailObj.projectURL = detailProject.projectWebsite;
             if (account) {
-                console.log(detailProject.title, detailProject.joinState, detailProject);
-                projectDetailObj.claimAmount = Number(ethers.utils.formatUnits(detailProject.claimableAmount, YUSD.decimals));
-                projectDetailObj.claimable = detailProject.claimable;
-                projectDetailObj.joinState = detailProject.joinState;
-                projectDetailObj.investTokenBalance = ethers.utils.formatUnits(detailProject.investTokenBalance, YUSD.decimals);
-                projectDetailObj.shareTokenBalance = ethers.utils.formatUnits(detailProject.shareTokenBalance, shareTokenDecimals);
-                projectDetailObj.investTokenAllowance = ethers.utils.formatUnits(detailProject.investTokenAllowance, YUSD.decimals);
-                projectDetailObj.shareTokenAllowance = ethers.utils.formatUnits(detailProject.shareTokenAllowance, shareTokenDecimals);
-                projectDetailObj.investEarnAmount = ethers.utils.formatUnits(detailProject.investEarnAmount, YOC.decimals);
+                console.log(detailProject.project.title, detailProject.profit.joinState, detailProject);
+                projectDetailObj.investTokenBalance = ethers.utils.formatUnits(detailProject.investToken.balance, YUSD.decimals);
+                projectDetailObj.shareTokenBalance = ethers.utils.formatUnits(detailProject.shareToken.balance, shareTokenDecimals);
+                projectDetailObj.investTokenAllowance = ethers.utils.formatUnits(detailProject.investToken.allowance, YUSD.decimals);
+                projectDetailObj.shareTokenAllowance = ethers.utils.formatUnits(detailProject.shareToken.allowance, shareTokenDecimals);
+
+                projectDetailObj.claimAmount = Number(ethers.utils.formatUnits(detailProject.profit.claimableAmount, YUSD.decimals));
+                projectDetailObj.claimable = detailProject.profit.claimable;
+                projectDetailObj.joinState = detailProject.profit.joinState;
+                projectDetailObj.investEarnAmount = ethers.utils.formatUnits(detailProject.profit.investEarnAmount, YOC.decimals);
+
 
                 let availableTokenTotalPrice = ((shareTokenSellAmount - (projectDetailObj.currentStatus * shareTokenSellAmount / 100)) / projectDetailObj.tokenPrice).toFixed(2);
                 let maxValue = Number(availableTokenTotalPrice) < Number(projectDetailObj.investTokenBalance) ? availableTokenTotalPrice : projectDetailObj.investTokenBalance;

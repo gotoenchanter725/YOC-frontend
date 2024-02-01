@@ -23,7 +23,7 @@ const AdminPage: NextPage = () => {
     const { account, signer, provider } = useAccount();
     const { loadingStart, loadingEnd } = useLoading();
     const { alertShow } = useAlert();
-    const [step, setStep] = useState("fundraising");
+    const [step, setStep] = useState("Fundraising");
     const [noDateFlag, setNoDataFlag] = useState(false);
     const [projects, setProjects] = useState<any[]>([]);
     const { projects: fundProjects, retireveProjectsDetails, loading, error } = useProject();
@@ -159,9 +159,9 @@ const AdminPage: NextPage = () => {
         </div>
 
         <div className="flex items-center my-6">
-            <div className={`bg-primary-pattern ${step == "Fundraising" ? 'bg-secondary-pattern shadow-btn-primary' : ''} cursor-pointer rounded py-3 px-5 mr-4 text-base text-white font-medium`} onClick={() => { setStep("Fundraising") }}>Open Projects</div>
-            <div className={`bg-primary-pattern ${step == "Ongoing" ? 'bg-secondary-pattern shadow-btn-primary' : ''} cursor-pointer rounded py-3 px-5 mr-4 text-base text-white font-medium`} onClick={() => { setStep("Ongoing") }}>Ongoing Projects</div>
-            <div className={`bg-primary-pattern ${step == "Closed" ? 'bg-secondary-pattern shadow-btn-primary' : ''} cursor-pointer rounded py-3 px-5 mr-4 text-base text-white font-medium`} onClick={() => { setStep("Closed") }}>Closed Projects</div>
+            <div className={`bg-primary-pattern ${step == "Fundraising" ? 'bg-secondary-pattern shadow-btn-primary' : ''} transition-all hover:bg-secondary-pattern hover:shadow-btn-primary cursor-pointer rounded py-3 px-5 mr-4 text-base text-white font-medium`} onClick={() => { setStep("Fundraising") }}>Open Projects</div>
+            <div className={`bg-primary-pattern ${step == "Ongoing" ? 'bg-secondary-pattern shadow-btn-primary' : ''} transition-all hover:bg-secondary-pattern hover:shadow-btn-primary cursor-pointer rounded py-3 px-5 mr-4 text-base text-white font-medium`} onClick={() => { setStep("Ongoing") }}>Ongoing Projects</div>
+            <div className={`bg-primary-pattern ${step == "Closed" ? 'bg-secondary-pattern shadow-btn-primary' : ''} transition-all hover:bg-secondary-pattern hover:shadow-btn-primary cursor-pointer rounded py-3 px-5 mr-4 text-base text-white font-medium`} onClick={() => { setStep("Closed") }}>Closed Projects</div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
             {

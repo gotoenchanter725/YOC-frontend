@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { retireveingCurrency, updateCurrency, errorCurrency } from "store/actions";
 import { tokenInterface } from "../constants/tokens";
 import axiosInstance from "utils/axios";
+import { YOC, YUSD } from "src/constants/contracts";
 
 const useCurrency = () => {
   const dispatch = useDispatch();
@@ -43,8 +44,17 @@ const useCurrency = () => {
     return item;
   }, [currencies]);
 
+  const getYOCDetail = useCallback(() => {
+    let currency = getCurrencyDetail(YOC.address);
+    return currency;
+  }, [getCurrencyDetail, YOC])
 
-  return { currencies, loading: currencyLoading, error: error, currencyRetireve, getCurrencyDetail };
+  const getYUSDDetail = useCallback(() => {
+    let currency = getCurrencyDetail(YUSD.address);
+    return currency;
+  }, [getCurrencyDetail, YUSD])
+
+  return { currencies, loading: currencyLoading, error: error, currencyRetireve, getCurrencyDetail, getYOCDetail, getYUSDDetail };
 }
 
 export default useCurrency;

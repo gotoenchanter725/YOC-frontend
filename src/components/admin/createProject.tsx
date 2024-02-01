@@ -132,51 +132,35 @@ const CreateProjectContent: FC<Props> = ({ handleClose }) => {
                 ethers.utils.parseUnits(decimals, 0),
                 ethers.utils.parseUnits(((Number(total) * Number(sellPercent)) / 100).toFixed(2), decimals),
                 [title, desc, category, projectWebsite, iconUrl, symbolUrl],
-                [ethers.utils.parseUnits(price, 3), ethers.utils.parseUnits(roi, 0), ethers.utils.parseUnits(startDate, 0), ethers.utils.parseUnits(endDate, 0), ongoingPercent, multiplier],
+                [ethers.utils.parseUnits(price, decimals), ethers.utils.parseUnits(roi, 0), ethers.utils.parseUnits(startDate, 0), ethers.utils.parseUnits(endDate, 0), ongoingPercent, multiplier],
                 [YUSD.address, projectAddress],
                 { gasLimit: gasLimit, gasPrice: gasPrice } // Set the gas limit here
             );
-            const createProjectReceipt = await createProjectTransaction.wait();
-            console.log(createProjectReceipt);
-            setCreatingProject(false);
 
             loadingStart();
             const eventlistencer = async (owner: any, contractAddr: any, tokenAddr: any) => {
                 console.log("DeployedNewProject", owner, account, contractAddr, tokenAddr);
                 if (owner == account) {
-                    let data = {
-                        projectTitle: title,
-                        iconUrl: iconUrl,
-                        ptokenAddress: tokenAddr,
-                        address: contractAddr,
-                        decimals,
-                        totalSupply: total,
-                        sellAmount: ((Number(total) * Number(sellPercent)) / 100).toFixed(2),
-                        price: price,
-                        endDate: endDate,
-                        multiplier: multiplier,
-                        projectAddress: projectAddress
-                    }
-                    try {
-                        let respons = await axios.post(process.env.API_ADDRESS + '/project/create', data);
-                        console.log(respons);
-                    } catch (error) {
-                        console.log(error)
-                    }
-
                     alertShow({
                         status: 'success',
-                        content: 'Project Create Success!'
+                        content: 'Project Create Success!',
+                        text: "Please wait for a few mins"
                     })
-                    updateProjectInfoByAddress(contractAddr);
                     loadingEnd();
+                    setCreatingProject(false);
+                    setTimeout(() => {
+                        updateProjectInfoByAddress(contractAddr);
+                    }, 5000);
                     ProjectManagerContract.removeListener("DeployedNewProject", eventlistencer);
                 }
             }
             ProjectManagerContract.on('DeployedNewProject', eventlistencer);
 
+            const createProjectReceipt = await createProjectTransaction.wait();
+            console.log("createProjectReceipt", createProjectReceipt);
         } catch (ex) {
             loadingEnd();
+            setCreatingProject(false);
             console.log("create project error: ", ex)
         }
     };

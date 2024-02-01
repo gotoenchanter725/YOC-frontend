@@ -21,7 +21,7 @@ const Fund: FC = () => {
     const { projects: fundProjects, retireveProjectsDetails, loading, error } = useProject()
     const { loadingStart, loadingEnd } = useLoading();
     const { alertShow } = useAlert();
-    const [step, setStep] = useState("fundraising");
+    const [step, setStep] = useState("Fundraising");
     const [noDateFlag, setNoDataFlag] = useState(false);
     const [projects, setProjects] = useState<any[]>([]);
     const [frequencyTime, setFrequencyTime] = useState(2);
@@ -234,13 +234,13 @@ const Fund: FC = () => {
             <div className="">
                 <div className="w-full my-6">
                     <div className="flex mb-4">
-                        <div className={`bg-primary-pattern text-center ${step == "Fundraising" ? 'bg-secondary-pattern shadow-btn-primary' : ''} transition-all hover:bg-secondary-pattern hover:shadow-btn-primary cursor-pointer rounded py-2 lg:py-4 px-6 lg:px-10 mr-2 lg:mr-4 text-base lg:text-xl text-white font-medium`}
+                        <div className={`bg-primary-pattern text-center ${step == "Fundraising" ? 'bg-secondary-pattern shadow-btn-primary' : ''} whitespace-nowrap transition-all hover:bg-secondary-pattern hover:shadow-btn-primary cursor-pointer rounded py-2 lg:py-4 px-6 lg:px-10 mr-2 lg:mr-4 text-base lg:text-xl text-white font-medium`}
                             onClick={() => { setStep("Fundraising") }}>Fundraising Projects</div>
-                        <div className={`bg-primary-pattern text-center ${step == "Ongoing" ? 'bg-secondary-pattern shadow-btn-primary' : ''} transition-all hover:bg-secondary-pattern hover:shadow-btn-primary cursor-pointer rounded py-2 lg:py-4 px-6 lg:px-10 mr-2 lg:mr-4 text-base lg:text-xl text-white font-medium`}
+                        <div className={`bg-primary-pattern text-center ${step == "Ongoing" ? 'bg-secondary-pattern shadow-btn-primary' : ''} whitespace-nowrap transition-all hover:bg-secondary-pattern hover:shadow-btn-primary cursor-pointer rounded py-2 lg:py-4 px-6 lg:px-10 mr-2 lg:mr-4 text-base lg:text-xl text-white font-medium`}
                             onClick={() => { setStep("Ongoing") }}>Ongoing Projects</div>
                         {
                             account ?
-                                <div className={`bg-primary-pattern text-center ${step == "My" ? 'bg-secondary-pattern shadow-btn-primary' : ''} transition-all hover:bg-secondary-pattern hover:shadow-btn-primary cursor-pointer rounded py-2 lg:py-4 px-6 lg:px-10 mr-2 lg:mr-4 text-base lg:text-xl text-white font-medium`}
+                                <div className={`bg-primary-pattern text-center ${step == "My" ? 'bg-secondary-pattern shadow-btn-primary' : ''} whitespace-nowrap transition-all hover:bg-secondary-pattern hover:shadow-btn-primary cursor-pointer rounded py-2 lg:py-4 px-6 lg:px-10 mr-2 lg:mr-4 text-base lg:text-xl text-white font-medium`}
                                     onClick={() => { setStep("My") }}>My Projects</div>
                                 : ""
                         }

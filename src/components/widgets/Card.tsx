@@ -8,7 +8,7 @@ import ModalV2 from "./Modalv2";
 import AdminVotingContent from "./AdminVotingContent";
 import UserVotingContent from "./UserVotingContent";
 import UserVotingResult from "./UserVotingResultModal";
-import { Project, ProjectDetail, TokenTemplate, YOC, YUSD } from "../../constants/contracts";
+import { Project, ProjectDetail, ProjectTrade, TokenTemplate, YOC, YUSD } from "../../constants/contracts";
 import { VotingQueryInterface, VotingResultInterface } from "../../interfaces/voting";
 import axios from "axios";
 import VotingHistory from "./VotingHistoryModalContent";
@@ -16,10 +16,10 @@ import VotingHistory from "./VotingHistoryModalContent";
 import useLoading from "@hooks/useLoading";
 import useAlert from "@hooks/useAlert";
 import useNetwork from "@hooks/useNetwork";
-import { convertWeiToEth } from "utils/unit";
 import useAccount from "@hooks/useAccount";
 import useProject from "@hooks/useFund";
 import useCurrency from "@hooks/useCurrency";
+import axiosInstance from "utils/axios";
 
 interface Props {
     item?: any;
@@ -46,8 +46,10 @@ interface detailTokenInterface {
     decimals: number
 }
 
+const yocAmountYear = 4.5 * 60 * 24 * 365 * 20;
+
 const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAction, harvestAction, admin, status }) => {
-    const { account, provider } = useAccount();
+    const { account, provider, signer } = useAccount();
     const { loadingStart, loadingEnd } = useLoading();
     const { updateProjectInfoByAddress } = useProject();
     const { alertShow } = useAlert();
@@ -73,7 +75,9 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
     const [shareContract, setShareContract] = useState<detailTokenInterface>();
     const [projectDetailContract, setProjectDetailContract] = useState<Contract>();
     const [projectStatus, setProjectStatus] = useState("");
-    const { getCurrencyDetail } = useCurrency();
+    const { getYOCDetail, getYUSDDetail } = useCurrency();
+    const [multiplier, setMultiplier] = useState("");
+    const [showUpdateMultiplierModal, setShowUpdateMultiplierModal] = useState(false);
 
     useEffect(() => {
         (async () => {
@@ -92,7 +96,7 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
                 )
                 setProjectDetailContract(detailContract);
                 setInvestContract({
-                    symbol: "YUSD",
+                    symbol: YUSD.symbol,
                     decimals: YUSD.decimals
                 })
                 setShareContract({
@@ -109,9 +113,9 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
     useEffect(() => {
         // if (item && provider && account && investContract && shareContract) {
         //     try {
-        //         // const projecContract = item.projectContract as Contract;
-        //         const projecContract = new Contract(item.poolAddress, Project.abi, WebSocketProvider);
-        //         projecContract.on('Participated', (address, amount1, amount2, user) => {
+        //         // const projectContract = item.projectContract as Contract;
+        //         const projectContract = new Contract(item.poolAddress, Project.abi, WebSocketProvider);
+        //         projectContract.on('Participated', (address, amount1, amount2, user) => {
         //             updateProjectInfoByAddress(address);
 
         //             if (user == account) {
@@ -124,7 +128,7 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
         //             }
         //         });
 
-        //         projecContract.on('Refund', (address, amount1, amount2, user) => {
+        //         projectContract.on('Refund', (address, amount1, amount2, user) => {
         //             updateProjectInfoByAddress(address);
 
         //             if (user == account) {
@@ -137,7 +141,7 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
         //             }
         //         });
 
-        //         projecContract.on('Claimed', (address, amount, user) => {
+        //         projectContract.on('Claimed', (address, amount, user) => {
         //             updateProjectInfoByAddress(address);
 
         //             if (user == account) {
@@ -149,7 +153,7 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
         //             }
         //         });
 
-        //         projecContract.on('ProfitDeposited', (address, amount, user) => {
+        //         projectContract.on('ProfitDeposited', (address, amount, user) => {
         //             updateProjectInfoByAddress(address);
 
         //             if (user == account) {
@@ -376,25 +380,152 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
     //     console.log(item.poolAddress);
     // }
 
-    const pauseTradeHandle = () => {
+    const pauseTradeHandle = async () => {
+        try {
+            loadingStart();
+            const ProjectTradeContract = new Contract(ProjectTrade.address, ProjectTrade.abi, signer);
+            let pauseTradeTx = await ProjectTradeContract.pause(item.poolAddress);
 
+            const eventlistencer = (ptokenAddress: string, paused: boolean) => {
+                console.log("Pause", ptokenAddress, paused);
+
+                if (!paused) {
+                    alertShow({
+                        content: "The project has paused successfully",
+                        status: 'success'
+                    });
+                } else {
+                    alertShow({
+                        content: "The project has resumed successfully",
+                        status: 'success'
+                    });
+                }
+                updateProjectInfoByAddress(ptokenAddress);
+                loadingEnd();
+                ProjectTradeContract.removeListener("Pause", eventlistencer);
+            }
+            ProjectTradeContract.on('Pause', eventlistencer)
+            await pauseTradeTx.wait();
+        } catch (error) {
+            loadingEnd();
+            console.log("Pause/Resume Trade Project Error: ", error)
+        }
     }
 
-    const cancelOrders = () => {
+    const cancelOrders = async () => {
+        try {
+            loadingStart();
+            const ProjectTradeContract = new Contract(ProjectTrade.address, ProjectTrade.abi, signer);
+            let cancelOrdersTx = await ProjectTradeContract.cancelOrders(item.poolAddress);
 
+            const eventlistencer = (ptokenAddress: string) => {
+                console.log("CancelAllOrders", ptokenAddress);
+
+                alertShow({
+                    content: "All orders of the project have cancelled successfully",
+                    status: 'success'
+                });
+
+                updateProjectInfoByAddress(ptokenAddress);
+                loadingEnd();
+                ProjectTradeContract.removeListener("CancelAllOrders", eventlistencer);
+            }
+            ProjectTradeContract.on('CancelAllOrders', eventlistencer)
+            await cancelOrdersTx.wait();
+        } catch (error) {
+            loadingEnd();
+            console.log("Cancel All Orders Error: ", error)
+        }
     }
 
-    const removeOrders = () => {
+    const removeOrders = async () => {
+        try {
+            loadingStart();
+            const ProjectTradeContract = new Contract(ProjectTrade.address, ProjectTrade.abi, signer);
+            let remvoeOrdersTx = await ProjectTradeContract.removeOrders(item.poolAddress);
 
+            const eventlistencer = (ptokenAddress: string) => {
+                console.log("RemoveAllOrders", ptokenAddress);
+
+                alertShow({
+                    content: "All orders of the project have removed successfully",
+                    status: 'success'
+                });
+
+                updateProjectInfoByAddress(ptokenAddress);
+                loadingEnd();
+                ProjectTradeContract.removeListener("RemoveAllOrders", eventlistencer);
+            }
+            ProjectTradeContract.on('RemoveAllOrders', eventlistencer)
+            await remvoeOrdersTx.wait();
+        } catch (error) {
+            loadingEnd();
+            console.log("Remove All Orders Error: ", error)
+        }
     }
 
-    const makeProjectTradeHandle = () => {
+    const makeProjectTradeHandle = async () => {
+        try {
+            loadingStart();
+            const projectContract = new Contract(item.poolAddress, Project.abi, signer);
+            const manualMoveTradeTx = await projectContract.manualMoveTrade();
+            await manualMoveTradeTx.wait();
 
+            updateProjectInfoByAddress(item.poolAddress);
+            alertShow({
+                content: "The project has moved to secondary marketplace successfully",
+                status: 'success'
+            });
+        } catch (error) {
+            loadingEnd();
+            console.log("Remove All Orders Error: ", error)
+        }
     }
 
-    const updateMultiplier = () => {
-
+    const handleOpenUpdateMultiplierModel = () => {
+        setMultiplier(item.multiplier);
+        setShowUpdateMultiplierModal(true);
     }
+    const updateMultiplier = async () => {
+        try {
+            loadingStart();
+            const res = await axiosInstance.post('/project/updateMultiplier', {
+                multiplier: multiplier,
+                projectAddress: item.poolAddress,
+                pId: ''
+            });
+            if (res && res.data) {
+                updateProjectInfoByAddress(item.poolAddress);
+                alertShow({
+                    content: "Multiplier updated successfully",
+                    status: 'success'
+                });
+                setShowUpdateMultiplierModal(false);
+                loadingEnd();
+            }
+        } catch (error) {
+            loadingEnd();
+            setShowUpdateMultiplierModal(false);
+            console.log("Update multiplier: ", error)
+        }
+    }
+
+    const investEarnUSDAmount = useMemo(() => {
+        let YOCDetail = getYOCDetail();
+        if (YOCDetail) {
+            return item.investEarnAmount * Number(YOCDetail.price);
+        } else {
+            return 0
+        }
+    }, [getYOCDetail, item]);
+
+    const APR = useMemo(() => {
+        let YOCDetail = getYOCDetail(), YUSDDetail = getYUSDDetail();
+        if (YOCDetail && YUSDDetail) {
+            return 100 * yocAmountYear * Number(YOCDetail.price) / (item.totalRaise * Number(YUSDDetail.price));
+        }
+        return 0;
+    }, [item, getYOCDetail, getYUSDDetail])
 
     const contentElement = useMemo(() => {
         let temp;
@@ -407,7 +538,7 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
                 <p>End Date: {(new Date(item.endDate)).toLocaleDateString()}</p>
 
                 <p>Invest & Earn Multiplier: {item.multiplier}</p>
-                <p>APR: Aprox. {item.APR}%</p>
+                <p>APR: Aprox. {APR.toFixed(2)}%</p>
                 <p>Total Tokens: {item.shareTokenTotalSupply}</p>
                 <a href="" target="_blank">Dividend History</a>
             </>
@@ -442,13 +573,13 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
             temp = <div className="btn-group">
                 {
                     admin ? <>
-                        <Button text="Update Multiplier" onClick={updateMultiplier} />
+                        <Button text="Update Multiplier" onClick={() => handleOpenUpdateMultiplierModel()} />
                     </> : <>
                         <Button text="Buy Token" onClick={buyHandler} />
                         <Button text="Add Token" onClick={() => addToken()} />
                         <div className="invest-wrap flex flex-col items-end">
-                            <p>{`Invest & Earn: ${0} ${YOC.symbol}${network == "ETH" ? 'e' : 'b'}`}</p>
-                            <p>{`Invest & Earn Value: $${0}`}</p>
+                            <p>{`Invest & Earn: ${item.investEarnAmount} ${YOC.symbol}${network == "ETH" ? 'e' : 'b'}`}</p>
+                            <p>{`Invest & Earn Value: $${investEarnUSDAmount}`}</p>
                         </div>
                     </>
                 }
@@ -458,10 +589,10 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
                 {
                     admin ?
                         <>
-                            <Button text="Update Multiplier" onClick={updateMultiplier} />
+                            <Button text="Update Multiplier" onClick={() => handleOpenUpdateMultiplierModel()} />
                             <Button text="Deposit Profit" onClick={() => setShowDepositModal(true)} />
                             <Button text="Cancel Orders" onClick={cancelOrders} />
-                            <Button text="Pause Trade" onClick={pauseTradeHandle} />
+                            <Button text={`${item.tradePaused ? 'Pause' : 'Resume'} Trade`} onClick={pauseTradeHandle} />
                             <Button text="Remove Orders" onClick={removeOrders} />
                         </>
                         :
@@ -474,7 +605,7 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
                             <Button text="Add Token" onClick={() => addToken()} />
                             <div className="invest-wrap flex flex-col items-end">
                                 <p>{`Invest & Earn: ${item.investEarnAmount} ${YOC.symbol}${network == "ETH" ? 'e' : 'b'}`}</p>
-                                <p>{`Invest & Earn Value: $${0}`}</p>
+                                <p>{`Invest & Earn Value: $${investEarnUSDAmount}`}</p>
                                 {
                                     item.investEarnAmount ?
                                         <Button text="Invest & Earn Harvest" onClick={investHarvestHandler} />
@@ -488,14 +619,14 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
             temp = <>
                 {
                     admin ? <>
-                        <Button text="Update Multiplier" onClick={updateMultiplier} />
+                        <Button text="Update Multiplier" onClick={() => handleOpenUpdateMultiplierModel()} />
                         <Button text="Go to secondary" onClick={makeProjectTradeHandle} />
                     </> :
                         <>
                             <Button className={"mt-1"} text={"Refund"} disabled={Number(item.shareTokenBalance) == 0} onClick={refundHandler} />
                             <div className="invest-wrap flex flex-col items-end">
                                 <p>{`Invest & Earn: ${item.investEarnAmount} ${YOC.symbol}${network == "ETH" ? 'e' : 'b'}`}</p>
-                                <p>{`Invest & Earn Value: $${0}`}</p>
+                                <p>{`Invest & Earn Value: $${investEarnUSDAmount}`}</p>
                                 {
                                     item.investEarnAmount ?
                                         <Button text="Invest & Earn Harvest" onClick={investHarvestHandler} />
@@ -507,7 +638,7 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
             </>
         }
         return temp;
-    }, [admin, item, projectStatus]);
+    }, [admin, item, projectStatus, investEarnUSDAmount]);
 
     const statusElement = useMemo(() => {
         let temp;
@@ -555,7 +686,7 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
             <div className="d-flex justify-between align-center">
                 <img className="w-[38px] h-[38px] rounded-full" src={item.logoSrc} alt="logo" />
                 <p className="project-name">{item.name}</p>
-                <div className="token-price !text-xs !px-2 !py-1 rounded text-white border border-border-primary">1 USD = {item.tokenPrice} {item.name}</div>
+                <div className="token-price !text-sm !px-2 !py-1 rounded text-white border border-border-primary">1 {YUSD.symbol} = {item.tokenPrice} {item.name}</div>
                 {/* <button onClick={() => deleteProjectHandle(item)} className='p-2 rounded bg-btn-primary text-white ml-2'><BsFillTrashFill /></button> */}
             </div>
             <p className="explanation">
@@ -582,7 +713,7 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
                 <p>{item.currentStatus.toFixed(2)}%</p>
                 <p>{(item.currentStatus * item.totalYTEST / 100).toLocaleString()}/{item.totalYTEST.toLocaleString()}</p>
             </div>
-            <div className="extra-info">
+            <div className="extra-info text-sm leading-[130%]">
                 <div>
                     {contentElement}
                     {statusElement}
@@ -701,6 +832,24 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
                     selectHistoryItem={(i: Number) => selectHistoryItem(i)}
                     show={showVotingHistoryModal}
                 />
+            </div>
+        </ModalV2>
+
+
+        {/* Update Multiplier Modal */}
+        <ModalV2
+            show={showUpdateMultiplierModal}
+            onClose={() => setShowUpdateMultiplierModal(false)}
+        >
+            <div className="modal_content p-4">
+                <p className='text-center text-2xl w-full text-white py-4 font-bold'>How much do you want?</p>
+                <div className="input_field mb-4">
+                    <input className="w-full text-white rounded border border-[#FFFFFF22] bg-transparent bg-primary-pattern px-4 py-2 outline-none" placeholder="10" onInput={(e: any) => setMultiplier(e.target.value)} value={multiplier} />
+                </div>
+                <div className="flex justify-end">
+                    <Button className="mr-2" text="Update" onClick={() => { updateMultiplier(); }} />
+                    <Button className="!bg-dark-primary" text="Cancel" onClick={() => { setShowUpdateMultiplierModal(false) }} />
+                </div>
             </div>
         </ModalV2>
     </div>;
