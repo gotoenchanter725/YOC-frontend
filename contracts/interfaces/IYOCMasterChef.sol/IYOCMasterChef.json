@@ -52,7 +52,7 @@
           "type": "address"
         }
       ],
-      "name": "addAuthorized",
+      "name": "addAuthorizedUser",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
