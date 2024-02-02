@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { retireveingCurrency, updateCurrency, errorCurrency } from "store/actions";
 import { tokenInterface } from "../constants/tokens";
@@ -49,12 +49,20 @@ const useCurrency = () => {
     return currency;
   }, [getCurrencyDetail, YOC])
 
+  const YOCDetail = useMemo(() => {
+    return getYOCDetail();
+  }, [currencies, getYOCDetail])
+
   const getYUSDDetail = useCallback(() => {
     let currency = getCurrencyDetail(YUSD.address);
     return currency;
-  }, [getCurrencyDetail, YUSD])
+  }, [getCurrencyDetail, YUSD]);
 
-  return { currencies, loading: currencyLoading, error: error, currencyRetireve, getCurrencyDetail, getYOCDetail, getYUSDDetail };
+  const YUSDDetail = useMemo(() => {
+    return getYUSDDetail();
+  }, [currencies, getYUSDDetail])
+
+  return { currencies, loading: currencyLoading, error: error, currencyRetireve, getCurrencyDetail, getYOCDetail, YOCDetail, getYUSDDetail, YUSDDetail };
 }
 
 export default useCurrency;

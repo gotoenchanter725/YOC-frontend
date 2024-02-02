@@ -85,6 +85,12 @@ const TokenComponent = (props: propsInterface) => {
                                         )
                                     })
                             }
+                            {
+                                (props.ignoreValue ? TOKENS.filter(item => item.address !== props.ignoreValue.address) : TOKENS).length == 0 ?
+                                    <p>
+                                        There is nothing ...
+                                    </p> : ""
+                            }
                         </div>
                     </div>
                 ) : ''

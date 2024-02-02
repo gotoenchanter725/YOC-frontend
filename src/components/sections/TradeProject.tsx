@@ -46,7 +46,7 @@ const TradeProjectSection: FC<props> = ({ }) => {
     }
 
     return <>
-        <table className="w-full text-sm">
+        <table className="w-full text-md">
             <thead>
                 <tr className="border-b border-[#4b4d4d] border-solid">
                     <th>

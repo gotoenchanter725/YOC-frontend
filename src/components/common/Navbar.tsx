@@ -22,6 +22,7 @@ import useWallet from "@hooks/useWallet"
 import useAdmin from "@hooks/useAdmin";
 import useNetwork from "@hooks/useNetwork";
 import { YOC, YUSD } from "../../constants/contracts";
+import useCurrency from "@hooks/useCurrency";
 
 const menuData = [
     {
@@ -107,6 +108,7 @@ const Navbar = () => {
     const { account, YOCBalance, ETHBalance, YUSDBalance } = useAccount();
     const { connectWallet, showWalletModal, disconnectWallet } = useWallet();
     const { network, native, YOC: YOC_TOKEN } = useNetwork();
+    const { currencyRetireve, YOCDetail } = useCurrency();
     const isAdmin = useAdmin();
     const currentPath = useMemo(() => {
         console.log(router.pathname);
@@ -128,6 +130,10 @@ const Navbar = () => {
             else setNavbarBgActive(false)
         })
     }, [])
+
+    useEffect(() => {
+        currencyRetireve();
+    }, []);
 
 
     const addGlobalYOCTokenHandle = async () => {
@@ -220,7 +226,7 @@ const Navbar = () => {
                             <div className="min-w-[20px] p-1.5">
                                 <img src={`/images/coins/${YOC_TOKEN}.png`} className="min-w-[22px] w-[22px] h-[22px]" alt='wallet' />
                             </div>
-                            <div className="flex pr-2"><span className="mr-2">{YOC_TOKEN}</span><span className="inline-block overflow-hidden text-ellipsis max-w-[60px]">${YOCBalance}</span></div>
+                            <div className="flex pr-2"><span className="mr-2">{YOC_TOKEN}</span><span className="inline-block overflow-hidden text-ellipsis max-w-[60px]">${YOCDetail ? Number(YOCDetail.price).toFixed(2) : '0.00'}</span></div>
                         </div>
                         <div className="flex rounded-lg border-[1px] border-border-primary items-center h-full p-2 ml-1">
                             <p className="whitespace-nowrap">Your Balance</p>

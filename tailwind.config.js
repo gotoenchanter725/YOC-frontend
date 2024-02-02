@@ -17,8 +17,9 @@ module.exports = {
         '5xl': '1640px',
       },
       fontSize: {
-        xs: ['8px', '10px'],
-        sm: ['10px', '12px'],
+        xxs: ['8', '8px'],
+        xs: ['10px', '10px'],
+        sm: ['11px', '12px'],
         md: ['12px', '14px'],
         base: ['14px', '16px'],
         lg: ['16px', '18px'],

@@ -18,6 +18,7 @@ import { debounceHook } from '../utils/hook';
 import axios from 'axios';
 import useWallet from '@hooks/useWallet';
 import useAccount from '@hooks/useAccount';
+import ProgressInput from '@components/widgets/ProgressInput';
 
 const tempMaxValue = 99999999999;
 const ethAddress = WETH;
@@ -50,6 +51,8 @@ const Swap: FC = () => {
     }, [provider]);
     const [swapStep, setSwapStep] = useState('swap');
     const [priceImpact, setPriceImpact] = useState(0);
+    const [percentageAmountIn, setPercentageAmountIn] = useState(0);
+    const [showWaitingModal, setShowWaitingModal] = useState(false);
 
     useEffect(() => {
         if (provider && account) {
@@ -145,6 +148,9 @@ const Swap: FC = () => {
 
     const setAmountInHandle = async (v: number) => {
         setAmountIn(v);
+        if (myBalanceIn) {
+            setPercentageAmountIn(amountIn * 100 / myBalanceIn)
+        }
         setLastTarget('in');
 
         debounceHook(() => {
@@ -376,37 +382,23 @@ const Swap: FC = () => {
         setSwapStep('confirm');
     }
 
-    const customAmountSetHandle = (type: string, amountType: string) => {
-        let unit = 0;
-        if (amountType == 'max') unit = 1;
-        else if (amountType == 'half') unit = 0.5;
+    const customAmountSetHandle = (type: string, per: number = 100) => {
         if (type == 'in') {
-            if (typeIn) {
-                if (amountIn && amountType == 'half') {
-                    setAmountInHandle(mathExact('Multiply', +amountIn, unit));
-                } else setAmountInHandle(mathExact('Multiply', +myBalanceIn, unit));
-            }
+            setAmountInHandle(mathExact('Multiply', +myBalanceIn, per / 100));
         } else {
-            if (typeOut) {
-                if (amountOut && amountType == 'half') {
-                    setAmountOutHandle(mathExact('Multiply', +amountOut, unit));
-                } else setAmountOutHandle(mathExact('Multiply', +myBalanceOut, unit));
-            }
+            setAmountOutHandle(mathExact('Multiply', +myBalanceOut, per / 100));
         }
     }
 
-    const [showWaitingModal, setShowWaitingModal] = useState(false);
-
     return (
         <div className='relative w-full'>
-            <img className='absolute left-0 top-[10vh] h-[85vh]' src='./images/bg-effect-image.png' alt='effect' />
             <div className='container !py-0 mx-auto min-h-[450px]'>
                 <div className='swap-container relative min-w-full min-h-full'>
                     <div className='absolute left-0 top-0 w-full h-full -z-10'>
                         <div className='absolute right-0 -top-[250px] w-[350px] h-[650px] opacity-25 bg-tr-gradient bg-blend-color-dodge'></div>
                     </div>
-                    <div className='w-full h-full flex justify-end items-start z-20'>
-                        <div className='flex flex-col  bg-bg-pattern rounded shadow-big w-[400px] mt-[100px] mr-[5vw]'>
+                    <div className='w-full h-full z-20 p-8'>
+                        <div className=' mx-auto flex flex-col bg-bg-pattern shadow-big w-[400px]'>
                             {
                                 swapStep == "swap" ? (
                                     <>
@@ -425,14 +417,14 @@ const Swap: FC = () => {
                                                 <label className='absolute left-2 -top-4 px-2 py-1 leading-4 bg-[#22262a] z-[1] rounded-t' htmlFor='first'>From</label>
                                                 <TokenComponent side="right" type={typeIn} setType={(v) => setTypeInHandle(v)} amount={amountIn} setAmount={(v) => setAmountInHandle(v)} ignoreValue={typeOut} disabled={!Boolean(account)} />
                                             </div>
+                                            <div className='flex items-center justify-between py-3'>
+                                                <ProgressInput className='w-full' inputClassName='plus !bg-gray-400' value={percentageAmountIn} setValue={(v) => { setPercentageAmountIn(v); customAmountSetHandle('in', v) }} />
+                                                <button className='bg-status-plus px-3 py-2 text-sm rounded shadow-btn-primary ml-2' onClick={() => { setPercentageAmountIn(100); customAmountSetHandle('in', 100) }}>Max</button>
+                                            </div>
                                             <div className='flex items-center justify-between'>
-                                                <div className='flex items-center mr-2'>
-                                                    <button className='rounded text-sm border border-border-primary px-2 py-1 leading-4 mr-2' onClick={() => customAmountSetHandle('in', 'max')}>Max</button>
-                                                    <button className='rounded text-sm border border-border-primary px-2 py-1 leading-4 mr-2' onClick={() => customAmountSetHandle('in', 'half')}>Half</button>
-                                                    <div className='flex items-center py-3'>
-                                                        <label className='text-sm mr-2'>Balance:</label>
-                                                        <span className='text-sm text-[#8B8B8B]'>{myBalanceIn}</span>
-                                                    </div>
+                                                <div className='flex items-center py-2'>
+                                                    <label className='text-sm mr-2'>Balance:</label>
+                                                    <span className='text-sm text-[#8B8B8B]'>{myBalanceIn}</span>
                                                 </div>
                                                 <div className='flex items-center'>
                                                     {
@@ -455,8 +447,8 @@ const Swap: FC = () => {
                                             </div>
                                             <div className='flex items-center justify-between'>
                                                 <div className='flex items-center mr-2'>
-                                                    <button className='rounded text-sm border border-border-primary px-2 py-1 leading-4 mr-2' onClick={() => customAmountSetHandle('out', 'max')}>Max</button>
-                                                    <button className='rounded text-sm border border-border-primary px-2 py-1 leading-4 mr-2' onClick={() => customAmountSetHandle('out', 'half')}>Half</button>
+                                                    <button className='rounded text-sm border border-border-primary px-2 py-1 leading-4 mr-2' onClick={() => customAmountSetHandle('out', 100)}>Max</button>
+                                                    <button className='rounded text-sm border border-border-primary px-2 py-1 leading-4 mr-2' onClick={() => customAmountSetHandle('out', 100)}>Half</button>
                                                     <div className='flex items-center py-3'>
                                                         <label className='text-sm mr-2'>Balance:</label>
                                                         <span className='text-sm text-[#8B8B8B]'>{myBalanceOut}</span>
@@ -543,9 +535,6 @@ const Swap: FC = () => {
                                     )
                             }
                         </div>
-
-                        <SideMenuBar />
-
                     </div>
                 </div>
             </div>
