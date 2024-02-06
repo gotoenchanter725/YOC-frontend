@@ -123,7 +123,7 @@ const CreateProjectContent: FC<Props> = ({ handleClose }) => {
                 [ethers.utils.parseUnits(price, 3), ethers.utils.parseUnits(roi, 0), ethers.utils.parseUnits(startDate, 0), ethers.utils.parseUnits(endDate, 0), ongoingPercent, multiplier],
                 [YUSD.address, projectAddress]
             );
-            const gasLimit = createProjectEstimate.mul(120).div(100);
+            const gasLimit = createProjectEstimate.mul(150).div(100);
             console.log(+gasPrice / 10 ** 18, +gasLimit, +gasPrice * +gasLimit / 10 ** 18);
             const createProjectTransaction = await ProjectManagerContract.createProject(
                 `${title} Token`,

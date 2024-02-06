@@ -67,7 +67,9 @@ const MenuBar = () => {
         <div className="logo">
             <div className="w-[240px] p-2 border-b border-[#ffffff2d]">
                 <Link href={'/'}>
-                    <img className="w-full cursor-pointer" src="/images/logo.png" alt="Footer Logo" />
+                    <a>
+                        <img className="w-full cursor-pointer" src="/images/logo.png" alt="Footer Logo" />
+                    </a>
                 </Link>
             </div>
 

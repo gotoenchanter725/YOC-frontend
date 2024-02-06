@@ -578,8 +578,8 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
                         <Button text="Buy Token" onClick={buyHandler} />
                         <Button text="Add Token" onClick={() => addToken()} />
                         <div className="invest-wrap flex flex-col items-end">
-                            <p>{`Invest & Earn: ${item.investEarnAmount} ${YOC.symbol}${network == "ETH" ? 'e' : 'b'}`}</p>
-                            <p>{`Invest & Earn Value: $${investEarnUSDAmount}`}</p>
+                            <p className="whitespace-nowrap">{`Invest & Earn: ${Number(item.investEarnAmount).toFixed(2)} ${YOC.symbol}${network == "ETH" ? 'e' : 'b'}`}</p>
+                            <p className="whitespace-nowrap">{`Invest & Earn Value: $${investEarnUSDAmount}`}</p>
                         </div>
                     </>
                 }
@@ -604,10 +604,10 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
                             </div>
                             <Button text="Add Token" onClick={() => addToken()} />
                             <div className="invest-wrap flex flex-col items-end">
-                                <p>{`Invest & Earn: ${item.investEarnAmount} ${YOC.symbol}${network == "ETH" ? 'e' : 'b'}`}</p>
-                                <p>{`Invest & Earn Value: $${investEarnUSDAmount}`}</p>
+                                <p className="whitespace-nowrap">{`Invest & Earn: ${Number(item.investEarnAmount).toFixed(2)} ${YOC.symbol}${network == "ETH" ? 'e' : 'b'}`}</p>
+                                <p className="whitespace-nowrap">{`Invest & Earn Value: $${investEarnUSDAmount}`}</p>
                                 {
-                                    item.investEarnAmount ?
+                                    +item.investEarnAmount ?
                                         <Button text="Invest & Earn Harvest" onClick={investHarvestHandler} />
                                         : ""
                                 }
@@ -625,10 +625,10 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
                         <>
                             <Button className={"mt-1"} text={"Refund"} disabled={Number(item.shareTokenBalance) == 0} onClick={refundHandler} />
                             <div className="invest-wrap flex flex-col items-end">
-                                <p>{`Invest & Earn: ${item.investEarnAmount} ${YOC.symbol}${network == "ETH" ? 'e' : 'b'}`}</p>
-                                <p>{`Invest & Earn Value: $${investEarnUSDAmount}`}</p>
+                                <p className="whitespace-nowrap">{`Invest & Earn: ${Number(item.investEarnAmount).toFixed(2)} ${YOC.symbol}${network == "ETH" ? 'e' : 'b'}`}</p>
+                                <p className="whitespace-nowrap">{`Invest & Earn Value: $${investEarnUSDAmount}`}</p>
                                 {
-                                    item.investEarnAmount ?
+                                    +item.investEarnAmount ?
                                         <Button text="Invest & Earn Harvest" onClick={investHarvestHandler} />
                                         : ""
                                 }
@@ -750,7 +750,7 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
                     </div>
                     <div className="w-full relative flex items-center justify-between mb-4">
                         <input className="w-[calc(100%_-_60px)] text-white rounded border border-[#FFFFFF22] bg-transparent bg-primary-pattern px-4 py-2 outline-none" placeholder="0.00" onInput={inputUSDAmount} value={usdAmount} />
-                        <span className="mr-1">USD</span>
+                        <span className="mr-1">{YUSD.symbol}</span>
                     </div>
                     <div className="d-flex justify-between align-center mb-4">
                         <span>Available: {item.availableMaxUsdValue}</span>
@@ -773,7 +773,7 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
                 <p className='text-center text-2xl w-full text-white py-4 font-bold'>How much do you want?</p>
                 <div className="input_field mb-4">
                     <input className="w-[calc(100%_-_50px)] text-white rounded border border-[#FFFFFF22] bg-transparent bg-primary-pattern px-4 py-2 outline-none" placeholder="0.00" onInput={inputUSDAmount} value={usdAmount} />
-                    <span className="text-right ml-4 text-white">USD</span>
+                    <span className="text-right ml-4 text-white">{YUSD.symbol}</span>
                 </div>
                 <div className="flex justify-end">
                     <Button className="mr-2" text="Deposit" onClick={() => { depositAction(item.poolAddress, item.investToken, usdAmount, item.investDecimal); setShowDepositModal(false) }} />
