@@ -1,6 +1,6 @@
 import React, { FC, useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Contract, ethers } from "ethers";
+import { BigNumber, Contract, ethers } from "ethers";
 import ProgressBar from "./ProgressBar";
 import Button from "./Button";
 import { BsFillTrashFill } from "react-icons/bs";
@@ -20,6 +20,9 @@ import useAccount from "@hooks/useAccount";
 import useProject from "@hooks/useFund";
 import useCurrency from "@hooks/useCurrency";
 import axiosInstance from "utils/axios";
+import MintSection from "@components/sections/Mint";
+import useAdmin from "@hooks/useAdmin";
+import { convertWeiToEth } from "utils/unit";
 
 interface Props {
     item?: any;
@@ -54,6 +57,7 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
     const { updateProjectInfoByAddress } = useProject();
     const { alertShow } = useAlert();
     const { explorer, network, scan } = useNetwork();
+    const isAdmin = useAdmin();
 
     const [showBuyTokenModal, setShowBuyTokenModal] = useState(false);
     const [showDepositModal, setShowDepositModal] = useState(false);
@@ -78,6 +82,7 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
     const { getYOCDetail, getYUSDDetail } = useCurrency();
     const [multiplier, setMultiplier] = useState("");
     const [showUpdateMultiplierModal, setShowUpdateMultiplierModal] = useState(false);
+    const [isMintShow, setIsMintShow] = useState(false);
 
     useEffect(() => {
         (async () => {
@@ -265,11 +270,12 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
         }
     }, [item, votingResponse, admin, projectDetailContract]);
 
-    const inputTokenAmount: React.KeyboardEventHandler<HTMLInputElement> = (e) => {
-        (e.target as HTMLInputElement).value;
-        let amount = Number((e.target as HTMLInputElement).value) || 0;
-        setTokenAmount(String(amount));
-        setUsdAmount(String((amount / item.tokenPrice).toFixed(2)));
+    const inputTokenAmount = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!isNaN(Number(e.target.value))) {
+            setTokenAmount(String(e.target.value));
+            let amount = Number((e.target as HTMLInputElement).value);
+            setUsdAmount(String((amount / item.tokenPrice).toFixed(2)));
+        }
     };
     const setMaxUsdAmountValue = () => {
         let availableTokenTotalPrice = ((item.totalYTEST - (item.currentStatus * item.totalYTEST / 100)) / item.tokenPrice).toFixed(2);
@@ -283,19 +289,13 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
         setUsdAmount(((+maxValue / item.tokenPrice).toFixed(2)).toString());
     }
 
-    const inputUSDAmount: React.KeyboardEventHandler<HTMLInputElement> = (e) => {
-        let amount = Number((e.target as HTMLInputElement).value) || 0;
-        setUsdAmount(String(amount));
-        setTokenAmount(String((amount * item.tokenPrice).toFixed(2)));
+    const inputUSDAmount = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!isNaN(Number(e.target.value))) {
+            setUsdAmount(String(e.target.value));
+            let amount = Number((e.target as HTMLInputElement).value);
+            setTokenAmount(String((amount * item.tokenPrice).toFixed(2)));
+        }
     };
-
-    const refundHandler: React.MouseEventHandler<HTMLDivElement> = () => {
-        refundAction(item.poolAddress, item.tokenPrice, item.shareToken, item.investDecimal, item.shareDecimal, item.shareTokenAllowance);
-    }
-
-    const claimHandler: React.MouseEventHandler<HTMLDivElement> = () => {
-        claimAction(item.poolAddress)
-    }
 
     const addToken = async () => {
         await window.ethereum.request({
@@ -317,13 +317,243 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
             setShowBuyTokenModal(true)
         } else {
             location.href = "/trade"
-
         }
     }
 
-    const investHarvestHandler = () => {
-        harvestAction(item.poolAddress)
-    }
+    const buyTokenActionHandle = useCallback(async () => {
+        if (account == undefined) {
+            alertShow({
+                status: 'failed',
+                content: 'Please connect to the Metamask!'
+            })
+            return;
+        } else if (isAdmin) {
+            alertShow({
+                status: 'failed',
+                content: 'Admin can\'t buy token!'
+            })
+            return;
+        }
+        const ProjectContractInstance = new Contract(item.poolAddress, Project.abi, signer);
+        let investAmount = Number(ethers.utils.parseUnits(usdAmount, item.investDecimal));
+        let shareAmount = Number(ethers.utils.parseUnits(tokenAmount, item.shareDecimal)); // N
+        try {
+            loadingStart();
+
+            if (+usdAmount > +item.investTokenAllowance) {
+                const investTokenInstance = new Contract(item.investToken, YUSD.abi, signer);
+                let approve_investToken = await investTokenInstance.approve(item.poolAddress, investAmount, {
+                    gasLimit: 300000
+                });
+                await approve_investToken.wait();
+            }
+            let participateEstimate = await ProjectContractInstance.estimateGas.participate(investAmount, shareAmount);
+            const gasLimit = participateEstimate.mul(150).div(100);
+            let participateTx = await ProjectContractInstance.participate(investAmount, shareAmount, {
+                gasLimit: gasLimit
+            });
+
+            const eventlistencer = (address: string, amount1: BigNumber, amount2: BigNumber, user: string) => {
+                console.log("Participated", address, amount1, amount2, user);
+                if (user == account) {
+                    let realInvestAmount = convertWeiToEth(amount1, investContract ? investContract.decimals : 16)
+                    let realShareAmount = convertWeiToEth(amount2, shareContract ? shareContract.decimals : 16)
+                    alertShow({
+                        content: `Participated ${realShareAmount} ${shareContract?.symbol}, ${realInvestAmount} ${investContract?.symbol} Successfully`,
+                        status: 'success'
+                    })
+                }
+                updateProjectInfoByAddress(address);
+                loadingEnd();
+                ProjectContractInstance.removeListener("Participated", eventlistencer);
+            }
+            ProjectContractInstance.on('Participated', eventlistencer)
+
+            await participateTx.wait();
+            loadingEnd();
+
+        } catch (ex) {
+            loadingEnd();
+            console.log("buy token error: ", ex)
+        }
+    }, [item, signer]);
+
+    const depositActionHandle = useCallback(async () => {
+        try {
+            if (account == undefined) {
+                alertShow({
+                    status: 'failed',
+                    content: 'Please connect to the Metamask!'
+                })
+                return;
+            }
+            loadingStart();
+            const ProjectContractInstance = new Contract(item.poolAddress, Project.abi, signer);
+            const investTokenInstance = new Contract(item.investToken, YUSD.abi, signer);
+
+            let investAmount = ethers.utils.parseUnits(usdAmount, item.investDecimal);
+            let investTokenApproveTx = await investTokenInstance.approve(item.poolAddress, investAmount, {
+                gasLimit: 300000
+            });
+            await investTokenApproveTx.wait();
+
+            let depositProfitTx = await ProjectContractInstance.makeDepositProfit(investAmount, {
+                gasLimit: 300000
+            });
+            const eventlistencer = (projectAddress: string, amount: BigNumber, user: string) => {
+                if (user == account) {
+                    let realAmount = convertWeiToEth(amount, investContract ? investContract.decimals : 16)
+                    alertShow({
+                        content: `Deposit ${realAmount} ${investContract?.symbol} Successfully`,
+                        status: 'success'
+                    })
+                }
+                updateProjectInfoByAddress(projectAddress);
+                ProjectContractInstance.removeListener("ProfitDeposited", eventlistencer);
+                loadingEnd();
+            }
+            ProjectContractInstance.on("ProfitDeposited", eventlistencer);
+
+            await depositProfitTx.wait();
+            loadingEnd();
+        } catch (ex) {
+            console.log("make depost error: ", ex)
+            loadingEnd();
+        }
+    }, [item, signer]);
+
+    const refundActionHandle = useCallback(async () => {
+        // refundAction(item.poolAddress, item.tokenPrice, item.shareToken, item.investDecimal, item.shareDecimal, item.shareTokenAllowance);
+        if (account == undefined) {
+            alertShow({
+                status: 'failed',
+                content: 'Please connect to the Metamask!'
+            })
+            return;
+        }
+        const ProjectContractInstance = new Contract(item.poolAddress, Project.abi, signer);
+        const shareTokenInstance = new Contract(item.shareToken, TokenTemplate.abi, signer);
+
+        let shareAmount = await shareTokenInstance.balanceOf(account);
+        let shareAmountToEth = Number(ethers.utils.formatUnits(shareAmount, item.shareDecimal));
+        if (shareAmountToEth == 0) {
+            alertShow({
+                status: 'failed',
+                content: 'Your balance is zero!'
+            })
+            return
+        }
+
+        try {
+            let investAmount = ethers.utils.parseUnits((shareAmountToEth / item.tokenPrice).toString(), item.investDecimal)
+
+            loadingStart();
+            if (+shareAmount > +item.shareTokenAllowance) {
+                let approve_ytest = await shareTokenInstance.approve(item.poolAddress, shareAmount, {
+                    gasLimit: 300000
+                });
+                await approve_ytest.wait();
+            }
+
+            let refundTx = await ProjectContractInstance.refund(shareAmount, investAmount, {
+                gasLimit: 300000
+            });
+
+            const eventlistencer = (address: string, amount1: BigNumber, amount2: BigNumber, user: string) => {
+                updateProjectInfoByAddress(address);
+
+                if (user == account) {
+                    let realInvestAmount = convertWeiToEth(amount1, investContract ? investContract.decimals : 16)
+                    let realShareAmount = convertWeiToEth(amount2, shareContract ? shareContract.decimals : 16)
+                    alertShow({
+                        content: `Refund ${realShareAmount} ${shareContract?.symbol}, ${realInvestAmount} ${investContract?.symbol} Successfully`,
+                        status: 'success'
+                    })
+                }
+                ProjectContractInstance.removeListener('Refund', eventlistencer);
+                loadingEnd();
+            }
+            ProjectContractInstance.on('Refund', eventlistencer);
+            await refundTx.wait();
+            loadingEnd();
+        } catch (ex) {
+            loadingEnd();
+        }
+    }, [item, signer]);
+
+    const claimActionHandle = useCallback(async () => {
+        // claimAction(item.poolAddress)
+        if (account == undefined) {
+            alertShow({
+                status: 'failed',
+                content: 'Please connect to the Metamask!'
+            })
+            return;
+        }
+        const ProjectContractInstance = new Contract(item.poolAddress, Project.abi, signer);
+        try {
+            loadingStart();
+            let claimTx = await ProjectContractInstance.claim({
+                gasLimit: 300000
+            });
+            const eventlistencer = (address: string, amount: BigNumber, user: string) => {
+                updateProjectInfoByAddress(address);
+
+                if (user == account) {
+                    let realAmount = convertWeiToEth(amount, investContract ? investContract.decimals : 16)
+                    alertShow({
+                        content: `Dividend Claimed ${realAmount} ${investContract?.symbol} Successfully`,
+                        status: 'success'
+                    })
+                }
+                ProjectContractInstance.removeListener('Claimed', eventlistencer);
+                loadingEnd();
+            }
+            ProjectContractInstance.on('Claimed', eventlistencer);
+            await claimTx.wait();
+            loadingEnd();
+        } catch (ex) {
+            loadingEnd();
+        }
+    }, [item, signer]);
+
+    const harvestActionHandle = useCallback(async () => {
+        // harvestAction(item.poolAddress);
+        if (account == undefined) {
+            alertShow({
+                status: 'failed',
+                content: 'Please connect to the Metamask!'
+            })
+            return;
+        }
+        const ProjectContractInstance = new Contract(item.poolAddress, Project.abi, signer);
+        try {
+            loadingStart();
+            let harvestTx = await ProjectContractInstance.claimInvestEarn({
+                gasLimit: 300000
+            });
+
+            const eventlistencer = (address: string, yocAmount: BigNumber, user: string) => {
+                updateProjectInfoByAddress(address);
+
+                if (user == account) {
+                    let realAmount = convertWeiToEth(yocAmount, YOC.decimals)
+                    alertShow({
+                        content: `Claimed ${realAmount} ${YOC?.symbol} Successfully`,
+                        status: 'success'
+                    })
+                }
+                ProjectContractInstance.removeListener('ClaimInvestEarn', eventlistencer);
+                loadingEnd();
+            }
+            ProjectContractInstance.on('ClaimInvestEarn', eventlistencer);
+
+            await harvestTx.wait();
+            loadingEnd();
+        } catch (ex) {
+            loadingEnd();
+        }
+    }, [item, signer]);
 
     const votingHistoryModalHandle = () => {
         selectHistoryItem(0)
@@ -384,19 +614,28 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
         try {
             loadingStart();
             const ProjectTradeContract = new Contract(ProjectTrade.address, ProjectTrade.abi, signer);
-            let pauseTradeTx = await ProjectTradeContract.pause(item.poolAddress);
+            let pauseTradeTx;
+            if (item.tradePaused) {
+                pauseTradeTx = await ProjectTradeContract.unpause(item.shareToken, {
+                    gasLimit: 68676
+                });
+            } else {
+                pauseTradeTx = await ProjectTradeContract.pause(item.shareToken, {
+                    gasLimit: 68676
+                });
+            }
 
             const eventlistencer = (ptokenAddress: string, paused: boolean) => {
                 console.log("Pause", ptokenAddress, paused);
 
                 if (!paused) {
                     alertShow({
-                        content: "The project has paused successfully",
+                        content: "The project has resumed successfully",
                         status: 'success'
                     });
                 } else {
                     alertShow({
-                        content: "The project has resumed successfully",
+                        content: "The project has paused successfully",
                         status: 'success'
                     });
                 }
@@ -416,7 +655,7 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
         try {
             loadingStart();
             const ProjectTradeContract = new Contract(ProjectTrade.address, ProjectTrade.abi, signer);
-            let cancelOrdersTx = await ProjectTradeContract.cancelOrders(item.poolAddress);
+            let cancelOrdersTx = await ProjectTradeContract.cancelOrders(item.shareToken);
 
             const eventlistencer = (ptokenAddress: string) => {
                 console.log("CancelAllOrders", ptokenAddress);
@@ -442,7 +681,7 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
         try {
             loadingStart();
             const ProjectTradeContract = new Contract(ProjectTrade.address, ProjectTrade.abi, signer);
-            let remvoeOrdersTx = await ProjectTradeContract.removeOrders(item.poolAddress);
+            let remvoeOrdersTx = await ProjectTradeContract.removeOrders(item.shareToken);
 
             const eventlistencer = (ptokenAddress: string) => {
                 console.log("RemoveAllOrders", ptokenAddress);
@@ -513,7 +752,7 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
     const investEarnUSDAmount = useMemo(() => {
         let YOCDetail = getYOCDetail();
         if (YOCDetail) {
-            return item.investEarnAmount * Number(YOCDetail.price);
+            return (item.investEarnAmount * Number(YOCDetail.price)).toFixed(2);
         } else {
             return 0
         }
@@ -589,10 +828,10 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
                 {
                     admin ?
                         <>
-                            <Button text="Update Multiplier" onClick={() => handleOpenUpdateMultiplierModel()} />
+                            {/* <Button text="Update Multiplier" onClick={() => handleOpenUpdateMultiplierModel()} /> */}
                             <Button text="Deposit Profit" onClick={() => setShowDepositModal(true)} />
                             <Button text="Cancel Orders" onClick={cancelOrders} />
-                            <Button text={`${item.tradePaused ? 'Pause' : 'Resume'} Trade`} onClick={pauseTradeHandle} />
+                            <Button text={`${item.tradePaused ? 'Resume' : 'Pause'} Trade`} onClick={pauseTradeHandle} />
                             <Button text="Remove Orders" onClick={removeOrders} />
                         </>
                         :
@@ -600,18 +839,21 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
                             <Button text="Buy Token" onClick={buyHandler} />
                             <div className="claim-wrap flex flex-col items-end">
                                 <p>{`Claim amount: ${(item.claimAmount || 0).toFixed(2)} YUSD`}</p>
-                                <Button disabled={!(item.claimAmount > 0 && !item.claimable)} text="Claim Dividend" onClick={claimHandler} />
+                                <Button disabled={!(item.claimAmount > 0 && !item.claimable)} text="Claim Dividend" onClick={claimActionHandle} />
                             </div>
                             <Button text="Add Token" onClick={() => addToken()} />
-                            <div className="invest-wrap flex flex-col items-end">
-                                <p className="whitespace-nowrap">{`Invest & Earn: ${Number(item.investEarnAmount).toFixed(2)} ${YOC.symbol}${network == "ETH" ? 'e' : 'b'}`}</p>
-                                <p className="whitespace-nowrap">{`Invest & Earn Value: $${investEarnUSDAmount}`}</p>
-                                {
-                                    +item.investEarnAmount ?
-                                        <Button text="Invest & Earn Harvest" onClick={investHarvestHandler} />
-                                        : ""
-                                }
-                            </div>
+                            {
+                                !item.investEarnClaimable ?
+                                    <div className="invest-wrap flex flex-col items-end">
+                                        <p className="whitespace-nowrap">{`Invest & Earn: ${Number(item.investEarnAmount).toFixed(2)} ${YOC.symbol}${network == "ETH" ? 'e' : 'b'}`}</p>
+                                        <p className="whitespace-nowrap">{`Invest & Earn Value: $${investEarnUSDAmount}`}</p>
+                                        {
+                                            +item.investEarnAmount ?
+                                                <Button text="Invest & Earn Harvest" onClick={harvestActionHandle} />
+                                                : ""
+                                        }
+                                    </div> : ""
+                            }
                         </>
                 }
             </div>
@@ -619,20 +861,23 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
             temp = <>
                 {
                     admin ? <>
-                        <Button text="Update Multiplier" onClick={() => handleOpenUpdateMultiplierModel()} />
+                        {/* <Button text="Update Multiplier" onClick={() => handleOpenUpdateMultiplierModel()} /> */}
                         <Button text="Go to secondary" onClick={makeProjectTradeHandle} />
                     </> :
                         <>
-                            <Button className={"mt-1"} text={"Refund"} disabled={Number(item.shareTokenBalance) == 0} onClick={refundHandler} />
-                            <div className="invest-wrap flex flex-col items-end">
-                                <p className="whitespace-nowrap">{`Invest & Earn: ${Number(item.investEarnAmount).toFixed(2)} ${YOC.symbol}${network == "ETH" ? 'e' : 'b'}`}</p>
-                                <p className="whitespace-nowrap">{`Invest & Earn Value: $${investEarnUSDAmount}`}</p>
-                                {
-                                    +item.investEarnAmount ?
-                                        <Button text="Invest & Earn Harvest" onClick={investHarvestHandler} />
-                                        : ""
-                                }
-                            </div>
+                            <Button className={"mt-1"} text={"Refund"} disabled={Number(item.shareTokenBalance) == 0} onClick={refundActionHandle} />
+                            {
+                                !item.investEarnClaimable ?
+                                    <div className="invest-wrap flex flex-col items-end">
+                                        <p className="whitespace-nowrap">{`Invest & Earn: ${Number(item.investEarnAmount).toFixed(2)} ${YOC.symbol}${network == "ETH" ? 'e' : 'b'}`}</p>
+                                        <p className="whitespace-nowrap">{`Invest & Earn Value: $${investEarnUSDAmount}`}</p>
+                                        {
+                                            +item.investEarnAmount ?
+                                                <Button text="Invest & Earn Harvest" onClick={harvestActionHandle} />
+                                                : ""
+                                        }
+                                    </div> : ""
+                            }
                         </>
                 }
             </>
@@ -738,7 +983,18 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
             onClose={() => setShowBuyTokenModal(false)}
         >
             <div className="modal_content buy_token_modal p-4">
-                <p className='text-center text-2xl w-full text-white py-6 font-bold'>How much do you want?</p>
+                <p className='text-center text-2xl w-full text-white py-6 font-bold'>Buy {item.name} tokens</p>
+                <div className='flex items-center mb-2'>
+                    <p className="whitespace-nowrap">Selling price: 1 YUSD = {item.tokenPrice} {item.name}</p>
+                    <div className='group relative'>
+                        <img className='ml-2 w-[14px] h-[14px]' src='/images/question.png' />
+                        <div className='hidden group-hover:block not-italic text-white absolute z-10 left-2 top-3.5 w-[300px] p-2 z-100 backdrop-blur-md bg-[#041b298c] rounded shadow-btn-primary'>
+                            Project Tokens can only be bought with YUSD, YOC's stable coin.<br />
+                            If you do not yet have any YUSD, just click on "Mint YUSD" below and go through the next steps.<br />
+                            Be aware that the investment will be locked during the fundraising phase.
+                        </div>
+                    </div>
+                </div>
                 <div className="input_field">
                     <div className="w-full relative flex items-center justify-between mb-4">
                         <input className="w-[calc(100%_-_60px)] text-white rounded border border-[#FFFFFF22] bg-transparent bg-primary-pattern px-4 py-2 outline-none" placeholder="0.00" onInput={inputTokenAmount} value={tokenAmount} />
@@ -754,12 +1010,15 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
                     </div>
                     <div className="d-flex justify-between align-center mb-4">
                         <span>Available: {item.availableMaxUsdValue}</span>
-                        <Button className="max-btn !bg-btn-primary" text="Max" onClick={setMaxUsdAmountValue} bgColor="#0c54ad)" />
+                        <div className="flex">
+                            <Button className="max-btn !bg-btn-primary mr-2" text="Mint YUSD" onClick={() => setIsMintShow(true)} bgColor="#0c54ad)" />
+                            <Button className="max-btn !bg-btn-primary" text="Max" onClick={setMaxUsdAmountValue} bgColor="#0c54ad)" />
+                        </div>
                     </div>
                 </div>
                 <div className="w-full flex justify-end">
-                    <Button text="Buy Token" onClick={() => { buyAction(usdAmount, item.tokenPrice, item.poolAddress, item.investToken, item.investDecimal, item.shareDecimal, item.investTokenAllowance); setShowBuyTokenModal(false); }} />
-                    <Button className="!bg-dark-primary ml-2" text="Cancel" onClick={() => { setShowBuyTokenModal(false); }} />
+                    <Button text="Buy Token" onClick={() => { buyTokenActionHandle(); setShowBuyTokenModal(false); }} />
+                    <Button className="bg-btn-disable ml-2" text="Cancel" onClick={() => { setShowBuyTokenModal(false); }} />
                 </div>
             </div>
         </ModalV2>
@@ -771,12 +1030,12 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
         >
             <div className="modal_content p-4">
                 <p className='text-center text-2xl w-full text-white py-4 font-bold'>How much do you want?</p>
-                <div className="input_field mb-4">
+                <div className="flex items-center justify-betweeninput_field mb-4">
                     <input className="w-[calc(100%_-_50px)] text-white rounded border border-[#FFFFFF22] bg-transparent bg-primary-pattern px-4 py-2 outline-none" placeholder="0.00" onInput={inputUSDAmount} value={usdAmount} />
                     <span className="text-right ml-4 text-white">{YUSD.symbol}</span>
                 </div>
                 <div className="flex justify-end">
-                    <Button className="mr-2" text="Deposit" onClick={() => { depositAction(item.poolAddress, item.investToken, usdAmount, item.investDecimal); setShowDepositModal(false) }} />
+                    <Button className="mr-2" text="Deposit" onClick={() => { depositActionHandle(); setShowDepositModal(false) }} />
                     <Button className="!bg-dark-primary" text="Cancel" onClick={() => { setShowDepositModal(false) }} />
                 </div>
             </div>
@@ -850,6 +1109,13 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
                     <Button className="mr-2" text="Update" onClick={() => { updateMultiplier(); }} />
                     <Button className="!bg-dark-primary" text="Cancel" onClick={() => { setShowUpdateMultiplierModal(false) }} />
                 </div>
+            </div>
+        </ModalV2>
+
+
+        <ModalV2 size="tiny" layer={100} show={isMintShow} onClose={() => setIsMintShow(false)}>
+            <div className="p-6 pt-10">
+                <MintSection />
             </div>
         </ModalV2>
     </div>;

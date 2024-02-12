@@ -40,9 +40,9 @@ module.exports = {
         'dark-primary': "#999999",
         'dark-secondary': '#bbbbbb',
         // button background
-        'btn-primary': 'rgba(67, 227, 224, 0.57)',
+        'btn-primary': '#076569e0',
         'btn-secondary': '#7212EF',
-        'btn-disable': "#2a4142",
+        'btn-disable': "#838585b0",
         // border
         'border-primary': '#97FBFF',
         "border-secondary": "#3b3b3b",

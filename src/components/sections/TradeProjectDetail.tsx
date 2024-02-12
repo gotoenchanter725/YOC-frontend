@@ -1,7 +1,7 @@
 import React, { FC, useEffect, useState, useMemo } from "react";
 import dynamic from 'next/dynamic';
 import { BsArrowDown, BsArrowUp } from "react-icons/bs";
-import { Contract, constants } from "ethers";
+import { BigNumber, Contract, constants } from "ethers";
 
 import CInput from "@components/widgets/CInput";
 import Period from "@components/widgets/Period";
@@ -175,7 +175,23 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                 );
                 await approveTx.wait();
             }
-            projectTradeContract.on('OrderCreated', (ptoken, userAddress, orderId, amount, price, isBuy) => {
+
+            let buyEstimate = await projectTradeContract.estimateGas.buy(
+                ptokenAddress,
+                convertEthToWei(String(amountForBuy), fundProjectDetail.shareDecimal),
+                convertEthToWei(String(priceForBuy), YUSD.decimals),
+            )
+            const gasLimit = buyEstimate.mul(150).div(100);
+            console.log(gasLimit);
+            let buyTx = await projectTradeContract.buy(
+                ptokenAddress,
+                convertEthToWei(String(amountForBuy), fundProjectDetail.shareDecimal),
+                convertEthToWei(String(priceForBuy), YUSD.decimals),
+                {
+                    gasLimit: gasLimit
+                }
+            )
+            const eventlistencer = (ptoken: string, userAddress: string, orderId: number, amount: BigNumber, price: BigNumber, isBuy: boolean) => {
                 if (ptokenAddress == ptoken && userAddress == account) {
                     console.log("OrderCreated:", ptoken, userAddress, orderId, amount, isBuy);
                     alertShow({
@@ -191,16 +207,10 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                         updateYUSDBalance();
                         loadingEnd();
                     }, 800);
+                    projectTradeContract.removeListener('OrderCreated', eventlistencer)
                 }
-            })
-            let buyTx = await projectTradeContract.buy(
-                ptokenAddress,
-                convertEthToWei(String(amountForBuy), fundProjectDetail.shareDecimal),
-                convertEthToWei(String(priceForBuy), YUSD.decimals),
-                {
-                    gasLimit: 4000000
-                }
-            )
+            }
+            projectTradeContract.on('OrderCreated', eventlistencer);
             await buyTx.wait();
         } catch (err) {
             loadingEnd();
@@ -241,7 +251,23 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                 );
                 await approveTx.wait();
             }
-            projectTradeContract.on('OrderCreated', (ptoken, userAddress, orderId, amount, price, isBuy) => {
+
+            let sellEstimate = await projectTradeContract.estimateGas.sell(
+                ptokenAddress,
+                convertEthToWei(String(amountForSell), fundProjectDetail.shareDecimal),
+                convertEthToWei(String(priceForSell), YUSD.decimals),
+            );
+            const gasLimit = sellEstimate.mul(150).div(100);
+            console.log(gasLimit);
+            let sellTx = await projectTradeContract.sell(
+                ptokenAddress,
+                convertEthToWei(String(amountForSell), fundProjectDetail.shareDecimal),
+                convertEthToWei(String(priceForSell), YUSD.decimals),
+                {
+                    gasLimit: gasLimit
+                }
+            );
+            const eventlistencer = (ptoken: string, userAddress: string, orderId: number, amount: BigNumber, price: BigNumber, isBuy: boolean) => {
                 if (ptokenAddress == ptoken && userAddress == account) {
                     console.log("OrderCreated:", ptoken, userAddress, orderId, amount, isBuy);
                     alertShow({
@@ -256,17 +282,11 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                         updateProjectInfoByAddress(String(fundProjectDetail.poolAddress));
                         updateYUSDBalance();
                         loadingEnd();
-                    }, 800)
+                    }, 800);
+                    projectTradeContract.removeListener('OrderCreated', eventlistencer);
                 }
-            })
-            let sellTx = await projectTradeContract.sell(
-                ptokenAddress,
-                convertEthToWei(String(amountForSell), fundProjectDetail.shareDecimal),
-                convertEthToWei(String(priceForSell), YUSD.decimals),
-                {
-                    gasLimit: 4000000
-                }
-            )
+            };
+            projectTradeContract.on('OrderCreated', eventlistencer)
             await sellTx.wait();
         } catch (err) {
             loadingEnd();
@@ -490,8 +510,8 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
         </div>
 
 
-        <Modal size="small" layer={100} show={isMintShow} onClose={() => setIsMintShow(false)}>
-            <div className="p-6">
+        <Modal size="tiny" layer={100} show={isMintShow} onClose={() => setIsMintShow(false)}>
+            <div className="p-6 pt-10">
                 <MintSection />
             </div>
         </Modal>

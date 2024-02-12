@@ -91,7 +91,7 @@ const useProject = () => {
             projectDetailObj.name = detailProject.project.title;
             projectDetailObj.logoSrc = detailProject.project.icon;
             projectDetailObj.symbolImage = detailProject.project.symbolImage;
-            projectDetailObj.tokenPrice = Number(ethers.utils.formatUnits(detailProject.project.shareTokenPrice, 3));
+            projectDetailObj.tokenPrice = Number(ethers.utils.formatUnits(detailProject.project.shareTokenPrice, shareTokenDecimals));
             projectDetailObj.explanation = detailProject.project.description;
             projectDetailObj.multiplier = +detailProject.project.multiplier;
             projectDetailObj.ROI = Number(ethers.utils.formatUnits(detailProject.project.roi, 0));
@@ -106,7 +106,6 @@ const useProject = () => {
             projectDetailObj.shareTokenTotalSupply = shareTokenTotalSupply;
             projectDetailObj.investToken = investTokenAddress;
             if (account) {
-                console.log(detailProject.project.title, detailProject.profit.joinState, detailProject);
                 projectDetailObj.investTokenBalance = ethers.utils.formatUnits(detailProject.investToken.balance, YUSD.decimals);
                 projectDetailObj.shareTokenBalance = ethers.utils.formatUnits(detailProject.shareToken.balance, shareTokenDecimals);
                 projectDetailObj.investTokenAllowance = ethers.utils.formatUnits(detailProject.investToken.allowance, YUSD.decimals);
@@ -115,11 +114,13 @@ const useProject = () => {
                 projectDetailObj.claimAmount = Number(ethers.utils.formatUnits(detailProject.profit.claimableAmount, YUSD.decimals));
                 projectDetailObj.claimable = detailProject.profit.claimable;
                 projectDetailObj.joinState = detailProject.profit.joinState;
+                projectDetailObj.investEarnClaimable = detailProject.profit.investEarnClaimable;
                 projectDetailObj.investEarnAmount = ethers.utils.formatUnits(detailProject.profit.investEarnAmount, YOC.decimals);
 
 
                 let availableTokenTotalPrice = ((shareTokenSellAmount - (projectDetailObj.currentStatus * shareTokenSellAmount / 100)) / projectDetailObj.tokenPrice).toFixed(2);
                 let maxValue = Number(availableTokenTotalPrice) < Number(projectDetailObj.investTokenBalance) ? availableTokenTotalPrice : projectDetailObj.investTokenBalance;
+                console.log(detailProject.project.title, detailProject.profit.joinState, detailProject, projectDetailObj.currentStatus, projectDetailObj.tokenPrice, availableTokenTotalPrice);
                 projectDetailObj.availableMaxUsdValue = maxValue.toString();
             }
             projectDetailObj.vote = {

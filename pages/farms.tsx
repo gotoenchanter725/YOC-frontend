@@ -423,8 +423,9 @@ const Farm: FC = () => {
 											onClick={() => togglePoolHandle(index, 'open')}
 										>
 											<div className="flex items-center w-[calc(100%_-_50px)]">
-												<div className="w-[48px] h-[48px] mr-4">
-													<img className="w-full h-full" src="/images/pair.png" alt="pair" />
+												<div className="flex items-center w-[48px] h-[48px] relative mr-4">
+													<img className="w-[36px] h-[36px]" src={item.liquidity.currency0.image} alt="pair" />
+													<img className="w-[36px] h-[36px] absolute left-3" src={item.liquidity.currency1.image} alt="pair" />
 												</div>
 												<div className="w-[120px] mr-4">
 													{

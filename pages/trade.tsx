@@ -56,8 +56,8 @@ const Trade: FC = () => {
             }
         </div>
 
-        <Modal size="small" layer={100} show={isMintShow} onClose={() => setIsMintShow(false)}>
-            <div className="p-6">
+        <Modal size="tiny" layer={100} show={isMintShow} onClose={() => setIsMintShow(false)}>
+            <div className="p-6 pt-10">
                 <MintSection></MintSection>
             </div>
         </Modal>

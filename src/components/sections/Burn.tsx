@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Contract } from 'ethers';
+import { BigNumber, Contract } from 'ethers';
 import useNetwork from '@hooks/useNetwork';
 import useAccount from '@hooks/useAccount';
 import useLoading from '@hooks/useLoading';
@@ -10,7 +10,7 @@ import { YOCSwapRouter, YUSD, YOC as YOCToken, WETH } from 'src/constants/contra
 import Modal from '@components/widgets/Modalv2';
 
 const BurnSection = () => {
-    const { provider, signer, ETHBalance, YUSDBalance, account } = useAccount();
+    const { provider, signer, ETHBalance, YUSDBalance, account, updateYOCBalance, updateYUSDBalance, updateETHBalance } = useAccount();
     const { network, YOC, native } = useNetwork();
     const { loadingStart, loadingEnd } = useLoading();
     const { alertShow } = useAlert();
@@ -94,7 +94,10 @@ const BurnSection = () => {
         setShowBurnModalToggle(false);
         loadingStart();
         try {
-            YUSDContract.on("Burn", (user, YUSDAmount, receivedETHAmount, receivedYOCAmount) => {
+            let burnTx = await YUSDContract.burn(amount, {
+                gasLimit: 300000
+            });
+            const eventlistencer = (user: string, YUSDAmount: BigNumber, receivedETHAmount: BigNumber, receivedYOCAmount: BigNumber) => {
                 if (user == account) {
                     alertShow({
                         content: `Burn Successfully`,
@@ -102,11 +105,14 @@ const BurnSection = () => {
                         status: 'success'
                     });
                     loadingEnd();
+                    updateYOCBalance()
+                    updateYUSDBalance()
+                    updateETHBalance()
+                    YUSDContract.removeListener("Burn", eventlistencer);
                 }
-            })
-            await YUSDContract.burn(amount, {
-                gasLimit: 300000
-            });
+            };
+            YUSDContract.on("Burn", eventlistencer);
+            await burnTx.wait()
         } catch (error) {
             console.log(error);
             loadingEnd();

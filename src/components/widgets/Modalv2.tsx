@@ -26,7 +26,8 @@ const Modal: FC<Props> = (props) => {
     }
 
     const convertSizeToClass = (size?: string) => {
-        if (!size || size == 'small') return "max-w-[600px]";
+        if (!size || size == 'tiny') return "max-w-[400px]";
+        else if (size == 'small') return "max-w-[600px]";
         else if (size == 'md') return "max-w-[1000px]"
         else if (size == 'large') return "max-w-[1200px]"
         else if (size == 'full') return "max-w-[calc(100vw_-_100px)]"
@@ -39,7 +40,7 @@ const Modal: FC<Props> = (props) => {
                 onClick={(e) => closeHandle(e.target)}
                 ref={modalWrapContainer}
             >
-                <div className={"w-full h-full md:h-auto z-100 bg-body-secondary " + convertSizeToClass(props.size)}>
+                <div className={"w-full h-full md:h-auto z-100 bg-body-secondary backdrop-blur-md " + convertSizeToClass(props.size)}>
                     <div className="relative bg-primary-pattern border-[0.5px] border-solid border-[#FFFFFF30] rounded-lg shadow ">
                         <button type="button" className="absolute right-3 top-3 bg-transparent hover:bg-gray-200 rounded-full p-1 ml-auto inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white" data-modal-toggle="defaultModal"
                             onClick={() => closeHandle('close')}

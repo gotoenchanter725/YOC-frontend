@@ -7,10 +7,11 @@ type Props = {
     color?: string;
     className?: string;
     disabled?: boolean;
+    defaultSize?: boolean;
 }
 
-const Button: FC<Props> = ({ text, onClick, bgColor = "#43e3e091", color = "white", className, disabled = false }) => {
-    return <button disabled={disabled} className={`app-button !rounded ${className} ${disabled ? 'disabled' : ''}`} onClick={onClick} style={{ backgroundColor: bgColor, color: color }}>{text}</button>
+const Button: FC<Props> = ({ text, onClick, className, disabled = false, defaultSize = false }) => {
+    return <button disabled={disabled} className={`bg-btn-primary text-white ${defaultSize ? '!w-[132px]' : ''} px-2 py-1 rounded backdrop-blur-md ${className} ${disabled ? 'disabled' : ''}`} onClick={onClick}>{text}</button>
 }
 
 export default Button;

@@ -19,6 +19,7 @@ import axios from 'axios';
 import useWallet from '@hooks/useWallet';
 import useAccount from '@hooks/useAccount';
 import ProgressInput from '@components/widgets/ProgressInput';
+import TokenSelector from '@components/widgets/TokenSelector';
 
 const tempMaxValue = 99999999999;
 const ethAddress = WETH;
@@ -400,28 +401,36 @@ const Swap: FC = () => {
                     <div className='w-full h-full z-20 p-8'>
                         <div className=' mx-auto flex flex-col bg-bg-pattern shadow-big w-[400px]'>
                             {
-                                swapStep == "swap" ? (
-                                    <>
-                                        <div className='px-3 py-6'>
-                                            <h3 className='relative text-2xl font-semibold text-primary text-center'>
-                                                Swap
-                                                <div className='absolute right-0 top-0'>
-                                                    <img className='h-[35px]' src='/images/swap-header.png' alt='swap' />
-                                                </div>
-                                            </h3>
-                                            <p className='text-dark-secondary mt-4 text-center'>Trade tokens in an instant</p>
-                                        </div>
+                                // swapStep == "swap" ? (
+                                <>
+                                    <div className='px-3 py-6'>
+                                        <h3 className='relative text-2xl font-semibold text-primary text-center'>
+                                            Swap
+                                            <div className='absolute right-0 top-0'>
+                                                <img className='h-[35px]' src='/images/swap-header.png' alt='swap' />
+                                            </div>
+                                        </h3>
+                                        <p className='text-dark-secondary mt-4 text-center'>Trade tokens in an instant</p>
+                                    </div>
 
-                                        <div className='relative px-3 py-6 bg-primary-pattern border border-[#ffffff28] rounded -mx-[1px]'>
-                                            <div className='flex flex-col justify-between relative mt-2'>
-                                                <label className='absolute left-2 -top-4 px-2 py-1 leading-4 bg-[#22262a] z-[1] rounded-t' htmlFor='first'>From</label>
-                                                <TokenComponent side="right" type={typeIn} setType={(v) => setTypeInHandle(v)} amount={amountIn} setAmount={(v) => setAmountInHandle(v)} ignoreValue={typeOut} disabled={!Boolean(account)} />
-                                            </div>
-                                            <div className='flex items-center justify-between py-3'>
-                                                <ProgressInput className='w-full' inputClassName='plus !bg-gray-400' value={percentageAmountIn} setValue={(v) => { setPercentageAmountIn(v); customAmountSetHandle('in', v) }} />
-                                                <button className='bg-status-plus px-3 py-2 text-sm rounded shadow-btn-primary ml-2' onClick={() => { setPercentageAmountIn(100); customAmountSetHandle('in', 100) }}>Max</button>
-                                            </div>
-                                            <div className='flex items-center justify-between'>
+                                    <div className='relative px-3 py-6 bg-primary-pattern border border-[#ffffff28] rounded -mx-[1px]'>
+                                        <div className='flex flex-col justify-between relative mt-2'>
+                                            <TokenSelector side="right"
+                                                type={typeIn}
+                                                setType={(v) => setTypeInHandle(v)}
+                                                amount={amountIn}
+                                                setAmount={(v) => setAmountInHandle(v)}
+                                                ignoreValue={typeOut}
+                                                disabled={!Boolean(account)}
+                                                balance={myBalanceIn}
+                                                loading={pendingApproveIn}
+                                            />
+                                        </div>
+                                        <div className='flex items-center justify-between py-3'>
+                                            <ProgressInput className='w-full' inputClassName='plus !bg-gray-400' value={percentageAmountIn} setValue={(v) => { setPercentageAmountIn(v); customAmountSetHandle('in', v) }} />
+                                            <button className='bg-status-plus px-3 py-2 text-sm rounded shadow-btn-primary ml-2' onClick={() => { setPercentageAmountIn(100); customAmountSetHandle('in', 100) }}>Max</button>
+                                        </div>
+                                        {/* <div className='flex items-center justify-between'>
                                                 <div className='flex items-center py-2'>
                                                     <label className='text-sm mr-2'>Balance:</label>
                                                     <span className='text-sm text-[#8B8B8B]'>{myBalanceIn}</span>
@@ -437,102 +446,112 @@ const Swap: FC = () => {
                                                             )
                                                     }
                                                 </div>
-                                            </div>
-                                            <div className='absolute z-[1] left-1/2 aspect-[1/1] -bottom-[calc(20px_+_0.5rem)] -translate-x-1/2 cursor-pointer'><img src='/images/swap.png' alt="swap" width={40} height={40} onClick={() => changeTokenEach()} /></div>
+                                            </div> */}
+                                        <div className='absolute z-[1] left-1/2 aspect-[1/1] -bottom-[calc(20px_+_0.5rem)] -translate-x-1/2 cursor-pointer'><img src='/images/swap.png' alt="swap" width={40} height={40} onClick={() => changeTokenEach()} /></div>
+                                    </div>
+                                    <div className='relative -z-0 px-3 pt-6 pb-4 mt-1 bg-secondary-pattern border border-[#ffffff28] rounded -mx-[1px]'>
+                                        <div className='flex flex-col justify-between relative mt-2'>
+                                            <TokenSelector side="right"
+                                                type={typeOut}
+                                                setType={(v) => setTypeOutHandle(v)}
+                                                amount={amountOut}
+                                                setAmount={(v) => setAmountOutHandle(v)}
+                                                ignoreValue={typeIn}
+                                                disabled={!Boolean(account)}
+                                                balance={myBalanceOut}
+                                            />
                                         </div>
-                                        <div className='relative -z-0 px-3 pt-6 pb-4 mt-1 bg-secondary-pattern border border-[#ffffff28] rounded -mx-[1px]'>
-                                            <div className='flex flex-col justify-between relative mt-2'>
-                                                <label className='absolute left-2 -top-4 px-2 py-1 z-[1] leading-4 bg-[#22262a] rounded-t' htmlFor='second'>To</label>
-                                                <TokenComponent side="right" type={typeOut} setType={(v) => setTypeOutHandle(v)} amount={amountOut} setAmount={(v) => setAmountOutHandle(v)} ignoreValue={typeIn} disabled={!Boolean(account)} />
+
+                                        <div className='flex items-center justify-end text-md mt-2 mb-1'>
+                                            <span className='text-white'>Fee: </span>
+                                            <span className='text-white'>0.19%</span>
+                                        </div>
+                                        <div className='bg-[#aaaaaa20] backdrop:blur-sm p-2.5 text-base rounded'>
+                                            <div className='flex items-center justify-between mb-2'>
+                                                <span>Price</span>
+                                                <span>1 {typeOut?.symbol} = {rate} {typeIn?.symbol}</span>
                                             </div>
                                             <div className='flex items-center justify-between'>
-                                                <div className='flex items-center mr-2'>
-                                                    <button className='rounded text-sm border border-border-primary px-2 py-1 leading-4 mr-2' onClick={() => customAmountSetHandle('out', 100)}>Max</button>
-                                                    <button className='rounded text-sm border border-border-primary px-2 py-1 leading-4 mr-2' onClick={() => customAmountSetHandle('out', 100)}>Half</button>
-                                                    <div className='flex items-center py-3'>
-                                                        <label className='text-sm mr-2'>Balance:</label>
-                                                        <span className='text-sm text-[#8B8B8B]'>{myBalanceOut}</span>
-                                                    </div>
-                                                </div>
-                                                <div className='flex items-center'>
-                                                </div>
+                                                <span>Price Impact</span>
+                                                <span>{Number(priceImpact * 100).toFixed(2)} %</span>
                                             </div>
                                         </div>
+                                    </div>
 
-                                        <div className='px-3 py-4'>
-                                            {/* <p className='text-primary text-sm'>Slippage Tolerance</p>
+                                    <div className='px-3 py-4'>
+                                        {/* <p className='text-primary text-sm'>Slippage Tolerance</p>
                                             <p className='text-secondary text-sm'>{'0.5'}%</p> */}
-                                            {
-                                                pendingSwap ? (
-                                                    <button className='bg-btn-primary w-full flex items-center justify-around py-5 my-10 text-3xl rounded-lg shadow-btn-primary'><SimpleLoading className='w-[36px] h-[36px]' /></button>
-                                                ) : (
-                                                    account ?
-                                                        <button className='bg-btn-primary w-full py-5 my-10 text-3xl rounded-lg shadow-btn-primary disabled:bg-btn-disable' disabled={(!+allowanceIn || !+amountIn || amountIn > myBalanceIn || !amountOut || !rate) as boolean} onClick={() => confirmSwapHandle()}>Swap</button>
-                                                        :
-                                                        <button className='bg-btn-primary w-full py-5 my-10 text-3xl rounded-lg shadow-btn-primary' onClick={() => disconnectWallet()}>Connect Wallet</button>
-                                                )
-                                            }
-                                        </div>
-                                    </>
-                                )
-                                    : (
-                                        <>
-                                            <div className='px-3 py-6'>
-                                                <h3 className='relative text-2xl font-semibold text-primary text-center'>
-                                                    <div className='absolute left-0 top-0 cursor-pointer' onClick={() => { setSwapStep('swap') }}>
-                                                        {/* <img className='h-[35px]' src='/images/swap-header.png' alt='swap' /> */}
-                                                        <img className='h-[35px]' src="https://img.icons8.com/color-glass/48/null/circled-left-2.png" />
-                                                    </div>
-                                                    Confirm Swap
-                                                    <div className='absolute right-0 top-0'>
-                                                        <img className='h-[35px]' src='/images/swap-header.png' alt='swap' />
-                                                    </div>
-                                                </h3>
-                                                <p className='text-dark-secondary mt-4 text-center'>Output is estimated</p>
-                                            </div>
+                                        {
+                                            pendingSwap ? (
+                                                <button className='bg-btn-primary w-full flex items-center justify-around py-5 text-3xl rounded-lg shadow-btn-primary'><SimpleLoading className='w-[36px] h-[36px]' /></button>
+                                            ) : (
+                                                account ?
+                                                    <button className='bg-btn-primary w-full py-5 text-3xl rounded-lg shadow-btn-primary disabled:bg-btn-disable' disabled={(!+allowanceIn || !+amountIn || amountIn > myBalanceIn || !amountOut || !rate) as boolean} onClick={() => swapHandle()}>Swap</button>
+                                                    :
+                                                    <button className='bg-btn-primary w-full py-5 my-10 text-3xl rounded-lg shadow-btn-primary' onClick={() => disconnectWallet()}>Connect Wallet</button>
+                                            )
+                                        }
+                                    </div>
+                                </>
+                                // )
+                                //     : (
+                                //         <>
+                                //             <div className='px-3 py-6'>
+                                //                 <h3 className='relative text-2xl font-semibold text-primary text-center'>
+                                //                     <div className='absolute left-0 top-0 cursor-pointer' onClick={() => { setSwapStep('swap') }}>
+                                //                         {/* <img className='h-[35px]' src='/images/swap-header.png' alt='swap' /> */}
+                                //                         <img className='h-[35px]' src="https://img.icons8.com/color-glass/48/null/circled-left-2.png" />
+                                //                     </div>
+                                //                     Confirm Swap
+                                //                     <div className='absolute right-0 top-0'>
+                                //                         <img className='h-[35px]' src='/images/swap-header.png' alt='swap' />
+                                //                     </div>
+                                //                 </h3>
+                                //                 <p className='text-dark-secondary mt-4 text-center'>Output is estimated</p>
+                                //             </div>
 
-                                            <div className='relative px-3 py-6 bg-primary-pattern border border-[#ffffff28] rounded -mx-[1px]'>
-                                                <div className='flex justify-between items-center relative mt-2 px-6 text-xl'>
-                                                    <label className='text-dark-primary'>{amountIn}</label>
-                                                    <div className='min-w-[100]'>{typeIn?.symbol}</div>
-                                                </div>
-                                                <div className='absolute z-[1] left-1/2 aspect-[1/1] -bottom-[calc(20px_+_0.5rem)] -translate-x-1/2 cursor-pointer'><img src='/images/swap.png' alt="swap" width={40} height={40} /></div>
-                                            </div>
-                                            <div className='relative -z-0 px-3 pt-6 pb-4 mt-1 bg-secondary-pattern border border-[#ffffff28] rounded -mx-[1px]'>
-                                                <div className='flex justify-between items-center relative mt-2 px-6 text-xl'>
-                                                    <label className='text-dark-primary'>{amountOut}</label>
-                                                    <div className='min-w-[100]'>{typeOut?.symbol}</div>
-                                                </div>
-                                            </div>
+                                //             <div className='relative px-3 py-6 bg-primary-pattern border border-[#ffffff28] rounded -mx-[1px]'>
+                                //                 <div className='flex justify-between items-center relative mt-2 px-6 text-xl'>
+                                //                     <label className='text-dark-primary'>{amountIn}</label>
+                                //                     <div className='min-w-[100]'>{typeIn?.symbol}</div>
+                                //                 </div>
+                                //                 <div className='absolute z-[1] left-1/2 aspect-[1/1] -bottom-[calc(20px_+_0.5rem)] -translate-x-1/2 cursor-pointer'><img src='/images/swap.png' alt="swap" width={40} height={40} /></div>
+                                //             </div>
+                                //             <div className='relative -z-0 px-3 pt-6 pb-4 mt-1 bg-secondary-pattern border border-[#ffffff28] rounded -mx-[1px]'>
+                                //                 <div className='flex justify-between items-center relative mt-2 px-6 text-xl'>
+                                //                     <label className='text-dark-primary'>{amountOut}</label>
+                                //                     <div className='min-w-[100]'>{typeOut?.symbol}</div>
+                                //                 </div>
+                                //             </div>
 
-                                            <div className='px-3 py-4'>
-                                                <div className='flex flex-col w-full'>
-                                                    <div className='flex items-center justify-between my-4'>
-                                                        <span className='text-white'>Price</span>
-                                                        <span className='text-white'>{rate} {typeIn?.symbol}/{typeOut?.symbol}</span>
-                                                    </div>
-                                                    {/* <div className='flex items-center justify-between mb-4'>
-                                                        <span className='text-white'>Minumum Received</span>
-                                                        <span className='text-white'>2.237 {typeOut?.symbol}</span>
-                                                    </div> */}
-                                                    <div className='flex items-center justify-between mb-4'>
-                                                        <span className='text-white'>Price Impact</span>
-                                                        <span className='text-secondary'>{Number(priceImpact * 100).toFixed(2)} %</span>
-                                                    </div>
-                                                    <div className='flex items-center justify-between mb-4'>
-                                                        <span className='text-white'>Liquidity Provide fee</span>
-                                                        <span className='text-white'>0.19%</span>
-                                                    </div>
-                                                </div>
-                                                {
-                                                    pendingSwap ?
-                                                        <button className='bg-btn-primary flex justify-around items-center w-full py-5 my-10 text-3xl rounded-lg shadow-btn-primary'><SimpleLoading className='w-[36px] h-[36px]' /></button>
-                                                        :
-                                                        <button className='bg-btn-primary w-full py-5 my-10 text-3xl rounded-lg shadow-btn-primary' onClick={() => swapHandle()}>Confirm Swap</button>
-                                                }
-                                            </div>
-                                        </>
-                                    )
+                                //             <div className='px-3 py-4'>
+                                //                 <div className='flex flex-col w-full'>
+                                //                     <div className='flex items-center justify-between my-4'>
+                                //                         <span className='text-white'>Price</span>
+                                //                         <span className='text-white'>{rate} {typeIn?.symbol}/{typeOut?.symbol}</span>
+                                //                     </div>
+                                //                     {/* <div className='flex items-center justify-between mb-4'>
+                                //                         <span className='text-white'>Minumum Received</span>
+                                //                         <span className='text-white'>2.237 {typeOut?.symbol}</span>
+                                //                     </div> */}
+                                //                     <div className='flex items-center justify-between mb-4'>
+                                //                         <span className='text-white'>Price Impact</span>
+                                //                         <span className='text-secondary'>{Number(priceImpact * 100).toFixed(2)} %</span>
+                                //                     </div>
+                                //                     <div className='flex items-center justify-between mb-4'>
+                                //                         <span className='text-white'>Liquidity Provide fee</span>
+                                //                         <span className='text-white'>0.19%</span>
+                                //                     </div>
+                                //                 </div>
+                                //                 {
+                                //                     pendingSwap ?
+                                //                         <button className='bg-btn-primary flex justify-around items-center w-full py-5 my-10 text-3xl rounded-lg shadow-btn-primary'><SimpleLoading className='w-[36px] h-[36px]' /></button>
+                                //                         :
+                                //                         <button className='bg-btn-primary w-full py-5 my-10 text-3xl rounded-lg shadow-btn-primary' onClick={() => swapHandle()}>Confirm Swap</button>
+                                //                 }
+                                //             </div>
+                                //         </>
+                                //     )
                             }
                         </div>
                     </div>

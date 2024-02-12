@@ -271,7 +271,7 @@ const AdminFarm: FC<Props> = (props) => {
                         </select>
                     </div>
                     <div className='flex flex-col mb-6'>
-                        <label className='text-white mb-2'>Alloc Point <span className='text-[#DD6F60]'>*</span></label>
+                        <label className='text-white mb-2'>Multiplier <span className='text-[#DD6F60]'>*</span></label>
                         <input type={'number'} value={allocPoint} onChange={(e: any) => setAllocPoint(e.target.value)} className='text-white rounded border border-[#FFFFFF22] bg-transparent bg-primary-pattern px-4 py-2' placeholder='' />
                     </div>
                     <div className="flex justify-between gap-6">

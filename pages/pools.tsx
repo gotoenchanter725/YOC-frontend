@@ -530,6 +530,16 @@ const Pools: FC = () => {
 													}
 												</div>
 												<div className="w-[25%] mr-4">
+													<div className="mb-2">Mutiplier</div>
+													{
+
+														item.loading ? <div role="status" className="max-w-sm animate-pulse h-[24px] flex items-center">
+															<p className="h-3 bg-gray-200 rounded-full w-12"></p>
+														</div> :
+															<p className="text-[#C7C7C7]">{item.allocPoint ? item.allocPoint : 0}</p>
+													}
+												</div>
+												<div className="w-[25%] mr-4">
 													<div className="mb-2">APR</div>
 													{
 

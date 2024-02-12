@@ -165,7 +165,7 @@ const AdminStake: FC<Props> = (props) => {
 							<td className='px-4 py-2 font-bold text-lg border-r border-[#373a40]'>No</td>
 							<td className='px-4 py-2 font-bold text-lg border-r border-[#373a40]'>Pool ID</td>
 							<td className='px-4 py-2 font-bold text-lg border-r border-[#373a40]'>Token</td>
-							<td className='px-4 py-2 font-bold text-lg border-r border-[#373a40]'>Alloc</td>
+							<td className='px-4 py-2 font-bold text-lg border-r border-[#373a40]'>Multiplier</td>
 							<td className='px-4 py-2 font-bold text-lg border-r border-[#373a40]'>Amount</td>
 							<td className='px-4 py-2 font-bold text-lg border-r border-[#373a40]'>APR</td>
 							<td className='px-4 py-2 font-bold text-lg border-r border-[#373a40]'>Created On</td>
@@ -223,7 +223,7 @@ const AdminStake: FC<Props> = (props) => {
 					<h2 className='text-2xl text-white mb-6'>Add Stake Pool</h2>
 					<div className='flex gap-6 mb-4'>
 						<div className='w-1/2 flex flex-col mb-6'>
-							<label className='text-white mb-2'>Alloc Point <span className='text-[#DD6F60]'>*</span></label>
+							<label className='text-white mb-2'>Token <span className='text-[#DD6F60]'>*</span></label>
 							<select className='w-full font-semibold rounded text-primary bg-transparent border-[0.5px] border-solid border-[#FFFFFF22] px-4 py-2'
 								onChange={(e) => { setToken(+e.target.value) }}
 							>
@@ -238,7 +238,7 @@ const AdminStake: FC<Props> = (props) => {
 							</select>
 						</div>
 						<div className='w-1/2 flex flex-col mb-6'>
-							<label className='text-white mb-2'>Alloc Point <span className='text-[#DD6F60]'>*</span></label>
+							<label className='text-white mb-2'>Multiplier <span className='text-[#DD6F60]'>*</span></label>
 							<input type={'number'} value={allocPoint} onChange={(e: any) => setAllocPoint(e.target.value)} className='text-white rounded border border-[#FFFFFF22] bg-transparent bg-primary-pattern px-4 py-2' placeholder='' />
 						</div>
 					</div>

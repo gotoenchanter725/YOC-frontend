@@ -207,6 +207,23 @@ const Liquidity: FC = () => {
                     console.log(convertEthToWei(String('1'), 18));
                     console.log(convertEthToWei(String(Number(+amountIn).toFixed(typeIn.decimals)), typeIn.decimals));
                     console.log(convertEthToWei(String(Number(+amountOut).toFixed(typeOut.decimals)), typeOut.decimals));
+                    let gasLimit = 3447470;
+                    try {
+                        let addLiquidityEstimate = await YOCSwapContract.estimateGas.addLiquidityETH(
+                            typeOut.address,
+                            convertEthToWei(String(Number(+amountOut).toFixed(typeOut.decimals)), typeOut.decimals),
+                            '0',
+                            '0',
+                            account,
+                            MaxUint256,
+                            {
+                                value: convertEthToWei(String(Number(+amountIn).toFixed(typeIn.decimals)), typeIn.decimals),
+                            }
+                        );
+                        gasLimit = +addLiquidityEstimate.mul(150).div(100);
+                    } catch (error) {
+                        console.log('get estimateGas', error);
+                    }
                     tx = await YOCSwapContract.addLiquidityETH(
                         typeOut.address,
                         convertEthToWei(String(Number(+amountOut).toFixed(typeOut.decimals)), typeOut.decimals),
@@ -217,10 +234,27 @@ const Liquidity: FC = () => {
                         // MaxUint256, 
                         {
                             value: convertEthToWei(String(Number(+amountIn).toFixed(typeIn.decimals)), typeIn.decimals),
-                            gasLimit: 3347370
+                            gasLimit: gasLimit
                         }
                     );
                 } else if (typeOut.address == WETH) {
+                    let gasLimit = 3447470;
+                    try {
+                        let addLiquidityEstimate = await YOCSwapContract.estimateGas.addLiquidityETH(
+                            typeIn.address,
+                            convertEthToWei(String(Number(+amountIn).toFixed(typeIn.decimals)), typeIn.decimals),
+                            '0',
+                            '0',
+                            account,
+                            MaxUint256,
+                            {
+                                value: convertEthToWei(String(Number(+amountOut).toFixed(typeOut.decimals)), typeOut.decimals),
+                            }
+                        );
+                        gasLimit = +addLiquidityEstimate.mul(150).div(100);
+                    } catch (error) {
+                        console.log('get estimateGas', error);
+                    }
                     tx = await YOCSwapContract.addLiquidityETH(
                         typeIn.address,
                         convertEthToWei(String(Number(+amountIn).toFixed(typeIn.decimals)), typeIn.decimals),
@@ -231,10 +265,27 @@ const Liquidity: FC = () => {
                         // MaxUint256, 
                         {
                             value: convertEthToWei(String(Number(+amountOut).toFixed(typeOut.decimals)), typeOut.decimals),
-                            gasLimit: 3347370
+                            gasLimit: gasLimit
                         }
                     );
                 } else {
+                    let gasLimit = 3447470;
+                    try {
+                        let addLiquidityEstimate = await YOCSwapContract.estimateGas.addLiquidity(
+                            typeIn.address,
+                            typeOut.address,
+                            convertEthToWei(String(Number(+amountIn).toFixed(typeIn.decimals)), typeIn.decimals),
+                            convertEthToWei(String(Number(+amountOut).toFixed(typeOut.decimals)), typeOut.decimals),
+                            '0',
+                            '0',
+                            account,
+                            MaxUint256,
+                        );
+                        gasLimit = +addLiquidityEstimate.mul(150).div(100);
+                        console.log(+addLiquidityEstimate);
+                    } catch (error) {
+                        console.log('get estimateGas', error);
+                    }
                     tx = await YOCSwapContract.addLiquidity(
                         typeIn.address,
                         typeOut.address,
@@ -246,7 +297,7 @@ const Liquidity: FC = () => {
                         MaxUint256,
                         // MaxUint256, 
                         {
-                            gasLimit: 3347370
+                            gasLimit: gasLimit
                         }
                     );
                 }

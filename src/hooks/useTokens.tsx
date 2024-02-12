@@ -9,14 +9,16 @@ const useCurrency = () => {
 
     useEffect(() => {
         (async () => {
+            setIsLoading(true);
             try {
                 const response = await axios.get(process.env.API_ADDRESS + '/currency/all');
+                setIsLoading(false);
                 setTokens(response.data.currencies)
             } catch (error) {
                 setError(error as any);
+                setIsLoading(false);
             }
 
-            setIsLoading(true);
         })();
     }, [])
 
@@ -35,14 +37,16 @@ const useLiquidityPools = () => {
 
     useEffect(() => {
         (async () => {
+            setIsLoading(true);
             try {
                 const response = await axios.get(process.env.API_ADDRESS + '/liquidity/all');
+                setIsLoading(false);
                 setTokens(response.data)
             } catch (error) {
+                setIsLoading(false);
                 setError(error as any);
             }
 
-            setIsLoading(true);
         })();
     }, [])
 
