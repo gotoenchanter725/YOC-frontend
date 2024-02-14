@@ -26,8 +26,8 @@ const Modal: FC<Props> = (props) => {
     }
 
     const convertSizeToClass = (size?: string) => {
-        if (!size || size == 'tiny') return "max-w-[400px]";
-        else if (size == 'small') return "max-w-[600px]";
+        if (size == 'tiny') return "max-w-[400px]";
+        else if (!size || size == 'small') return "max-w-[600px]";
         else if (size == 'md') return "max-w-[1000px]"
         else if (size == 'large') return "max-w-[1200px]"
         else if (size == 'full') return "max-w-[calc(100vw_-_100px)]"

@@ -292,6 +292,9 @@ const Swap: FC = () => {
                         );
                     }
                 } else if (typeOut.address == WETH) {
+                    if (allowanceIn < amountIn) {
+                        approveHandle(typeIn, 'in')
+                    }
                     if (lastTarget == 'in') {
                         tx = await tokenContract.swapExactTokensForETH(
                             convertEthToWei(String(Number(+amountIn).toFixed(+typeIn.decimals)), typeIn.decimals),
@@ -316,6 +319,10 @@ const Swap: FC = () => {
                         );
                     }
                 } else {
+                    if (allowanceIn < amountIn) {
+                        approveHandle(typeIn, 'in')
+                    }
+
                     if (lastTarget == 'in') {
                         tx = await tokenContract.swapExactTokensForTokens(
                             convertEthToWei(String(Number(+amountIn).toFixed(+typeIn.decimals)), typeIn.decimals),
