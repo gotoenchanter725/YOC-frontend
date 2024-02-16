@@ -47,12 +47,12 @@ const BNB_NETWORK = {
     },
     testnet: {
         // RPC_URL: "https://data-seed-prebsc-1-s1.binance.org:8545/",
-        // RPC_URL: "https://rpc.ankr.com/bsc_testnet_chapel",
-        // https: "https://rpc.ankr.com/bsc_testnet_chapel/",
-        // wss: "wss://rpc.ankr.com/bsc_testnet_chapel/ws/",
-        RPC_URL: "https://rpc.ankr.com/bsc_testnet_chapel/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf",
-        https: "https://rpc.ankr.com/bsc_testnet_chapel/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf",
-        wss: "wss://rpc.ankr.com/bsc_testnet_chapel/ws/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf",
+        RPC_URL: "https://rpc.ankr.com/bsc_testnet_chapel",
+        https: "https://rpc.ankr.com/bsc_testnet_chapel/",
+        wss: "wss://rpc.ankr.com/bsc_testnet_chapel/ws/",
+        // RPC_URL: "https://rpc.ankr.com/bsc_testnet_chapel/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf",
+        // https: "https://rpc.ankr.com/bsc_testnet_chapel/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf",
+        // wss: "wss://rpc.ankr.com/bsc_testnet_chapel/ws/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf",
         CHAIN_ID: 97
     }
 }
