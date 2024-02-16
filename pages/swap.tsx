@@ -293,7 +293,7 @@ const Swap: FC = () => {
                     }
                 } else if (typeOut.address == WETH) {
                     if (allowanceIn < amountIn) {
-                        approveHandle(typeIn, 'in')
+                        await approveHandle(typeIn, 'in')
                     }
                     if (lastTarget == 'in') {
                         tx = await tokenContract.swapExactTokensForETH(
@@ -320,7 +320,7 @@ const Swap: FC = () => {
                     }
                 } else {
                     if (allowanceIn < amountIn) {
-                        approveHandle(typeIn, 'in')
+                        await approveHandle(typeIn, 'in')
                     }
 
                     if (lastTarget == 'in') {
@@ -493,7 +493,7 @@ const Swap: FC = () => {
                                                 <button className='bg-btn-primary w-full flex items-center justify-around py-5 text-3xl rounded-lg shadow-btn-primary'><SimpleLoading className='w-[36px] h-[36px]' /></button>
                                             ) : (
                                                 account ?
-                                                    <button className='bg-btn-primary w-full py-5 text-3xl rounded-lg shadow-btn-primary disabled:bg-btn-disable' disabled={(!+allowanceIn || !+amountIn || amountIn > myBalanceIn || !amountOut || !rate) as boolean} onClick={() => swapHandle()}>Swap</button>
+                                                    <button className='bg-btn-primary w-full py-5 text-3xl rounded-lg shadow-btn-primary disabled:bg-btn-disable' disabled={(!+amountIn || amountIn > myBalanceIn || !amountOut || !rate) as boolean} onClick={() => swapHandle()}>Swap</button>
                                                     :
                                                     <button className='bg-btn-primary w-full py-5 my-10 text-3xl rounded-lg shadow-btn-primary' onClick={() => disconnectWallet()}>Connect Wallet</button>
                                             )

@@ -120,7 +120,7 @@ const CreateProjectContent: FC<Props> = ({ handleClose }) => {
                 ethers.utils.parseUnits(decimals, 0),
                 ethers.utils.parseUnits(((Number(total) * Number(sellPercent)) / 100).toFixed(2), decimals),
                 [title, desc, category, projectWebsite, iconUrl, symbolUrl],
-                [ethers.utils.parseUnits(price, 3), ethers.utils.parseUnits(roi, 0), ethers.utils.parseUnits(startDate, 0), ethers.utils.parseUnits(endDate, 0), ongoingPercent, multiplier],
+                [ethers.utils.parseUnits(price, decimals), ethers.utils.parseUnits(roi, 0), ethers.utils.parseUnits(startDate, 0), ethers.utils.parseUnits(endDate, 0), ongoingPercent, multiplier],
                 [YUSD.address, projectAddress]
             );
             const gasLimit = createProjectEstimate.mul(150).div(100);
