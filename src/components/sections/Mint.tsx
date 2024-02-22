@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { BigNumber, Contract } from 'ethers';
+import { BigNumber, Contract, constants } from 'ethers';
 import Modal from '@components/widgets/Modalv2';
 import Toggle from '@components/widgets/Toggle';
 import useNetwork from '@hooks/useNetwork';
@@ -10,6 +10,7 @@ import { convertEthToWei, convertWeiToEth } from 'utils/unit';
 import { debounceHook } from 'utils/hook';
 import { YOCSwapRouter, YUSD, YOC as YOCToken, WETH } from 'src/constants/contracts';
 import useCurrency from '@hooks/useCurrency';
+const { MaxUint256 } = constants;
 
 const MintSection = () => {
     const { provider, signer, ETHBalance, YOCBalance, YUSDBalance, account, updateYOCBalance, updateYUSDBalance, updateETHBalance } = useAccount();
@@ -126,8 +127,9 @@ const MintSection = () => {
             if (withYOC) { // Mint with YOC
                 const YOCContract = new Contract(YOCToken.address, YOCToken.abi, signer);
                 const allowanceYOC = await YOCContract.allowance(account, YUSD.address);
-                if (approx < allowanceYOC) {
-                    const approveTx = await YOCContract.approve(YUSD.address, approx, {
+                console.log(+approx, +allowanceYOC);
+                if (approx > allowanceYOC) {
+                    const approveTx = await YOCContract.approve(YUSD.address, MaxUint256, {
                         gasLimit: 300000
                     });
                     await approveTx.wait();
