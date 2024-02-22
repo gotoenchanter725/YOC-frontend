@@ -122,7 +122,7 @@ const MintSection = () => {
         setShowMintModalToggle(false);
         loadingStart();
         try {
-            let gasLimit = 0, mintTx;
+            let gasLimit = 300000, mintTx;
             if (withYOC) { // Mint with YOC
                 const YOCContract = new Contract(YOCToken.address, YOCToken.abi, signer);
                 const allowanceYOC = await YOCContract.allowance(account, YUSD.address);

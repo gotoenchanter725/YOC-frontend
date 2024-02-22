@@ -347,12 +347,18 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
                 });
                 await approve_investToken.wait();
             }
-            let participateEstimate = await ProjectContractInstance.estimateGas.participate(investAmount, shareAmount);
-            const gasLimit = participateEstimate.mul(150).div(100);
+
+            let gasLimit = 300000;
+            try {
+                let participateEstimate = await ProjectContractInstance.estimateGas.participate(investAmount, shareAmount);
+                gasLimit = +participateEstimate.mul(150).div(100);
+            } catch (error) {
+                console.log('gaslimit', error);
+            }
+
             let participateTx = await ProjectContractInstance.participate(investAmount, shareAmount, {
                 gasLimit: gasLimit
             });
-
             const eventlistencer = (address: string, amount1: BigNumber, amount2: BigNumber, user: string) => {
                 console.log("Participated", address, amount1, amount2, user);
                 if (user == account) {

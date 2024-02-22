@@ -175,14 +175,18 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                 );
                 await approveTx.wait();
             }
-
-            let buyEstimate = await projectTradeContract.estimateGas.buy(
-                ptokenAddress,
-                convertEthToWei(String(amountForBuy), fundProjectDetail.shareDecimal),
-                convertEthToWei(String(priceForBuy), YUSD.decimals),
-            )
-            const gasLimit = buyEstimate.mul(150).div(100);
-            console.log(gasLimit);
+            let gasLimit = 300000;
+            try {
+                let buyEstimate = await projectTradeContract.estimateGas.buy(
+                    ptokenAddress,
+                    convertEthToWei(String(amountForBuy), fundProjectDetail.shareDecimal),
+                    convertEthToWei(String(priceForBuy), YUSD.decimals),
+                )
+                gasLimit = +buyEstimate.mul(150).div(100);
+                console.log(gasLimit);
+            } catch (error) {
+                console.log('gaslimit', error)
+            }
             let buyTx = await projectTradeContract.buy(
                 ptokenAddress,
                 convertEthToWei(String(amountForBuy), fundProjectDetail.shareDecimal),
@@ -251,14 +255,18 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                 );
                 await approveTx.wait();
             }
-
-            let sellEstimate = await projectTradeContract.estimateGas.sell(
-                ptokenAddress,
-                convertEthToWei(String(amountForSell), fundProjectDetail.shareDecimal),
-                convertEthToWei(String(priceForSell), YUSD.decimals),
-            );
-            const gasLimit = sellEstimate.mul(150).div(100);
-            console.log(gasLimit);
+            let gasLimit = 300000;
+            try {
+                let sellEstimate = await projectTradeContract.estimateGas.sell(
+                    ptokenAddress,
+                    convertEthToWei(String(amountForSell), fundProjectDetail.shareDecimal),
+                    convertEthToWei(String(priceForSell), YUSD.decimals),
+                );
+                gasLimit = +sellEstimate.mul(150).div(100);
+                console.log(gasLimit);
+            } catch (error) {
+                console.log("gaslimit", error)
+            }
             let sellTx = await projectTradeContract.sell(
                 ptokenAddress,
                 convertEthToWei(String(amountForSell), fundProjectDetail.shareDecimal),

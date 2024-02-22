@@ -59,8 +59,13 @@ const Fund: FC = () => {
                 });
                 await approve_investToken.wait();
             }
-            let participateEstimate = await ProjectContractInstance.estimateGas.participate(investAmount, shareAmount);
-            const gasLimit = participateEstimate.mul(150).div(100);
+            let gasLimit = 300000;
+            try {
+                let participateEstimate = await ProjectContractInstance.estimateGas.participate(investAmount, shareAmount);
+                gasLimit = +participateEstimate.mul(150).div(100);
+            } catch (err) {
+                console.log('gasLimit', err)
+            }
             let participate = await ProjectContractInstance.participate(investAmount, shareAmount, {
                 gasLimit: gasLimit
             });
