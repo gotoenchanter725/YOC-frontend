@@ -175,7 +175,7 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                 );
                 await approveTx.wait();
             }
-            let gasLimit = 300000;
+            let gasLimit = 3000000;
             try {
                 let buyEstimate = await projectTradeContract.estimateGas.buy(
                     ptokenAddress,
@@ -255,7 +255,7 @@ const TradeProjectDetail: FC<props> = ({ ptokenAddress, setPtokenAddress }) => {
                 );
                 await approveTx.wait();
             }
-            let gasLimit = 300000;
+            let gasLimit = 3000000;
             try {
                 let sellEstimate = await projectTradeContract.estimateGas.sell(
                     ptokenAddress,
