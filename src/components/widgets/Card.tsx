@@ -52,7 +52,7 @@ interface detailTokenInterface {
 const yocAmountYear = 4.5 * 60 * 24 * 365 * 20;
 
 const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAction, harvestAction, admin, status }) => {
-    const { account, provider, signer } = useAccount();
+    const { account, provider, signer, getSigner } = useAccount();
     const { loadingStart, loadingEnd } = useLoading();
     const { updateProjectInfoByAddress } = useProject();
     const { alertShow } = useAlert();
@@ -334,14 +334,15 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
             })
             return;
         }
-        const ProjectContractInstance = new Contract(item.poolAddress, Project.abi, signer);
+        const signerInstance = await getSigner();
+        const ProjectContractInstance = new Contract(item.poolAddress, Project.abi, signerInstance);
         let investAmount = Number(ethers.utils.parseUnits(usdAmount, item.investDecimal));
-        let shareAmount = Number(ethers.utils.parseUnits(tokenAmount, item.shareDecimal)); // N
+        let shareAmount = Number(ethers.utils.parseUnits(tokenAmount, item.shareDecimal));
         try {
             loadingStart();
 
             if (+usdAmount > +item.investTokenAllowance) {
-                const investTokenInstance = new Contract(item.investToken, YUSD.abi, signer);
+                const investTokenInstance = new Contract(item.investToken, YUSD.abi, signerInstance);
                 let approve_investToken = await investTokenInstance.approve(item.poolAddress, investAmount, {
                     gasLimit: 300000
                 });
@@ -382,7 +383,7 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
             loadingEnd();
             console.log("buy token error: ", ex)
         }
-    }, [item, signer]);
+    }, [item, signer, usdAmount, tokenAmount, account, investContract, shareContract]);
 
     const depositActionHandle = useCallback(async () => {
         try {
@@ -394,8 +395,9 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
                 return;
             }
             loadingStart();
-            const ProjectContractInstance = new Contract(item.poolAddress, Project.abi, signer);
-            const investTokenInstance = new Contract(item.investToken, YUSD.abi, signer);
+            const signerInstance = await getSigner();
+            const ProjectContractInstance = new Contract(item.poolAddress, Project.abi, signerInstance);
+            const investTokenInstance = new Contract(item.investToken, YUSD.abi, signerInstance);
 
             let investAmount = ethers.utils.parseUnits(usdAmount, item.investDecimal);
             let investTokenApproveTx = await investTokenInstance.approve(item.poolAddress, investAmount, {
@@ -426,7 +428,7 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
             console.log("make depost error: ", ex)
             loadingEnd();
         }
-    }, [item, signer]);
+    }, [item, signer, usdAmount, account, investContract, shareContract]);
 
     const refundActionHandle = useCallback(async () => {
         // refundAction(item.poolAddress, item.tokenPrice, item.shareToken, item.investDecimal, item.shareDecimal, item.shareTokenAllowance);
@@ -437,8 +439,9 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
             })
             return;
         }
-        const ProjectContractInstance = new Contract(item.poolAddress, Project.abi, signer);
-        const shareTokenInstance = new Contract(item.shareToken, TokenTemplate.abi, signer);
+        const signerInstance = await getSigner();
+        const ProjectContractInstance = new Contract(item.poolAddress, Project.abi, signerInstance);
+        const shareTokenInstance = new Contract(item.shareToken, TokenTemplate.abi, signerInstance);
 
         let shareAmount = await shareTokenInstance.balanceOf(account);
         let shareAmountToEth = Number(ethers.utils.formatUnits(shareAmount, item.shareDecimal));
@@ -485,7 +488,7 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
         } catch (ex) {
             loadingEnd();
         }
-    }, [item, signer]);
+    }, [item, signer, account, investContract, shareContract]);
 
     const claimActionHandle = useCallback(async () => {
         // claimAction(item.poolAddress)
@@ -496,7 +499,8 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
             })
             return;
         }
-        const ProjectContractInstance = new Contract(item.poolAddress, Project.abi, signer);
+        const signerInstance = await getSigner();
+        const ProjectContractInstance = new Contract(item.poolAddress, Project.abi, signerInstance);
         try {
             loadingStart();
             let claimTx = await ProjectContractInstance.claim({
@@ -521,7 +525,7 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
         } catch (ex) {
             loadingEnd();
         }
-    }, [item, signer]);
+    }, [item, signer, account, investContract, shareContract]);
 
     const harvestActionHandle = useCallback(async () => {
         // harvestAction(item.poolAddress);
@@ -532,7 +536,8 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
             })
             return;
         }
-        const ProjectContractInstance = new Contract(item.poolAddress, Project.abi, signer);
+        const signerInstance = await getSigner();
+        const ProjectContractInstance = new Contract(item.poolAddress, Project.abi, signerInstance);
         try {
             loadingStart();
             let harvestTx = await ProjectContractInstance.claimInvestEarn({
@@ -559,7 +564,7 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
         } catch (ex) {
             loadingEnd();
         }
-    }, [item, signer]);
+    }, [item, signer, account, investContract, shareContract]);
 
     const votingHistoryModalHandle = () => {
         selectHistoryItem(0)
@@ -616,10 +621,18 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
     //     console.log(item.poolAddress);
     // }
 
-    const pauseTradeHandle = async () => {
+    const pauseTradeHandle = useCallback(async () => {
+        if (account == undefined) {
+            alertShow({
+                status: 'failed',
+                content: 'Please connect to the Metamask!'
+            })
+            return;
+        }
+        const signerInstance = await getSigner();
+        const ProjectTradeContract = new Contract(ProjectTrade.address, ProjectTrade.abi, signerInstance);
         try {
             loadingStart();
-            const ProjectTradeContract = new Contract(ProjectTrade.address, ProjectTrade.abi, signer);
             let pauseTradeTx;
             if (item.tradePaused) {
                 pauseTradeTx = await ProjectTradeContract.unpause(item.shareToken, {
@@ -655,12 +668,13 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
             loadingEnd();
             console.log("Pause/Resume Trade Project Error: ", error)
         }
-    }
+    }, [item, signer, account, investContract, shareContract]);
 
-    const cancelOrders = async () => {
+    const cancelOrders = useCallback(async () => {
         try {
             loadingStart();
-            const ProjectTradeContract = new Contract(ProjectTrade.address, ProjectTrade.abi, signer);
+            const signerInstance = await getSigner();
+            const ProjectTradeContract = new Contract(ProjectTrade.address, ProjectTrade.abi, signerInstance);
             let cancelOrdersTx = await ProjectTradeContract.cancelOrders(item.shareToken);
 
             const eventlistencer = (ptokenAddress: string) => {
@@ -681,12 +695,13 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
             loadingEnd();
             console.log("Cancel All Orders Error: ", error)
         }
-    }
+    }, [item, signer, account, investContract, shareContract]);
 
-    const removeOrders = async () => {
+    const removeOrders = useCallback(async () => {
         try {
             loadingStart();
-            const ProjectTradeContract = new Contract(ProjectTrade.address, ProjectTrade.abi, signer);
+            const signerInstance = await getSigner();
+            const ProjectTradeContract = new Contract(ProjectTrade.address, ProjectTrade.abi, signerInstance);
             let remvoeOrdersTx = await ProjectTradeContract.removeOrders(item.shareToken);
 
             const eventlistencer = (ptokenAddress: string) => {
@@ -707,12 +722,13 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
             loadingEnd();
             console.log("Remove All Orders Error: ", error)
         }
-    }
+    }, [item, signer, account, investContract, shareContract])
 
-    const makeProjectTradeHandle = async () => {
+    const makeProjectTradeHandle = useCallback(async () => {
         try {
             loadingStart();
-            const projectContract = new Contract(item.poolAddress, Project.abi, signer);
+            const signerInstance = await getSigner();
+            const projectContract = new Contract(item.poolAddress, Project.abi, signerInstance);
             const manualMoveTradeTx = await projectContract.manualMoveTrade();
             await manualMoveTradeTx.wait();
 
@@ -725,13 +741,13 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
             loadingEnd();
             console.log("Remove All Orders Error: ", error)
         }
-    }
+    }, [item, signer])
 
     const handleOpenUpdateMultiplierModel = () => {
         setMultiplier(item.multiplier);
         setShowUpdateMultiplierModal(true);
     }
-    const updateMultiplier = async () => {
+    const updateMultiplier = useCallback(async () => {
         try {
             loadingStart();
             const res = await axiosInstance.post('/project/updateMultiplier', {
@@ -753,7 +769,7 @@ const Card: FC<Props> = ({ item, buyAction, refundAction, claimAction, depositAc
             setShowUpdateMultiplierModal(false);
             console.log("Update multiplier: ", error)
         }
-    }
+    }, [item, multiplier]);
 
     const investEarnUSDAmount = useMemo(() => {
         let YOCDetail = getYOCDetail();

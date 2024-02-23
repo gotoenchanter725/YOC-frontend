@@ -75,7 +75,21 @@ const useAccount = () => {
         setYOCBalance(await getYOCBalance());
     }
 
-    return { account, YOCBalance, YUSDBalance, ETHBalance, updateYOCBalance, updateYUSDBalance, updateETHBalance, getETHBalance, provider: JsonRpcProvider, signer, JsonRpcProvider, WebSocketProvider };
+    return {
+        account,
+        YOCBalance,
+        YUSDBalance,
+        ETHBalance,
+        updateYOCBalance,
+        updateYUSDBalance,
+        updateETHBalance,
+        getETHBalance,
+        provider: JsonRpcProvider,
+        signer,
+        getSigner: getEthersSigner,
+        JsonRpcProvider,
+        WebSocketProvider
+    };
 }
 
 export default useAccount;
